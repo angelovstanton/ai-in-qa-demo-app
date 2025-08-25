@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         String   // CITIZEN, CLERK, FIELD_AGENT, SUPERVISOR, ADMIN
+  passwordHash String
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department       Department?      @relation(fields: [departmentId], references: [id])
+  createdRequests  ServiceRequest[] @relation("CreatedBy")
+  assignedRequests ServiceRequest[] @relation("AssignedTo")
+  comments         Comment[]
+  attachments      Attachment[]
+  assignments      Assignment[]     @relation("AssignedBy")
+  assignedTasks    Assignment[]     @relation("AssignedTo")
+
+  @@map("users")
+}
+
+model Department {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  users           User[]
+  serviceRequests ServiceRequest[]
+
+  @@map("departments")
+}
+
+model ServiceRequest {
+  id           String    @id @default(uuid())
+  code         String    @unique
+  title        String
+  description  String
+  category     String
+  priority     String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status       String    @default("DRAFT")  // DRAFT, SUBMITTED, TRIAGED, etc.
+  locationText String
+  lat          Float?
+  lng          Float?
+  createdBy    String
+  assignedTo   String?
+  departmentId String?
+  version      Int       @default(1)
+  slaDueAt     DateTime?
+  closedAt     DateTime?
+  reopenUntil  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  creator     User        @relation("CreatedBy", fields: [createdBy], references: [id])
+  assignee    User?       @relation("AssignedTo", fields: [assignedTo], references: [id])
+  department  Department? @relation(fields: [departmentId], references: [id])
+  comments    Comment[]
+  attachments Attachment[]
+  assignments Assignment[]
+  eventLogs   EventLog[]
+
+  @@map("service_requests")
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  requestId  String
+  authorId   String
+  body       String
+  visibility String   // PUBLIC, INTERNAL
+  createdAt  DateTime @default(now())
+
+  request ServiceRequest @relation(fields: [requestId], references: [id])
+  author  User          @relation(fields: [authorId], references: [id])
+
+  @@map("comments")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  requestId    String
+  uploadedById String
+  filename     String
+  mime         String
+  size         Int
+  url          String
+  createdAt    DateTime @default(now())
+
+  request    ServiceRequest @relation(fields: [requestId], references: [id])
+  uploadedBy User           @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
+model Assignment {
+  id           String   @id @default(uuid())
+  requestId    String
+  assigneeId   String
+  assignedById String
+  assignedAt   DateTime @default(now())
+
+  request    ServiceRequest @relation(fields: [requestId], references: [id])
+  assignee   User           @relation("AssignedTo", fields: [assigneeId], references: [id])
+  assignedBy User           @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  @@map("assignments")
+}
+
+model EventLog {
+  id        String   @id @default(uuid())
+  requestId String
+  type      String
+  payload   String   // JSON stored as string
+  createdAt DateTime @default(now())
+
+  request ServiceRequest @relation(fields: [requestId], references: [id])
+
+  @@map("event_logs")
+}
+
+model FeatureFlag {
+  key   String @id
+  value String // JSON stored as string
+
+  @@map("feature_flags")
+}

@@ -1,0 +1,293 @@
+# ========================
+# AI in QA Demo App - GitIgnore
+# ========================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.test
+.env.production
+
+# Logs
+logs
+*.log
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+city-services-portal/api/dev.db*
+city-services-portal/api/test.db*
+city-services-portal/api/prisma/dev.db*
+
+# Build outputs
+dist/
+build/
+city-services-portal/ui/dist/
+city-services-portal/api/dist/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.cache/
+
+# Docker
+.dockerignore
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+test-results/
+
+# Uploads and user content
+city-services-portal/api/uploads/
+city-services-portal/api/public/uploads/
+
+# Generated documentation
+docs/
+
+# Backup files
+*.backup
+*.bak
+
+# Lock files (keep package-lock.json for consistency)
+# yarn.lock
+# pnpm-lock.yaml
+
+# Prisma generated client (regenerated on build)
+city-services-portal/api/node_modules/.prisma/
+
+# Local development overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Generated types
+types/generated/
+
+# Storybook build outputs
+storybook-static/
+
+# Jest
+jest-coverage/
+
+# ESLint
+.eslintcache
+
+# Prettier
+.prettier-cache
+
+# Webpack
+.webpack/
+
+# Parcel
+.parcel-cache/
+
+# Vite
+city-services-portal/ui/.vite/
+
+# Next.js (if used in future)
+.next/
+out/
+
+# Nuxt.js (if used in future)
+.nuxt/
+
+# Gatsby files (if used in future)
+public/
+.cache/
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Expo (if used in future)
+.expo/
+
+# Local env files
+.env*.local
+
+# Vercel (if used for deployment)
+.vercel
+
+# Turbo (if used for monorepo)
+.turbo
+
+# Mac specific
+.AppleDouble
+.LSOverride
+
+# Windows specific
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific
+*~
+
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local development configuration
+config/local.json
+config/development.local.json
+
+# SSL certificates (if any)
+*.pem
+*.key
+*.crt
+*.csr
+
+# Firebase (if used)
+.firebase/
+.firebaserc
+firebase-debug.log
+
+# Sentry
+.sentryclirc
+
+# Bundle analyzer reports
+webpack-bundle-analyzer-report.html
+
+# Temporary test files
+temp-test-*
+test-temp-*
+
+# AI/ML model files (if any)
+*.model
+*.pkl
+*.h5
+
+# Large media files that shouldn't be in git
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+
+# Large images (keep small ones for UI)
+*.psd
+*.ai
+*.eps
+*.raw
+*.tiff
+*.bmp
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Local scripts and notes
+local-*
+notes.md
+todo.md
+scratch.md
+
+# Performance monitoring
+.clinic/
+flamegraph.html
+
+# Security scanning results
+security-scan-*
+vulnerability-report-*

@@ -1,0 +1,16 @@
+# React + MUI Ground Rules
+- Prefer MUI components for all UI: Stepper, Dialog, TextField, Select, Autocomplete, Snackbar, DataGrid, DateTimePicker.
+- All interactive elements MUST have data-testid="cs-<page>-<element>" and an accessible name (label/aria-label).
+- Use controlled components with react-hook-form + zod for validation. Show helperText on errors.
+- DataGrid: enable server-side sorting/filtering/pagination. Route params: page/size/sort/filter ? call API.
+- Keep DOM stable for WebDriver: avoid random ids; if MUI generates ids, override via `id` when necessary.
+- Use ThemeProvider with a custom theme; store design tokens in theme (spacing, palette, shape).
+- i18n: wire MUI locale (BG/EN) and expose a Language switch in the top bar.
+- Do not inline CSS; use `sx` prop or styled API consistently.
+- Each feature page lives under /ui/src/features/<area>/ with index.tsx and subcomponents.
+
+# API Quality Gate
+- OpenAPI documented and served at /api-docs.
+- Errors use { error: { code, message, details?, correlationId } } and every response carries a correlationId.
+- Lists: filtering, sorting whitelist, pagination + X-Total-Count.
+- POST /requests requires Idempotency-Key; PATCH uses If-Match version ? respond 409 on mismatch.
