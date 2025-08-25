@@ -6,7 +6,7 @@ import {
   CommentPatterns,
   FilePatterns,
   SearchPatterns 
-} from './validation';
+} from '../utils/validation';
 
 /**
  * Comprehensive form validation schemas for the AI in QA Demo Application

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -14,181 +14,430 @@ import {
   Alert,
   Checkbox,
   Switch,
-  Slider,
   Autocomplete,
   Chip,
-  Rating,
-  Button,
   Card,
   CardContent,
   Grid,
-  InputAdornment,
-  IconButton,
+  LinearProgress,
+  FormHelperText,
+  CircularProgress,
 } from '@mui/material';
-import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { Warning as WarningIcon } from '@mui/icons-material';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import StepperWizard, { StepperStep } from '../../components/StepperWizard';
 import { useCreateServiceRequest } from '../../hooks/useServiceRequests';
+import { serviceRequestSchema, ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
+import { XSSPrevention, Sanitization } from '../../utils/validation';
 
-// Enhanced validation schema with many field types
-const requestSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters').max(120, 'Title must be less than 120 characters'),
-  description: z.string().min(30, 'Description must be at least 30 characters').max(2000, 'Description too long'),
-  category: z.string().min(1, 'Category is required'),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
-  locationText: z.string().min(1, 'Location is required'),
-  
-  // Contact Information
-  contactMethod: z.enum(['EMAIL', 'PHONE', 'SMS', 'MAIL']),
-  alternatePhone: z.string().optional(),
-  bestTimeToContact: z.string().optional(),
-  
-  // Issue Details
-  issueType: z.string().min(1, 'Issue type is required'),
-  severity: z.number().min(1).max(10),
-  isRecurring: z.boolean(),
-  
-  // Location Details
-  streetAddress: z.string().min(1, 'Street address is required'),
-  city: z.string().min(1, 'City is required'),
-  postalCode: z.string().min(5, 'Valid postal code required'),
-  landmark: z.string().optional(),
-  accessInstructions: z.string().optional(),
-  
-  // Service-specific fields
-  affectedServices: z.array(z.string()).min(1, 'At least one service must be selected'),
-  estimatedValue: z.number().optional(),
-  isEmergency: z.boolean(),
-  hasPermits: z.boolean(),
-  
-  // Additional Information
-  additionalContacts: z.array(z.object({
-    name: z.string().min(1, 'Name required'),
-    phone: z.string().min(10, 'Valid phone required'),
-    relationship: z.string().min(1, 'Relationship required')
-  })).optional(),
-  
-  // User Experience
-  satisfactionRating: z.number().min(1).max(5).optional(),
-  comments: z.string().optional(),
-  agreesToTerms: z.boolean().refine(val => val === true, 'You must agree to terms'),
-  wantsUpdates: z.boolean(),
-});
+// Local storage key for form persistence
+const FORM_STORAGE_KEY = 'new-request-form-data';
 
-type RequestFormData = z.infer<typeof requestSchema>;
+// Custom debounce hook to replace lodash
+const useDebounce = <T extends any[]>(
+  callback: (...args: T) => void,
+  delay: number
+) => {
+  const timeoutRef = useRef<number | null>(null);
+
+  return useCallback((...args: T) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay) as unknown as number;
+  }, [callback, delay]);
+};
+
+// Rate limiting for form submissions
+const useRateLimit = (maxAttempts: number = 5, timeWindow: number = 60000) => {
+  const [attempts, setAttempts] = useState<number[]>([]);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  const checkRateLimit = useCallback(() => {
+    const now = Date.now();
+    const recentAttempts = attempts.filter(time => now - time < timeWindow);
+    
+    if (recentAttempts.length >= maxAttempts) {
+      setIsBlocked(true);
+      setTimeout(() => setIsBlocked(false), timeWindow);
+      return false;
+    }
+    
+    setAttempts([...recentAttempts, now]);
+    return true;
+  }, [attempts, maxAttempts, timeWindow]);
+
+  return { isBlocked, checkRateLimit };
+};
+
+// Character count component with validation styling
+const CharacterCount: React.FC<{
+  current: number;
+  max: number;
+  fieldName: string;
+  formName: string;
+}> = ({ current, max, fieldName, formName }) => {
+  const percentage = (current / max) * 100;
+  const isWarning = percentage > 80;
+  const isError = percentage > 100;
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography
+        variant="caption"
+        color={isError ? 'error' : isWarning ? 'warning.main' : 'text.secondary'}
+        data-testid={FormValidationTestIds.CHAR_COUNT(formName, fieldName)}
+      >
+        {current}/{max} characters
+      </Typography>
+      <LinearProgress
+        variant="determinate"
+        value={Math.min(percentage, 100)}
+        color={isError ? 'error' : isWarning ? 'warning' : 'primary'}
+        sx={{ height: 2, mt: 0.5 }}
+      />
+    </Box>
+  );
+};
+
+// Validation feedback component
+const ValidationFeedback: React.FC<{
+  field: any;
+  error?: any;
+  fieldName: string;
+  formName: string;
+  isValidating?: boolean;
+  maxLength?: number;
+  showCharCount?: boolean;
+  securityCheck?: boolean;
+}> = ({ field, error, fieldName, formName, isValidating, maxLength, showCharCount, securityCheck }) => {
+  const value = field.value || '';
+  const hasXSS = securityCheck && XSSPrevention.containsXSS(value);
+  
+  return (
+    <Box>
+      {isValidating && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <CircularProgress size={16} sx={{ mr: 1 }} />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            data-testid={FormValidationTestIds.VALIDATION_LOADING(formName, fieldName)}
+          >
+            Validating...
+          </Typography>
+        </Box>
+      )}
+      
+      {error && (
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ display: 'block', mt: 1 }}
+          data-testid={FormValidationTestIds.FIELD_ERROR(formName, fieldName)}
+          role="alert"
+          aria-live="polite"
+        >
+          {error.message}
+        </Typography>
+      )}
+      
+      {hasXSS && (
+        <Alert severity="error" sx={{ mt: 1 }} icon={<WarningIcon />}>
+          <Typography variant="caption">
+            Content contains potentially harmful elements. Please remove any script tags or suspicious content.
+          </Typography>
+        </Alert>
+      )}
+      
+      {showCharCount && maxLength && (
+        <CharacterCount
+          current={value.length}
+          max={maxLength}
+          fieldName={fieldName}
+          formName={formName}
+        />
+      )}
+    </Box>
+  );
+};
 
 const categories = [
-  'Roads and Transportation',
-  'Street Lighting',
-  'Waste Management',
-  'Water and Sewer',
-  'Parks and Recreation',
-  'Public Safety',
-  'Building and Permits',
-  'Snow Removal',
-  'Traffic Signals',
-  'Sidewalk Maintenance',
-  'Tree Services',
-  'Noise Complaints',
-  'Animal Control',
-  'Other'
+  'roads-transportation',
+  'street-lighting', 
+  'waste-management',
+  'water-sewer',
+  'parks-recreation',
+  'public-safety',
+  'building-permits',
+  'snow-removal',
+  'traffic-signals',
+  'sidewalk-maintenance',
+  'tree-services',
+  'noise-complaints',
+  'animal-control',
+  'other'
 ];
 
-const issueTypes = [
-  'Pothole',
-  'Broken Street Light',
-  'Garbage Collection Issue',
-  'Water Leak',
-  'Sewer Backup',
-  'Damaged Playground',
-  'Graffiti',
-  'Broken Traffic Light',
-  'Fallen Tree',
-  'Illegal Dumping',
-  'Noise Violation',
-  'Stray Animal',
-  'Building Code Violation',
-  'Permit Issue',
-  'Other'
-];
-
-const affectedServicesOptions = [
-  'Water Supply',
-  'Electrical',
-  'Gas',
-  'Internet/Cable',
-  'Garbage Collection',
-  'Recycling',
-  'Public Transportation',
-  'Emergency Services',
-  'Postal Service'
-];
+const categoryLabels: Record<string, string> = {
+  'roads-transportation': 'Roads and Transportation',
+  'street-lighting': 'Street Lighting',
+  'waste-management': 'Waste Management',
+  'water-sewer': 'Water and Sewer',
+  'parks-recreation': 'Parks and Recreation',
+  'public-safety': 'Public Safety',
+  'building-permits': 'Building and Permits',
+  'snow-removal': 'Snow Removal',
+  'traffic-signals': 'Traffic Signals',
+  'sidewalk-maintenance': 'Sidewalk Maintenance',
+  'tree-services': 'Tree Services',
+  'noise-complaints': 'Noise Complaints',
+  'animal-control': 'Animal Control',
+  'other': 'Other'
+};
 
 const NewRequestPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isAsyncValidating, setIsAsyncValidating] = useState<Record<string, boolean>>({});
   const { createRequest, loading: isSubmitting } = useCreateServiceRequest();
+  const { isBlocked, checkRateLimit } = useRateLimit(5, 60000);
+
+  // Load saved form data from localStorage
+  const loadSavedFormData = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.warn('Failed to load saved form data:', error);
+    }
+    return null;
+  }, []);
 
   const {
     control,
     handleSubmit,
     watch,
-    formState: { errors },
-  } = useForm<RequestFormData>({
-    resolver: zodResolver(requestSchema),
-    defaultValues: {
+    trigger,
+    formState: { errors, isValidating },
+    setValue,
+    getValues,
+  } = useForm<ServiceRequestFormData>({
+    resolver: zodResolver(serviceRequestSchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: loadSavedFormData() || {
       title: '',
       description: '',
       category: '',
       priority: 'MEDIUM',
+      streetAddress: '',
+      city: '',
+      postalCode: '',
       locationText: '',
+      landmark: '',
+      accessInstructions: '',
       contactMethod: 'EMAIL',
       alternatePhone: '',
       bestTimeToContact: '',
       issueType: '',
       severity: 5,
       isRecurring: false,
-      streetAddress: '',
-      city: '',
-      postalCode: '',
-      landmark: '',
-      accessInstructions: '',
-      affectedServices: [],
-      estimatedValue: 0,
       isEmergency: false,
       hasPermits: false,
+      affectedServices: [],
+      estimatedValue: 0,
       additionalContacts: [],
-      wantsUpdates: true,
+      attachments: [],
+      satisfactionRating: undefined,
+      comments: '',
       agreesToTerms: false,
+      wantsUpdates: true,
+      preferredDate: undefined,
+      preferredTime: '',
     },
-  });
-
-  const { fields: contactFields, append: appendContact, remove: removeContact } = useFieldArray({
-    control,
-    name: 'additionalContacts',
   });
 
   const watchedValues = watch();
 
+  // Save form data to localStorage whenever form values change
+  const debouncedSave = useDebounce((data: ServiceRequestFormData) => {
+    try {
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.warn('Failed to save form data:', error);
+    }
+  }, 1000);
+
+  useEffect(() => {
+    debouncedSave(watchedValues);
+  }, [watchedValues, debouncedSave]);
+
+  // Clear saved form data when component unmounts or form is submitted successfully
+  const clearSavedFormData = useCallback(() => {
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Failed to clear saved form data:', error);
+    }
+  }, []);
+
+  // Debounced validation for real-time feedback
+  const debouncedValidation = useDebounce(async (fieldName: string) => {
+    setIsAsyncValidating(prev => ({ ...prev, [fieldName]: true }));
+    
+    try {
+      // Simulate async validation (e.g., checking for duplicates)
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      await trigger(fieldName as any);
+    } finally {
+      setIsAsyncValidating(prev => ({ ...prev, [fieldName]: false }));
+    }
+  }, 300);
+
+  // Handle emergency toggle with validation
+  const handleEmergencyChange = useCallback((checked: boolean) => {
+    setValue('isEmergency', checked);
+    if (checked) {
+      // Emergency requests must have HIGH or URGENT priority
+      if (!['HIGH', 'URGENT'].includes(getValues('priority'))) {
+        setValue('priority', 'HIGH');
+      }
+    }
+    trigger(['isEmergency', 'priority', 'alternatePhone']);
+  }, [setValue, getValues, trigger]);
+
+  // Sanitize input on change
+  const handleInputChange = useCallback((fieldName: string, value: string) => {
+    const sanitized = Sanitization.sanitizeForDatabase(value);
+    setValue(fieldName as any, sanitized);
+    debouncedValidation(fieldName);
+  }, [setValue, debouncedValidation]);
+
+  // Step validation function
+  const validateStep = useCallback(async (stepIndex: number): Promise<{ isValid: boolean; errors: string[] }> => {
+    const stepFields = getStepFields(stepIndex);
+    const results = await Promise.all(stepFields.map(field => trigger(field as any)));
+    const isValid = results.every(result => result);
+    
+    // Collect errors for this step
+    const stepErrors: string[] = [];
+    stepFields.forEach(field => {
+      const fieldError = getFieldError(errors, field);
+      if (fieldError) {
+        stepErrors.push(`${getFieldLabel(field)}: ${fieldError.message}`);
+      }
+    });
+
+    // Check for emergency request validation
+    if (stepIndex === 2 && watchedValues.isEmergency && !watchedValues.alternatePhone) {
+      stepErrors.push('Emergency requests require alternate phone number');
+    }
+
+    return {
+      isValid: isValid && stepErrors.length === 0,
+      errors: stepErrors
+    };
+  }, [trigger, errors, watchedValues]);
+
+  // Get fields for each step
+  const getStepFields = (stepIndex: number): string[] => {
+    switch (stepIndex) {
+      case 0: // Basic Information
+        return ['title', 'description', 'category', 'priority'];
+      case 1: // Location
+        return ['streetAddress', 'city', 'postalCode', 'locationText'];
+      case 2: // Contact & Services
+        return ['contactMethod', 'affectedServices', ...(watchedValues.isEmergency ? ['alternatePhone'] : [])];
+      case 3: // Additional Info
+        return ['agreesToTerms'];
+      case 4: // Review
+        return []; // No specific validation for review step
+      default:
+        return [];
+    }
+  };
+
+  // Get field error
+  const getFieldError = (errors: any, fieldPath: string): any => {
+    const parts = fieldPath.split('.');
+    let current = errors;
+    for (const part of parts) {
+      if (current && typeof current === 'object' && part in current) {
+        current = current[part];
+      } else {
+        return null;
+      }
+    }
+    return current;
+  };
+
+  // Get field label
+  const getFieldLabel = (fieldName: string): string => {
+    const labels: Record<string, string> = {
+      title: 'Request Title',
+      description: 'Description',
+      category: 'Category',
+      priority: 'Priority',
+      streetAddress: 'Street Address',
+      city: 'City',
+      postalCode: 'Postal Code',
+      locationText: 'Location Details',
+      contactMethod: 'Contact Method',
+      alternatePhone: 'Alternate Phone',
+      affectedServices: 'Affected Services',
+      agreesToTerms: 'Terms Agreement',
+    };
+    return labels[fieldName] || fieldName;
+  };
+
+  // Handle step change
+  const handleStepChange = useCallback((fromStep: number, toStep: number) => {
+    console.log(`Moving from step ${fromStep} to step ${toStep}`);
+  }, []);
+
   const handleFormSubmit = async () => {
+    if (!checkRateLimit()) {
+      setSubmitError('Too many submission attempts. Please wait before trying again.');
+      return;
+    }
+
     setSubmitError(null);
     
     try {
       await handleSubmit(async (data) => {
+        // Final XSS check before submission
+        const textFields = ['title', 'description', 'locationText', 'comments'];
+        for (const field of textFields) {
+          const value = data[field as keyof ServiceRequestFormData] as string;
+          if (value && XSSPrevention.containsXSS(value)) {
+            throw new Error(`${field} contains potentially harmful content. Please remove any script tags or suspicious content.`);
+          }
+        }
+
         // Generate idempotency key
         const idempotencyKey = `new-request-${Date.now()}-${Math.random()}`;
         
-        // Convert the enhanced data to the basic API format
+        // Convert the enhanced data to the basic API format with proper sanitization
         const apiData = {
-          title: data.title,
-          description: data.description,
+          title: Sanitization.sanitizeForDatabase(data.title),
+          description: Sanitization.sanitizeForDatabase(data.description),
           category: data.category,
           priority: data.priority,
-          locationText: `${data.streetAddress}, ${data.city}, ${data.postalCode}${data.landmark ? ` (Near: ${data.landmark})` : ''}`,
+          locationText: Sanitization.sanitizeForDatabase(
+            `${data.streetAddress}, ${data.city}, ${data.postalCode}${data.landmark ? ` (Near: ${data.landmark})` : ''}`
+          ),
         };
         
         await createRequest(apiData, idempotencyKey);
+        
+        // Clear saved form data on successful submission
+        clearSavedFormData();
         
         // Redirect to requests list on success
         window.location.href = '/citizen/requests';
@@ -200,12 +449,14 @@ const NewRequestPage: React.FC = () => {
   };
 
   const handleCancel = () => {
+    // Clear saved form data on cancel
+    clearSavedFormData();
     window.location.href = '/citizen/requests';
   };
 
   // Step 1: Basic Information
   const BasicInfoStep = (
-    <Box data-testid="cs-new-request-step-basic">
+    <Box data-testid="cs-new-request-step-1">
       <Typography variant="h6" gutterBottom>
         Basic Information
       </Typography>
@@ -214,15 +465,35 @@ const NewRequestPage: React.FC = () => {
         name="title"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Request Title"
-            margin="normal"
-            error={!!errors.title}
-            helperText={errors.title?.message}
-            data-testid="cs-new-request-title"
-          />
+          <Box>
+            <TextField
+              {...field}
+              fullWidth
+              label="Request Title"
+              margin="normal"
+              error={!!errors.title}
+              required
+              inputProps={{
+                maxLength: 120,
+                'aria-describedby': errors.title ? FormValidationTestIds.FIELD_ERROR('new-request', 'title') : undefined,
+              }}
+              data-testid="cs-new-request-title"
+              onChange={(e) => {
+                field.onChange(e);
+                handleInputChange('title', e.target.value);
+              }}
+            />
+            <ValidationFeedback
+              field={field}
+              error={errors.title}
+              fieldName="title"
+              formName="new-request"
+              isValidating={isAsyncValidating.title}
+              maxLength={120}
+              showCharCount
+              securityCheck
+            />
+          </Box>
         )}
       />
 
@@ -230,17 +501,40 @@ const NewRequestPage: React.FC = () => {
         name="description"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Detailed Description"
-            multiline
-            rows={4}
-            margin="normal"
-            error={!!errors.description}
-            helperText={errors.description?.message || `${field.value?.length || 0}/2000 characters`}
-            data-testid="cs-new-request-description"
-          />
+          <Box>
+            <TextField
+              {...field}
+              fullWidth
+              label="Detailed Description"
+              multiline
+              rows={4}
+              margin="normal"
+              error={!!errors.description}
+              required
+              inputProps={{
+                maxLength: 2000,
+                'aria-describedby': errors.description ? FormValidationTestIds.FIELD_ERROR('new-request', 'description') : undefined,
+              }}
+              data-testid="cs-new-request-description"
+              onChange={(e) => {
+                field.onChange(e);
+                handleInputChange('description', e.target.value);
+              }}
+            />
+            <ValidationFeedback
+              field={field}
+              error={errors.description}
+              fieldName="description"
+              formName="new-request"
+              isValidating={isAsyncValidating.description}
+              maxLength={2000}
+              showCharCount
+              securityCheck
+            />
+            <FormHelperText>
+              Please provide at least 10 words describing the issue in detail
+            </FormHelperText>
+          </Box>
         )}
       />
 
@@ -250,24 +544,26 @@ const NewRequestPage: React.FC = () => {
             name="category"
             control={control}
             render={({ field }) => (
-              <FormControl fullWidth margin="normal" error={!!errors.category}>
+              <FormControl fullWidth margin="normal" error={!!errors.category} required>
                 <InputLabel>Category</InputLabel>
                 <Select
                   {...field}
                   label="Category"
                   data-testid="cs-new-request-category"
+                  aria-describedby={errors.category ? FormValidationTestIds.FIELD_ERROR('new-request', 'category') : undefined}
                 >
                   {categories.map((category) => (
                     <MenuItem key={category} value={category}>
-                      {category}
+                      {categoryLabels[category]}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.category && (
-                  <Typography variant="caption" color="error">
-                    {errors.category.message}
-                  </Typography>
-                )}
+                <ValidationFeedback
+                  field={field}
+                  error={errors.category}
+                  fieldName="category"
+                  formName="new-request"
+                />
               </FormControl>
             )}
           />
@@ -275,122 +571,66 @@ const NewRequestPage: React.FC = () => {
 
         <Grid item xs={12} md={6}>
           <Controller
-            name="issueType"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete
-                {...field}
-                options={issueTypes}
-                freeSolo
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Issue Type"
-                    margin="normal"
-                    error={!!errors.issueType}
-                    helperText={errors.issueType?.message}
-                    data-testid="cs-new-request-issue-type"
-                  />
-                )}
-                onChange={(_, value) => field.onChange(value || '')}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Controller
             name="priority"
             control={control}
             render={({ field }) => (
-              <FormControl margin="normal" error={!!errors.priority}>
+              <FormControl margin="normal" error={!!errors.priority} required>
                 <FormLabel component="legend">Priority</FormLabel>
                 <RadioGroup
                   {...field}
                   row
                   data-testid="cs-new-request-priority"
+                  aria-describedby={errors.priority ? FormValidationTestIds.FIELD_ERROR('new-request', 'priority') : undefined}
                 >
                   <FormControlLabel value="LOW" control={<Radio />} label="Low" />
                   <FormControlLabel value="MEDIUM" control={<Radio />} label="Medium" />
                   <FormControlLabel value="HIGH" control={<Radio />} label="High" />
                   <FormControlLabel value="URGENT" control={<Radio />} label="Urgent" />
                 </RadioGroup>
+                <ValidationFeedback
+                  field={field}
+                  error={errors.priority}
+                  fieldName="priority"
+                  formName="new-request"
+                />
               </FormControl>
             )}
           />
         </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl margin="normal" fullWidth>
-            <FormLabel component="legend">Issue Severity (1-10)</FormLabel>
-            <Controller
-              name="severity"
-              control={control}
-              render={({ field }) => (
-                <Box sx={{ px: 2, pt: 1 }}>
-                  <Slider
-                    {...field}
-                    min={1}
-                    max={10}
-                    marks
-                    valueLabelDisplay="on"
-                    data-testid="cs-new-request-severity"
-                  />
-                </Box>
-              )}
-            />
-          </FormControl>
-        </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Controller
-            name="isRecurring"
-            control={control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={field.value}
-                    onChange={field.onChange}
-                    data-testid="cs-new-request-recurring"
-                  />
-                }
-                label="Is this a recurring issue?"
+      <Controller
+        name="isEmergency"
+        control={control}
+        render={({ field }) => (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={field.value}
+                onChange={(e) => handleEmergencyChange(e.target.checked)}
+                color="error"
+                data-testid="cs-new-request-emergency"
+                aria-label="Is this an emergency"
               />
-            )}
+            }
+            label="Is this an emergency?"
           />
-        </Grid>
+        )}
+      />
 
-        <Grid item xs={6}>
-          <Controller
-            name="isEmergency"
-            control={control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={field.value}
-                    onChange={field.onChange}
-                    color="error"
-                    data-testid="cs-new-request-emergency"
-                  />
-                }
-                label="Is this an emergency?"
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
+      {watchedValues.isEmergency && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          <Typography variant="body2">
+            Emergency requests require alternate contact information and will be prioritized accordingly.
+          </Typography>
+        </Alert>
+      )}
     </Box>
   );
 
   // Step 2: Location Information
   const LocationStep = (
-    <Box data-testid="cs-new-request-step-location">
+    <Box data-testid="cs-new-request-step-2">
       <Typography variant="h6" gutterBottom>
         Location Information
       </Typography>
@@ -399,15 +639,35 @@ const NewRequestPage: React.FC = () => {
         name="streetAddress"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Street Address"
-            margin="normal"
-            error={!!errors.streetAddress}
-            helperText={errors.streetAddress?.message}
-            data-testid="cs-new-request-street-address"
-          />
+          <Box>
+            <TextField
+              {...field}
+              fullWidth
+              label="Street Address"
+              margin="normal"
+              error={!!errors.streetAddress}
+              required
+              inputProps={{
+                maxLength: 100,
+                'aria-describedby': errors.streetAddress ? FormValidationTestIds.FIELD_ERROR('new-request', 'streetAddress') : undefined,
+              }}
+              data-testid="cs-new-request-street-address"
+              onChange={(e) => {
+                field.onChange(e);
+                handleInputChange('streetAddress', e.target.value);
+              }}
+            />
+            <ValidationFeedback
+              field={field}
+              error={errors.streetAddress}
+              fieldName="streetAddress"
+              formName="new-request"
+              isValidating={isAsyncValidating.streetAddress}
+              maxLength={100}
+              showCharCount
+              securityCheck
+            />
+          </Box>
         )}
       />
 
@@ -417,15 +677,35 @@ const NewRequestPage: React.FC = () => {
             name="city"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                fullWidth
-                label="City"
-                margin="normal"
-                error={!!errors.city}
-                helperText={errors.city?.message}
-                data-testid="cs-new-request-city"
-              />
+              <Box>
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="City"
+                  margin="normal"
+                  error={!!errors.city}
+                  required
+                  inputProps={{
+                    maxLength: 50,
+                    'aria-describedby': errors.city ? FormValidationTestIds.FIELD_ERROR('new-request', 'city') : undefined,
+                  }}
+                  data-testid="cs-new-request-city"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleInputChange('city', e.target.value);
+                  }}
+                />
+                <ValidationFeedback
+                  field={field}
+                  error={errors.city}
+                  fieldName="city"
+                  formName="new-request"
+                  isValidating={isAsyncValidating.city}
+                  maxLength={50}
+                  showCharCount
+                  securityCheck
+                />
+              </Box>
             )}
           />
         </Grid>
@@ -434,348 +714,211 @@ const NewRequestPage: React.FC = () => {
             name="postalCode"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                fullWidth
-                label="Postal Code"
-                margin="normal"
-                error={!!errors.postalCode}
-                helperText={errors.postalCode?.message}
-                data-testid="cs-new-request-postal-code"
-              />
+              <Box>
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="Postal Code"
+                  margin="normal"
+                  error={!!errors.postalCode}
+                  required
+                  inputProps={{
+                    maxLength: 10,
+                    'aria-describedby': errors.postalCode ? FormValidationTestIds.FIELD_ERROR('new-request', 'postalCode') : undefined,
+                  }}
+                  data-testid="cs-new-request-postal-code"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleInputChange('postalCode', e.target.value);
+                  }}
+                />
+                <ValidationFeedback
+                  field={field}
+                  error={errors.postalCode}
+                  fieldName="postalCode"
+                  formName="new-request"
+                  isValidating={isAsyncValidating.postalCode}
+                  maxLength={10}
+                  showCharCount
+                  securityCheck
+                />
+              </Box>
             )}
           />
         </Grid>
       </Grid>
-
-      <Controller
-        name="landmark"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Nearby Landmark (Optional)"
-            margin="normal"
-            helperText="e.g., Near City Hall, Opposite the park"
-            data-testid="cs-new-request-landmark"
-          />
-        )}
-      />
-
-      <Controller
-        name="accessInstructions"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Access Instructions (Optional)"
-            multiline
-            rows={2}
-            margin="normal"
-            helperText="Special instructions for accessing the location"
-            data-testid="cs-new-request-access-instructions"
-          />
-        )}
-      />
 
       <Controller
         name="locationText"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Additional Location Details"
-            margin="normal"
-            error={!!errors.locationText}
-            helperText={errors.locationText?.message || 'Describe the exact location of the issue'}
-            data-testid="cs-new-request-location-text"
-          />
+          <Box>
+            <TextField
+              {...field}
+              fullWidth
+              label="Additional Location Details"
+              margin="normal"
+              error={!!errors.locationText}
+              required
+              inputProps={{
+                maxLength: 500,
+                'aria-describedby': errors.locationText ? FormValidationTestIds.FIELD_ERROR('new-request', 'locationText') : 'location-helper-text',
+              }}
+              data-testid="cs-new-request-location-text"
+              onChange={(e) => {
+                field.onChange(e);
+                handleInputChange('locationText', e.target.value);
+              }}
+            />
+            <FormHelperText id="location-helper-text">
+              Describe the exact location of the issue (minimum 10 characters)
+            </FormHelperText>
+            <ValidationFeedback
+              field={field}
+              error={errors.locationText}
+              fieldName="locationText"
+              formName="new-request"
+              isValidating={isAsyncValidating.locationText}
+              maxLength={500}
+              showCharCount
+              securityCheck
+            />
+          </Box>
         )}
       />
     </Box>
   );
 
-  // Step 3: Contact & Service Information
-  const ContactServiceStep = (
-    <Box data-testid="cs-new-request-step-contact">
+  // Step 3: Contact & Services
+  const ContactServicesStep = (
+    <Box data-testid="cs-new-request-step-3">
       <Typography variant="h6" gutterBottom>
         Contact & Service Information
       </Typography>
       
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Controller
-            name="contactMethod"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Preferred Contact Method</InputLabel>
-                <Select
-                  {...field}
-                  label="Preferred Contact Method"
-                  data-testid="cs-new-request-contact-method"
-                >
-                  <MenuItem value="EMAIL">Email</MenuItem>
-                  <MenuItem value="PHONE">Phone</MenuItem>
-                  <MenuItem value="SMS">SMS</MenuItem>
-                  <MenuItem value="MAIL">Mail</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-          />
-        </Grid>
-        <Grid item xs={6}>
-          <Controller
-            name="alternatePhone"
-            control={control}
-            render={({ field }) => (
+      <Controller
+        name="contactMethod"
+        control={control}
+        render={({ field }) => (
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Preferred Contact Method</InputLabel>
+            <Select
+              {...field}
+              label="Preferred Contact Method"
+              data-testid="cs-new-request-contact-method"
+              aria-describedby={errors.contactMethod ? FormValidationTestIds.FIELD_ERROR('new-request', 'contactMethod') : undefined}
+            >
+              <MenuItem value="EMAIL">Email</MenuItem>
+              <MenuItem value="PHONE">Phone</MenuItem>
+              <MenuItem value="SMS">SMS</MenuItem>
+              <MenuItem value="MAIL">Mail</MenuItem>
+            </Select>
+            <ValidationFeedback
+              field={field}
+              error={errors.contactMethod}
+              fieldName="contactMethod"
+              formName="new-request"
+            />
+          </FormControl>
+        )}
+      />
+
+      {watchedValues.isEmergency && (
+        <Controller
+          name="alternatePhone"
+          control={control}
+          render={({ field }) => (
+            <Box>
               <TextField
                 {...field}
                 fullWidth
-                label="Alternate Phone (Optional)"
+                label="Alternate Phone (Required for Emergency)"
                 margin="normal"
+                error={!!errors.alternatePhone}
+                required
+                inputProps={{
+                  maxLength: 15,
+                  'aria-describedby': errors.alternatePhone ? FormValidationTestIds.FIELD_ERROR('new-request', 'alternatePhone') : undefined,
+                }}
                 data-testid="cs-new-request-alternate-phone"
+                onChange={(e) => {
+                  field.onChange(e);
+                  handleInputChange('alternatePhone', e.target.value);
+                }}
               />
-            )}
-          />
-        </Grid>
-      </Grid>
-
-      <Controller
-        name="bestTimeToContact"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Best Time to Contact (Optional)"
-            margin="normal"
-            helperText="e.g., Weekdays 9-5, Evenings, Weekends only"
-            data-testid="cs-new-request-best-time"
-          />
-        )}
-      />
-
-      <FormControl fullWidth margin="normal">
-        <FormLabel component="legend">Affected Services</FormLabel>
-        <Controller
-          name="affectedServices"
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              multiple
-              options={affectedServicesOptions}
-              value={field.value || []}
-              onChange={(_, value) => field.onChange(value)}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    variant="outlined"
-                    label={option}
-                    {...getTagProps({ index })}
-                    key={option}
-                  />
-                ))
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  placeholder="Select affected services"
-                  error={!!errors.affectedServices}
-                  helperText={errors.affectedServices?.message}
-                  data-testid="cs-new-request-affected-services"
-                />
-              )}
-            />
+              <ValidationFeedback
+                field={field}
+                error={errors.alternatePhone}
+                fieldName="alternatePhone"
+                formName="new-request"
+                isValidating={isAsyncValidating.alternatePhone}
+              />
+            </Box>
           )}
         />
-      </FormControl>
+      )}
 
       <Controller
-        name="estimatedValue"
+        name="affectedServices"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Estimated Cost/Value (Optional)"
-            type="number"
-            margin="normal"
-            InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-            }}
-            helperText="Estimated cost of damage or repair value"
-            data-testid="cs-new-request-estimated-value"
-          />
+          <FormControl fullWidth margin="normal" error={!!errors.affectedServices} required>
+            <FormLabel component="legend">Affected Services</FormLabel>
+            <Box>
+              <Autocomplete
+                multiple
+                options={['Water Supply', 'Electrical', 'Gas', 'Internet/Cable', 'Garbage Collection']}
+                value={field.value || []}
+                onChange={(_, value) => field.onChange(value)}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      variant="outlined"
+                      label={option}
+                      {...getTagProps({ index })}
+                      key={option}
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Select affected services"
+                    error={!!errors.affectedServices}
+                    inputProps={{
+                      ...params.inputProps,
+                      'aria-describedby': errors.affectedServices ? FormValidationTestIds.FIELD_ERROR('new-request', 'affectedServices') : undefined,
+                    }}
+                    data-testid="cs-new-request-affected-services"
+                  />
+                )}
+              />
+              <ValidationFeedback
+                field={field}
+                error={errors.affectedServices}
+                fieldName="affectedServices"
+                formName="new-request"
+              />
+            </Box>
+          </FormControl>
         )}
       />
-
-      {/* Additional Contacts */}
-      <Box sx={{ mt: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Additional Contacts</Typography>
-          <Button
-            startIcon={<AddIcon />}
-            onClick={() => appendContact({ name: '', phone: '', relationship: '' })}
-            data-testid="cs-new-request-add-contact"
-          >
-            Add Contact
-          </Button>
-        </Box>
-        
-        {contactFields.map((field, index) => (
-          <Card key={field.id} sx={{ mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle1">Contact {index + 1}</Typography>
-                <IconButton
-                  onClick={() => removeContact(index)}
-                  color="error"
-                  data-testid={`cs-new-request-remove-contact-${index}`}
-                >
-                  <RemoveIcon />
-                </IconButton>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Controller
-                    name={`additionalContacts.${index}.name`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Name"
-                        error={!!errors.additionalContacts?.[index]?.name}
-                        helperText={errors.additionalContacts?.[index]?.name?.message}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <Controller
-                    name={`additionalContacts.${index}.phone`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Phone"
-                        error={!!errors.additionalContacts?.[index]?.phone}
-                        helperText={errors.additionalContacts?.[index]?.phone?.message}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <Controller
-                    name={`additionalContacts.${index}.relationship`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Relationship"
-                        error={!!errors.additionalContacts?.[index]?.relationship}
-                        helperText={errors.additionalContacts?.[index]?.relationship?.message}
-                      />
-                    )}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
     </Box>
   );
 
-  // Step 4: Additional Info
+  // Step 4: Additional Information
   const AdditionalInfoStep = (
-    <Box data-testid="cs-new-request-step-additional">
+    <Box data-testid="cs-new-request-step-4">
       <Typography variant="h6" gutterBottom>
         Additional Information
       </Typography>
-      
-      <Controller
-        name="hasPermits"
-        control={control}
-        render={({ field }) => (
-          <FormControlLabel
-            control={
-              <Switch
-                checked={field.value}
-                onChange={field.onChange}
-                data-testid="cs-new-request-has-permits"
-              />
-            }
-            label="Do you have relevant permits for this request?"
-          />
-        )}
-      />
 
       <Controller
-        name="comments"
+        name="agreesToTerms"
         control={control}
         render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Additional Comments (Optional)"
-            multiline
-            rows={3}
-            margin="normal"
-            helperText="Any additional information that might be helpful"
-            data-testid="cs-new-request-comments"
-          />
-        )}
-      />
-
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Service Experience
-        </Typography>
-        
-        <FormControl margin="normal">
-          <FormLabel component="legend">Rate your previous experience with city services (1-5 stars)</FormLabel>
-          <Controller
-            name="satisfactionRating"
-            control={control}
-            render={({ field }) => (
-              <Rating
-                {...field}
-                size="large"
-                data-testid="cs-new-request-rating"
-              />
-            )}
-          />
-        </FormControl>
-
-        <Controller
-          name="wantsUpdates"
-          control={control}
-          render={({ field }) => (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={field.value}
-                  onChange={field.onChange}
-                  data-testid="cs-new-request-wants-updates"
-                />
-              }
-              label="I want to receive updates about this request"
-            />
-          )}
-        />
-
-        <Controller
-          name="agreesToTerms"
-          control={control}
-          render={({ field }) => (
+          <Box>
             <FormControlLabel
               control={
                 <Checkbox
@@ -784,24 +927,26 @@ const NewRequestPage: React.FC = () => {
                   color="primary"
                   required
                   data-testid="cs-new-request-agree-terms"
+                  aria-label="Agree to terms and conditions"
                 />
               }
               label="I agree to the terms and conditions and confirm that the information provided is accurate"
             />
-          )}
-        />
-        {errors.agreesToTerms && (
-          <Typography variant="caption" color="error" display="block">
-            {errors.agreesToTerms.message}
-          </Typography>
+            <ValidationFeedback
+              field={field}
+              error={errors.agreesToTerms}
+              fieldName="agreesToTerms"
+              formName="new-request"
+            />
+          </Box>
         )}
-      </Box>
+      />
     </Box>
   );
 
   // Step 5: Review
   const ReviewStep = (
-    <Box data-testid="cs-new-request-step-review">
+    <Box data-testid="cs-new-request-step-5">
       <Typography variant="h6" gutterBottom>
         Review Your Request
       </Typography>
@@ -812,12 +957,9 @@ const NewRequestPage: React.FC = () => {
             <CardContent>
               <Typography variant="subtitle1" color="primary" gutterBottom>Basic Information</Typography>
               <Typography variant="body2"><strong>Title:</strong> {watchedValues.title}</Typography>
-              <Typography variant="body2"><strong>Category:</strong> {watchedValues.category}</Typography>
-              <Typography variant="body2"><strong>Issue Type:</strong> {watchedValues.issueType}</Typography>
+              <Typography variant="body2"><strong>Category:</strong> {categoryLabels[watchedValues.category] || watchedValues.category}</Typography>
               <Typography variant="body2"><strong>Priority:</strong> {watchedValues.priority}</Typography>
-              <Typography variant="body2"><strong>Severity:</strong> {watchedValues.severity}/10</Typography>
               <Typography variant="body2"><strong>Emergency:</strong> {watchedValues.isEmergency ? 'Yes' : 'No'}</Typography>
-              <Typography variant="body2"><strong>Recurring:</strong> {watchedValues.isRecurring ? 'Yes' : 'No'}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -829,9 +971,6 @@ const NewRequestPage: React.FC = () => {
               <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress}</Typography>
               <Typography variant="body2"><strong>City:</strong> {watchedValues.city}</Typography>
               <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode}</Typography>
-              {watchedValues.landmark && (
-                <Typography variant="body2"><strong>Landmark:</strong> {watchedValues.landmark}</Typography>
-              )}
             </CardContent>
           </Card>
         </Grid>
@@ -845,7 +984,7 @@ const NewRequestPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1" color="primary" gutterBottom>Contact Information</Typography>
@@ -853,34 +992,24 @@ const NewRequestPage: React.FC = () => {
               {watchedValues.alternatePhone && (
                 <Typography variant="body2"><strong>Alternate Phone:</strong> {watchedValues.alternatePhone}</Typography>
               )}
-              {watchedValues.bestTimeToContact && (
-                <Typography variant="body2"><strong>Best Time:</strong> {watchedValues.bestTimeToContact}</Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Service Information</Typography>
-              <Typography variant="body2"><strong>Affected Services:</strong></Typography>
-              <Box sx={{ mt: 1 }}>
-                {watchedValues.affectedServices?.map((service) => (
-                  <Chip key={service} label={service} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                ))}
-              </Box>
-              {watchedValues.estimatedValue && (
-                <Typography variant="body2"><strong>Estimated Value:</strong> ${watchedValues.estimatedValue}</Typography>
-              )}
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       {submitError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ mt: 2 }}
+          data-testid={FormValidationTestIds.FORM_ERROR('new-request')}
+        >
           {submitError}
+        </Alert>
+      )}
+
+      {isBlocked && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Too many submission attempts. Please wait before trying again.
         </Alert>
       )}
     </Box>
@@ -897,7 +1026,7 @@ const NewRequestPage: React.FC = () => {
     },
     {
       label: 'Contact & Services',
-      component: ContactServiceStep,
+      component: ContactServicesStep,
     },
     {
       label: 'Additional Details',
@@ -915,13 +1044,24 @@ const NewRequestPage: React.FC = () => {
         Submit New Service Request
       </Typography>
 
+      {isValidating && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress />
+          <Typography variant="caption" color="text.secondary">
+            Validating form...
+          </Typography>
+        </Box>
+      )}
+
       <StepperWizard
         steps={steps}
         onSubmit={handleFormSubmit}
         onCancel={handleCancel}
-        isSubmitting={isSubmitting}
+        isSubmitting={isSubmitting || isBlocked}
         submitLabel="Submit Request"
         testId="cs-new-request-wizard"
+        onStepValidation={validateStep}
+        onStepChange={handleStepChange}
       />
     </Box>
   );
