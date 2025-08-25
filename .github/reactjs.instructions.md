@@ -5,7 +5,7 @@ applyTo: '**/*.jsx, **/*.tsx, **/*.js, **/*.ts'
 
 # ReactJS Development Instructions
 
-Instructions for building high-quality ReactJS applications with modern patterns, hooks, and comprehensive QA testing support following the official React documentation at https://react.dev.
+Instructions for building high-quality ReactJS applications with modern patterns, hooks, comprehensive QA testing support, and robust form validation following the official React documentation at https://react.dev.
 
 ## Project Context
 - Latest React version (React 18+)
@@ -15,6 +15,7 @@ Instructions for building high-quality ReactJS applications with modern patterns
 - Comprehensive test automation support with data-testid attributes
 - Feature flag integration for controlled testing scenarios
 - Role-based access control and authentication patterns
+- **Advanced Form Validation**: Zod schemas with real-time validation and security features
 
 ## Development Standards
 
@@ -46,6 +47,297 @@ Instructions for building high-quality ReactJS applications with modern patterns
 - Keep components small and focused on a single concern
 - Use composition patterns (render props, children as functions)
 
+### Form Validation Requirements
+All forms MUST implement comprehensive validation with the following standards:
+
+#### Required Validation Framework
+```typescript
+// Import validation framework
+import { z } from 'zod';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+// Use standardized validation patterns
+import { ValidationPatterns, ErrorMessages, formatErrorMessage } from '../utils/validation';
+
+// All forms must implement:
+// 1. Zod schema validation
+// 2. Real-time validation with debouncing
+// 3. Comprehensive error messages
+// 4. Input sanitization
+// 5. Accessibility support
+// 6. Security considerations (XSS prevention)
+```
+
+#### Mandatory Validation Types
+Every form input must include appropriate validation:
+
+```typescript
+// 1. Required Field Validation
+const requiredField = z.string()
+  .min(1, 'This field is required')
+  .transform((val) => val.trim());
+
+// 2. Email Validation (comprehensive)
+const emailValidation = z.string()
+  .min(1, 'Email is required')
+  .email('Please enter a valid email address')
+  .max(254, 'Email address is too long')
+  .refine(
+    (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+    'Email format is invalid'
+  );
+
+// 3. Password Validation (security requirements)
+const passwordValidation = z.string()
+  .min(8, 'Password must be at least 8 characters long')
+  .max(128, 'Password must be less than 128 characters')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+    'Password must contain: uppercase letter, lowercase letter, number, and special character'
+  );
+
+// 4. Name Validation (unicode support)
+const nameValidation = z.string()
+  .min(2, 'Name must be at least 2 characters')
+  .max(50, 'Name must be less than 50 characters')
+  .regex(
+    /^[a-zA-ZÀ-ÿ\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
+    'Name can only contain letters, spaces, hyphens, and apostrophes'
+  )
+  .transform((name) => name.trim());
+
+// 5. Phone Number Validation (international support)
+const phoneValidation = z.string()
+  .min(10, 'Phone number must be at least 10 digits')
+  .max(15, 'Phone number must be less than 15 digits')
+  .regex(
+    /^[\+]?[1-9][\d]{0,15}$/,
+    'Please enter a valid phone number'
+  );
+
+// 6. Text Content Validation (XSS prevention)
+const safeTextValidation = z.string()
+  .transform((text) => text.trim())
+  .refine(
+    (text) => !/<script|javascript:|on\w+=/i.test(text),
+    'Text contains potentially harmful content'
+  );
+```
+
+#### Form Implementation Standards
+```typescript
+// Example comprehensive form component
+function RegistrationForm() {
+  // 1. Define validation schema
+  const registrationSchema = z.object({
+    firstName: ValidationPatterns.name,
+    lastName: ValidationPatterns.name,
+    email: ValidationPatterns.email,
+    password: ValidationPatterns.password,
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    phone: ValidationPatterns.phone,
+    streetAddress: z.string()
+      .min(5, 'Street address must be at least 5 characters')
+      .max(100, 'Street address is too long'),
+    city: ValidationPatterns.name,
+    postalCode: ValidationPatterns.postalCode,
+    agreesToTerms: z.boolean()
+      .refine(val => val === true, 'You must agree to the Terms and Conditions'),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+  // 2. Setup form with validation
+  const { control, handleSubmit, formState: { errors }, watch } = useForm({
+    resolver: zodResolver(registrationSchema),
+    mode: 'onBlur', // Real-time validation
+    reValidateMode: 'onChange'
+  });
+
+  // 3. Watch for password confirmation validation
+  const password = watch('password');
+
+  // 4. Form submission with error handling
+  const onSubmit = async (data: z.infer<typeof registrationSchema>) => {
+    try {
+      // Sanitize data before submission
+      const sanitizedData = {
+        ...data,
+        firstName: Sanitization.sanitizeForDatabase(data.firstName),
+        lastName: Sanitization.sanitizeForDatabase(data.lastName),
+        streetAddress: Sanitization.sanitizeForDatabase(data.streetAddress),
+      };
+      
+      await api.post('/auth/register', sanitizedData);
+    } catch (error) {
+      // Handle API errors appropriately
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} data-testid="cs-registration-form">
+      {/* 5. Use validated input components */}
+      <ValidatedTextField
+        name="firstName"
+        label="First Name"
+        control={control}
+        error={errors.firstName}
+        required
+        testId="cs-registration-first-name"
+        maxLength={50}
+        showCharCount
+      />
+
+      <ValidatedTextField
+        name="email"
+        label="Email Address"
+        type="email"
+        control={control}
+        error={errors.email}
+        required
+        testId="cs-registration-email"
+      />
+
+      <ValidatedTextField
+        name="password"
+        label="Password"
+        type="password"
+        control={control}
+        error={errors.password}
+        required
+        testId="cs-registration-password"
+        helperText="Must contain uppercase, lowercase, number, and special character"
+      />
+
+      {/* 6. Include accessibility and test attributes */}
+      <Button
+        type="submit"
+        variant="contained"
+        fullWidth
+        data-testid="cs-registration-submit"
+        aria-label="Submit registration form"
+      >
+        Create Account
+      </Button>
+    </Box>
+  );
+}
+```
+
+#### Real-time Validation Implementation
+```typescript
+// Enhanced input component with real-time validation
+function ValidatedTextField({
+  name,
+  label,
+  control,
+  error,
+  required = false,
+  type = 'text',
+  testId,
+  maxLength,
+  showCharCount = false,
+  debounceMs = 300,
+  ...props
+}) {
+  const [charCount, setCharCount] = useState(0);
+
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          {...props}
+          label={label}
+          type={type}
+          error={!!error}
+          helperText={error?.message}
+          required={required}
+          fullWidth
+          margin="normal"
+          data-testid={testId}
+          inputProps={{
+            maxLength,
+            'aria-describedby': error ? `${name}-error` : undefined,
+            'aria-invalid': !!error,
+          }}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            field.onChange(newValue);
+            setCharCount(newValue.length);
+            
+            // Trigger real-time validation with debouncing
+            if (debounceMs > 0) {
+              clearTimeout(field.debounceTimeout);
+              field.debounceTimeout = setTimeout(() => {
+                control._trigger(name);
+              }, debounceMs);
+            }
+          }}
+          InputProps={{
+            endAdornment: showCharCount && maxLength && (
+              <InputAdornment position="end">
+                <Typography
+                  variant="caption"
+                  color={charCount > maxLength * 0.9 ? 'error' : 'textSecondary'}
+                  data-testid={`${testId}-char-count`}
+                >
+                  {charCount}/{maxLength}
+                </Typography>
+              </InputAdornment>
+            ),
+          }}
+        />
+      )}
+    />
+  );
+}
+```
+
+### Error Handling and User Feedback
+```typescript
+// Comprehensive error handling for forms
+function FormErrorHandler({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
+  if (!error) return null;
+
+  const getErrorMessage = (error: Error): string => {
+    if (error.message.includes('network')) {
+      return ErrorMessages.NETWORK.CONNECTION_ERROR;
+    }
+    if (error.message.includes('validation')) {
+      return 'Please check your input and try again';
+    }
+    if (error.message.includes('exists')) {
+      return ErrorMessages.BUSINESS.EMAIL_EXISTS;
+    }
+    return ErrorMessages.NETWORK.SERVER_ERROR;
+  };
+
+  return (
+    <Alert 
+      severity="error" 
+      data-testid="cs-form-error"
+      action={
+        <Button 
+          color="inherit" 
+          size="small" 
+          onClick={onRetry}
+          data-testid="cs-form-retry"
+        >
+          Try Again
+        </Button>
+      }
+    >
+      {getErrorMessage(error)}
+    </Alert>
+  );
+}
+```
+
 ### Test Automation Support
 ```typescript
 // Test ID Patterns for QA Automation
@@ -60,6 +352,12 @@ interface TestIds {
   FORM_INPUT: (name: string) => `cs-form-${name}`;
   FORM_SUBMIT: 'cs-form-submit';
   FORM_CANCEL: 'cs-form-cancel';
+  FORM_ERROR: 'cs-form-error';
+  FORM_SUCCESS: 'cs-form-success';
+  
+  // Validation feedback
+  FIELD_ERROR: (name: string) => `cs-field-error-${name}`;
+  CHAR_COUNT: (name: string) => `cs-char-count-${name}`;
   
   // Navigation components
   NAV_MENU: 'cs-nav-menu';
@@ -76,27 +374,44 @@ interface TestIds {
   DELETE_BUTTON: (id: string) => `cs-delete-${id}`;
 }
 
-// Example component with proper test IDs
+// Example component with proper test IDs and validation
 function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
+  const loginSchema = z.object({
+    email: ValidationPatterns.email,
+    password: z.string().min(1, 'Password is required'),
+    rememberMe: z.boolean().optional(),
+  });
+
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur'
+  });
+
   return (
-    <form onSubmit={onSubmit} data-testid="cs-login-form">
-      <TextField
+    <form onSubmit={handleSubmit(onSubmit)} data-testid="cs-login-form">
+      <ValidatedTextField
         name="email"
         label="Email"
-        data-testid="cs-login-email"
+        type="email"
+        control={control}
+        error={errors.email}
         required
+        testId="cs-login-email"
       />
-      <TextField
+      <ValidatedTextField
         name="password"
-        type="password"
         label="Password"
-        data-testid="cs-login-password"
+        type="password"
+        control={control}
+        error={errors.password}
         required
+        testId="cs-login-password"
       />
       <Button
         type="submit"
         disabled={isLoading}
         data-testid="cs-login-submit"
+        aria-label={isLoading ? 'Signing in...' : 'Sign in to your account'}
       >
         {isLoading ? 'Signing In...' : 'Sign In'}
       </Button>
@@ -131,72 +446,6 @@ function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
 - Use MUI icons consistently across the application
 - Leverage MUI's data grid for complex table scenarios
 - Implement proper form validation with MUI components
-
-### Form Handling with React Hook Form
-```typescript
-// Example form with validation and test IDs
-function ServiceRequestForm() {
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(validationSchema)
-  });
-
-  return (
-    <Box component="form" data-testid="cs-service-request-form">
-      <Controller
-        name="title"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label="Request Title"
-            error={!!errors.title}
-            helperText={errors.title?.message}
-            data-testid="cs-request-title"
-            fullWidth
-            margin="normal"
-          />
-        )}
-      />
-      
-      <Controller
-        name="category"
-        control={control}
-        render={({ field }) => (
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Category</InputLabel>
-            <Select
-              {...field}
-              label="Category"
-              error={!!errors.category}
-              data-testid="cs-request-category"
-            >
-              {categories.map((category) => (
-                <MenuItem 
-                  key={category.id} 
-                  value={category.id}
-                  data-testid={`cs-category-${category.slug}`}
-                >
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      />
-      
-      <Button
-        type="submit"
-        variant="contained"
-        data-testid="cs-request-submit"
-        fullWidth
-        sx={{ mt: 2 }}
-      >
-        Submit Request
-      </Button>
-    </Box>
-  );
-}
-```
 
 ### Multi-Step Forms and Wizards
 - Implement stepper components for complex workflows
@@ -389,6 +638,55 @@ class ErrorBoundary extends React.Component<
 - Implement proper color contrast ratios
 - Test with screen readers and accessibility tools
 - Include accessibility test IDs: `cs-a11y-{element}`
+- Ensure all form errors are announced to screen readers
+- Implement proper focus management for form validation
+
+### Security Requirements
+All forms must implement these security measures:
+
+```typescript
+// 1. Input Sanitization
+const sanitizeInput = (input: string): string => {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '');
+};
+
+// 2. XSS Prevention in text areas and rich content
+const preventXSS = (content: string): boolean => {
+  const xssPatterns = [
+    /<script[^>]*>.*?<\/script>/gi,
+    /javascript:/gi,
+    /on\w+\s*=/gi,
+    /<iframe[^>]*>.*?<\/iframe>/gi,
+  ];
+  
+  return !xssPatterns.some(pattern => pattern.test(content));
+};
+
+// 3. Rate limiting for form submissions
+const useRateLimit = (maxAttempts: number, timeWindow: number) => {
+  const [attempts, setAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  
+  const checkRateLimit = useCallback(() => {
+    if (attempts >= maxAttempts) {
+      setIsBlocked(true);
+      setTimeout(() => {
+        setAttempts(0);
+        setIsBlocked(false);
+      }, timeWindow);
+      return false;
+    }
+    setAttempts(prev => prev + 1);
+    return true;
+  }, [attempts, maxAttempts, timeWindow]);
+  
+  return { isBlocked, checkRateLimit };
+};
+```
 
 ### Testing Integration
 ```typescript
@@ -415,14 +713,24 @@ export const renderWithProviders = (
   return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
 };
 
-// Example test with proper selectors
-test('should submit service request form', async () => {
+// Example test with comprehensive validation testing
+test('should validate and submit service request form', async () => {
   const user = userEvent.setup();
   renderWithProviders(<ServiceRequestForm />);
   
+  // Test validation errors
+  await user.click(screen.getByTestId('cs-request-submit'));
+  expect(screen.getByText('Title is required')).toBeInTheDocument();
+  
+  // Test successful validation
   await user.type(
     screen.getByTestId('cs-request-title'), 
-    'Pothole on Main Street'
+    'Pothole on Main Street that needs immediate attention'
+  );
+  
+  await user.type(
+    screen.getByTestId('cs-request-description'),
+    'Large pothole causing damage to vehicles and creating safety hazard for pedestrians'
   );
   
   await user.selectOptions(
@@ -434,6 +742,26 @@ test('should submit service request form', async () => {
   
   expect(screen.getByTestId('cs-request-success')).toBeInTheDocument();
 });
+
+// Test form validation errors
+test('should show validation errors for invalid inputs', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<RegistrationForm />);
+  
+  // Test email validation
+  await user.type(screen.getByTestId('cs-registration-email'), 'invalid-email');
+  await user.tab();
+  expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
+  
+  // Test password validation
+  await user.type(screen.getByTestId('cs-registration-password'), 'weak');
+  await user.tab();
+  expect(screen.getByText(/Password must contain/)).toBeInTheDocument();
+  
+  // Test required field validation
+  await user.click(screen.getByTestId('cs-registration-submit'));
+  expect(screen.getByText('First name is required')).toBeInTheDocument();
+});
 ```
 
 ## Implementation Guidelines
@@ -441,17 +769,25 @@ test('should submit service request form', async () => {
 ### Component Development Process
 1. **Design**: Plan component architecture and props interface
 2. **TypeScript**: Define proper interfaces and types
-3. **Implementation**: Create component with proper hooks and state
-4. **Test IDs**: Add comprehensive data-testid attributes
-5. **Styling**: Apply MUI theme and responsive design
-6. **Testing**: Write unit tests with React Testing Library
-7. **Documentation**: Add JSDoc comments and usage examples
-8. **Integration**: Test with parent components and API integration
+3. **Validation**: Implement comprehensive Zod schema validation
+4. **Implementation**: Create component with proper hooks and state
+5. **Test IDs**: Add comprehensive data-testid attributes
+6. **Security**: Implement input sanitization and XSS prevention
+7. **Styling**: Apply MUI theme and responsive design
+8. **Testing**: Write unit tests with React Testing Library
+9. **Accessibility**: Ensure WCAG 2.1 AA compliance
+10. **Documentation**: Add JSDoc comments and usage examples
+11. **Integration**: Test with parent components and API integration
 
 ### Quality Gates
 - [ ] TypeScript compilation passes without errors or warnings
 - [ ] All interactive elements have proper test IDs
 - [ ] Component passes accessibility audit
+- [ ] **All forms implement comprehensive validation with Zod schemas**
+- [ ] **Input sanitization and XSS prevention implemented**
+- [ ] **Real-time validation with appropriate debouncing**
+- [ ] **Comprehensive error messages for all validation scenarios**
+- [ ] **Security measures implemented (rate limiting, content filtering)**
 - [ ] Unit tests cover main functionality and edge cases
 - [ ] Component works properly with different user roles
 - [ ] Feature flags are properly integrated where applicable
@@ -460,4 +796,23 @@ test('should submit service request form', async () => {
 - [ ] Component is responsive across different screen sizes
 - [ ] Code follows established patterns and conventions
 
-This ReactJS development approach ensures high-quality, testable components that support comprehensive QA automation while maintaining excellent user experience and accessibility standards.
+### Mandatory Form Validation Checklist
+Every form component must implement:
+
+- [ ] **Zod validation schema** with comprehensive rules
+- [ ] **Real-time validation** with debounced feedback
+- [ ] **Input sanitization** for XSS prevention
+- [ ] **Comprehensive error messages** for all scenarios
+- [ ] **Accessibility support** with ARIA attributes
+- [ ] **Character count indicators** for text fields with limits
+- [ ] **Password strength indicators** for password fields
+- [ ] **Email uniqueness validation** for registration forms
+- [ ] **File upload validation** with type and size checks
+- [ ] **Rate limiting** for form submissions
+- [ ] **Test IDs** for all form elements and validation states
+- [ ] **Security measures** against common vulnerabilities
+- [ ] **Cross-field validation** for related inputs
+- [ ] **Proper loading states** during submission
+- [ ] **Success and error feedback** with retry mechanisms
+
+This ReactJS development approach ensures high-quality, secure, testable components with comprehensive form validation that supports extensive QA automation while maintaining excellent user experience and accessibility standards.
