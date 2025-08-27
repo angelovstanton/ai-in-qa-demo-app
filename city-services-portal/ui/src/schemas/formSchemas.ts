@@ -115,7 +115,7 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
-// Service Request Creation Schema
+// Service Request Creation Schema with proper conditional validation
 export const serviceRequestSchema = z.object({
   // Basic Information
   title: ServiceRequestPatterns.title,
@@ -126,10 +126,10 @@ export const serviceRequestSchema = z.object({
   // Date of Request - new field with validation
   dateOfRequest: ServiceRequestPatterns.dateOfRequest,
 
-  // Location Information (address fields are optional, can be used for mailing)
-  streetAddress: ValidationPatterns.streetAddress.optional(),
-  city: ValidationPatterns.city.optional(),
-  postalCode: ValidationPatterns.postalCode.optional(),
+  // Location Information (all optional - these are separate from contact address)
+  streetAddress: z.string().max(100, 'Street address is too long').optional(),
+  city: z.string().max(50, 'City name is too long').optional(),
+  postalCode: z.string().max(10, 'Postal code is too long').optional(),
   locationText: ServiceRequestPatterns.locationText,
   
   landmark: z.string()
@@ -140,26 +140,19 @@ export const serviceRequestSchema = z.object({
     .max(300, 'Access instructions are too long')
     .optional(),
 
-  // Contact Information
+  // Contact Information - will be validated conditionally
   contactMethod: ServiceRequestPatterns.contactMethod,
-  email: ValidationPatterns.email.optional(),
-  phone: ValidationPatterns.phone.optional(),
-  alternatePhone: z.string().optional().refine((val) => {
-    // If empty or undefined, it's valid (optional)
-    if (!val || val.trim().length === 0) return true;
-    // If provided, must match phone pattern
-    return /^[\+]?[1-9][\d]{9,14}$/.test(val) && val.length >= 10 && val.length <= 15;
-  }, {
-    message: 'Please enter a valid phone number (10-15 digits, optional + prefix)'
-  }),
+  email: z.string().email('Please enter a valid email address').optional(),
+  phone: z.string().optional(),
+  alternatePhone: z.string().optional(),
   bestTimeToContact: z.string()
     .max(100, 'Best time to contact description is too long')
     .optional(),
   
-  // Mailing Address (separate from location address)
-  mailingStreetAddress: ValidationPatterns.streetAddress.optional(),
-  mailingCity: ValidationPatterns.city.optional(),
-  mailingPostalCode: ValidationPatterns.postalCode.optional(),
+  // Mailing Address (completely separate and optional)
+  mailingStreetAddress: z.string().max(100, 'Mailing street address is too long').optional(),
+  mailingCity: z.string().max(50, 'Mailing city name is too long').optional(),
+  mailingPostalCode: z.string().max(10, 'Mailing postal code is too long').optional(),
 
   // Issue Details
   issueType: z.string().optional(),
@@ -187,13 +180,15 @@ export const serviceRequestSchema = z.object({
         /^[a-zA-Z\s]+$/,
         'Relationship can only contain letters and spaces'
       )
-  })).max(5, 'Maximum 5 additional contacts allowed'),
+  })).max(5, 'Maximum 5 additional contacts allowed').default([]).optional(),
 
   // File Attachments (completely optional)
-  attachments: z.array(FilePatterns.attachment)
-    .max(5, 'Maximum 5 file attachments allowed')
-    .optional()
-    .default([]),
+  attachments: z.array(z.object({
+    name: z.string(),
+    size: z.number(),
+    type: z.string(),
+    file: z.any().optional() // File object for frontend, optional for backend
+  })).max(5, 'Maximum 5 file attachments allowed').optional(),
 
   // User Experience
   satisfactionRating: z.number()
@@ -204,7 +199,7 @@ export const serviceRequestSchema = z.object({
   comments: z.string()
     .max(1000, 'Comments must be less than 1000 characters')
     .optional()
-    .transform((val) => val ? ValidationPatterns.safeText.parse(val) : val),
+    .transform((val) => val ? val.trim() : val),
 
   // Legal and Preferences
   agreesToTerms: z.boolean()
@@ -213,7 +208,7 @@ export const serviceRequestSchema = z.object({
   wantsUpdates: z.boolean().default(true),
 
   // Scheduled Service (if applicable)
-  preferredDate: ValidationPatterns.futureDate.optional(),
+  preferredDate: z.date().optional().or(z.string().optional()),
   preferredTime: z.string().optional(),
 
 }).refine((data) => {
@@ -227,7 +222,7 @@ export const serviceRequestSchema = z.object({
   path: ["alternatePhone"],
 }).refine((data) => {
   // Email is required when EMAIL contact method is selected
-  if (data.contactMethod === 'EMAIL' || !data.contactMethod) {
+  if (data.contactMethod === 'EMAIL') {
     return data.email && data.email.trim().length > 0;
   }
   return true;
@@ -243,24 +238,6 @@ export const serviceRequestSchema = z.object({
 }, {
   message: "Phone number is required for phone/SMS contact method",
   path: ["phone"],
-}).refine((data) => {
-  // Scheduled service requires both date and time
-  if (data.preferredTime) {
-    return data.preferredDate;
-  }
-  return true;
-}, {
-  message: "Preferred date is required when preferred time is specified",
-  path: ["preferredDate"],
-}).refine((data) => {
-  // High value requests require additional verification
-  if (data.estimatedValue && data.estimatedValue > 50000) {
-    return data.additionalContacts.length > 0;
-  }
-  return true;
-}, {
-  message: "High-value requests require at least one additional contact",
-  path: ["additionalContacts"],
 }).refine((data) => {
   // Emergency requests require higher priority
   if (data.isEmergency) {
@@ -289,7 +266,7 @@ export const commentSchema = z.object({
       (type) => ['image/jpeg', 'image/png', 'application/pdf'].includes(type),
       'Only JPEG, PNG, and PDF files are allowed for comments'
     )
-  })).max(3, 'Maximum 3 file attachments allowed for comments'),
+  })).max(3, 'Maximum 3 file attachments allowed for comments').default([]).optional(),
 
   // Follow-up preferences
   wantsFollowUp: z.boolean().default(false),
@@ -467,7 +444,7 @@ export const contactFormSchema = z.object({
   }),
   
   attachments: z.array(FilePatterns.attachment)
-    .max(3, 'Maximum 3 attachments allowed'),
+    .max(3, 'Maximum 3 attachments allowed').default([]).optional(),
 
 }).refine((data) => {
   // Phone required for phone response preference
