@@ -220,6 +220,7 @@ async function main() {
   // Clear existing data first
   console.log('🗑️ Clearing existing data...');
   await prisma.eventLog.deleteMany();
+  await prisma.upvote.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.attachment.deleteMany();
   await prisma.assignment.deleteMany();
@@ -767,8 +768,31 @@ async function main() {
     }
   }
 
-  // TODO: Create upvotes for requests to improve ranklist data
-  // This will be added after Prisma client is regenerated
+  // Create upvotes for requests
+  console.log('👍 Creating upvotes...');
+  const upvoteCount = Math.floor(requests.length * 0.6); // 60% of requests have upvotes
+  let totalUpvotes = 0;
+  for (let i = 0; i < upvoteCount; i++) {
+    const request = requests[i];
+    const upvoters = getRandomElements(citizens, Math.floor(Math.random() * 5) + 1); // 1-5 upvotes per request
+    
+    for (const upvoter of upvoters) {
+      // Don't let users upvote their own requests
+      if (upvoter.id !== request.createdBy) {
+        try {
+          await prisma.upvote.create({
+            data: {
+              userId: upvoter.id,
+              requestId: request.id,
+            }
+          });
+          totalUpvotes++;
+        } catch (error) {
+          // Ignore duplicate upvotes
+        }
+      }
+    }
+  }
 
   console.log('✅ Seeding completed successfully!');
   console.log(`📊 Created:`);
@@ -777,6 +801,7 @@ async function main() {
   console.log(`   📋 ${requests.length} service requests`);
   console.log(`   📎 ${attachmentCount} attachments`);
   console.log(`   💬 ${commentCount} comments`);
+  console.log(`   👍 ${totalUpvotes} upvotes`);
   console.log(`   📝 ${requests.length * 2} event logs (average)`);
   console.log(`   🚩 4 feature flags`);
   

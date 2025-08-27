@@ -13,14 +13,7 @@ import {
   Select,
   MenuItem,
   TextField,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Avatar,
-  Divider,
   Container,
-  Pagination,
   IconButton,
   Tooltip,
   InputAdornment,
@@ -34,45 +27,19 @@ import {
   TrendingUp as TrendingIcon,
   CalendarToday as CalendarIcon,
   Category as CategoryIcon,
-  Speed as PriorityIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { useServiceRequests } from '../hooks/useServiceRequests';
+import { ServiceRequest } from '../types';
 import DataTable from '../components/DataTable';
 import { GridColDef, GridPaginationModel, GridSortModel, GridFilterModel } from '@mui/x-data-grid';
 
-interface ResolvedCase {
-  id: string;
-  code: string;
-  title: string;
-  category: string;
-  priority: string;
-  creator: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  assignee?: {
-    id: string;
-    name: string;
-  };
-  department?: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  resolvedAt: string;
-  resolutionTime: number; // in hours
-  satisfactionRating?: number;
-  resolutionSummary?: string;
-  upvotes: number;
-  commentsCount: number;
-}
-
+// Stats interface for resolved cases
 interface ResolvedCasesStats {
   totalCases: number;
   averageResolutionTime: number;
@@ -85,11 +52,8 @@ interface ResolvedCasesStats {
 
 const ResolvedCasesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [cases, setCases] = useState<ResolvedCase[]>([]);
   const [stats, setStats] = useState<ResolvedCasesStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +70,7 @@ const ResolvedCasesPage: React.FC = () => {
     pageSize: 10,
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: 'resolvedAt', sort: 'desc' },
+    { field: 'updatedAt', sort: 'desc' },
   ]);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
 
@@ -144,119 +108,66 @@ const ResolvedCasesPage: React.FC = () => {
     'other': 'Other'
   };
 
+  // Use the hook to fetch resolved cases
+  const { 
+    data: cases, 
+    loading, 
+    error: requestsError, 
+    totalCount,
+    refetch: refetchCases 
+  } = useServiceRequests({
+    status: 'RESOLVED,CLOSED', // Filter for resolved and closed cases
+    category: selectedCategory || undefined,
+    priority: selectedPriority || undefined,
+    department: selectedDepartment || undefined,
+    text: searchTerm || undefined,
+    page: paginationModel.page + 1,
+    pageSize: paginationModel.pageSize,
+    sort: sortModel.length > 0 ? `${sortModel[0].field}:${sortModel[0].sort}` : 'updatedAt:desc',
+    showAll: true, // Show all resolved cases, not just user's own
+  });
+
   useEffect(() => {
-    fetchResolvedCases();
-    fetchStats();
-  }, [paginationModel, sortModel, searchTerm, selectedCategory, selectedPriority, selectedDepartment, dateFrom, dateTo, minSatisfactionRating]);
-
-  const fetchResolvedCases = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        page: (paginationModel.page + 1).toString(),
-        pageSize: paginationModel.pageSize.toString(),
-        ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory && { category: selectedCategory }),
-        ...(selectedPriority && { priority: selectedPriority }),
-        ...(selectedDepartment && { department: selectedDepartment }),
-        ...(dateFrom && { dateFrom: dateFrom.toISOString() }),
-        ...(dateTo && { dateTo: dateTo.toISOString() }),
-        ...(minSatisfactionRating && { minSatisfactionRating }),
-        ...(sortModel.length > 0 && { 
-          sort: `${sortModel[0].field}:${sortModel[0].sort}` 
-        }),
-      });
-
-      const response = await api.get(`/requests/resolved?${params}`);
-      setCases(response.data.data);
-      setTotalCount(response.data.pagination.totalCount);
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to fetch resolved cases');
-      
-      // Fallback to mock data
-      const mockCases: ResolvedCase[] = [
-        {
-          id: '1',
-          code: 'REQ-2024-001',
-          title: 'Pothole on Main Street',
-          category: 'roads-transportation',
-          priority: 'HIGH',
-          creator: { id: '1', name: 'John Smith', email: 'john@example.com' },
-          assignee: { id: '2', name: 'Road Crew A' },
-          department: { id: '1', name: 'Public Works' },
-          createdAt: '2024-01-01T10:00:00Z',
-          resolvedAt: '2024-01-05T15:30:00Z',
-          resolutionTime: 101.5,
-          satisfactionRating: 5,
-          resolutionSummary: 'Pothole filled with asphalt. Road surface restored.',
-          upvotes: 12,
-          commentsCount: 5,
-        },
-        {
-          id: '2',
-          code: 'REQ-2024-002',
-          title: 'Broken streetlight on Oak Avenue',
-          category: 'street-lighting',
-          priority: 'MEDIUM',
-          creator: { id: '2', name: 'Sarah Johnson', email: 'sarah@example.com' },
-          assignee: { id: '3', name: 'Electrical Team' },
-          department: { id: '2', name: 'Utilities' },
-          createdAt: '2024-01-02T14:20:00Z',
-          resolvedAt: '2024-01-06T09:45:00Z',
-          resolutionTime: 91.4,
-          satisfactionRating: 4,
-          resolutionSummary: 'Replaced faulty LED bulb and checked electrical connections.',
-          upvotes: 8,
-          commentsCount: 3,
-        },
-        {
-          id: '3',
-          code: 'REQ-2024-003',
-          title: 'Overflowing trash bin in Central Park',
-          category: 'waste-management',
-          priority: 'LOW',
-          creator: { id: '3', name: 'Mike Wilson', email: 'mike@example.com' },
-          assignee: { id: '4', name: 'Sanitation Crew' },
-          department: { id: '3', name: 'Sanitation' },
-          createdAt: '2024-01-03T08:15:00Z',
-          resolvedAt: '2024-01-04T16:20:00Z',
-          resolutionTime: 32.1,
-          satisfactionRating: 3,
-          resolutionSummary: 'Emptied bin and increased collection frequency for this location.',
-          upvotes: 6,
-          commentsCount: 2,
-        },
-      ];
-      setCases(mockCases);
-      setTotalCount(mockCases.length);
-    } finally {
-      setLoading(false);
+    if (requestsError) {
+      setError(requestsError);
     }
-  };
+    fetchStats();
+  }, [requestsError, dateFrom, dateTo]);
+
+
 
   const fetchStats = async () => {
     try {
-      const params = new URLSearchParams({
-        ...(dateFrom && { dateFrom: dateFrom.toISOString() }),
-        ...(dateTo && { dateTo: dateTo.toISOString() }),
-      });
+      // Create params object first
+      const paramsObj: Record<string, string> = {};
+      
+      // Add conditional parameters
+      if (dateFrom) paramsObj.dateFrom = dateFrom.toISOString();
+      if (dateTo) paramsObj.dateTo = dateTo.toISOString();
 
-      const response = await api.get(`/requests/resolved/stats?${params}`);
-      setStats(response.data.data);
+      // Convert to URLSearchParams
+      const params = new URLSearchParams(paramsObj);
+
+      // Use the main requests endpoint with status filter and aggregation
+      const response = await api.get(`/requests?status=RESOLVED,CLOSED&aggregate=stats&${params}`);
+      
+      if (response.data && response.data.stats) {
+        setStats({
+          totalCases: response.data.stats.count || 0,
+          averageResolutionTime: response.data.stats.avgResolutionTime || 0,
+          satisfactionRate: response.data.stats.avgSatisfaction || 0,
+          topCategory: response.data.stats.topCategory || 'N/A',
+          thisMonthCount: response.data.stats.thisMonthCount || 0,
+          lastMonthCount: response.data.stats.lastMonthCount || 0,
+          improvementRate: response.data.stats.improvementRate || 0
+        });
+      } else {
+        setStats(null);
+      }
     } catch (err: any) {
-      // Fallback to mock stats
-      const mockStats: ResolvedCasesStats = {
-        totalCases: 156,
-        averageResolutionTime: 72.3,
-        satisfactionRate: 4.2,
-        topCategory: 'roads-transportation',
-        thisMonthCount: 23,
-        lastMonthCount: 18,
-        improvementRate: 27.8,
-      };
-      setStats(mockStats);
+      console.error('Error fetching stats:', err);
+      // Don't show stats if there's an error
+      setStats(null);
     }
   };
 
@@ -269,9 +180,16 @@ const ResolvedCasesPage: React.FC = () => {
     setDateTo(null);
     setMinSatisfactionRating('');
   };
+  
+
 
   const handleViewCase = (caseId: string) => {
-    navigate(`/request/${caseId}`);
+    if (caseId) {
+      navigate(`/request/${caseId}`);
+    } else {
+      console.error('Invalid case ID');
+      setError('Cannot view case: Invalid case ID');
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -374,7 +292,7 @@ const ResolvedCasesPage: React.FC = () => {
       ),
     },
     {
-      field: 'resolvedAt',
+      field: 'updatedAt',
       headerName: 'Resolved Date',
       width: 130,
       filterable: true,
@@ -417,9 +335,11 @@ const ResolvedCasesPage: React.FC = () => {
     title: case_.title,
     category: case_.category,
     priority: case_.priority,
-    resolutionTime: case_.resolutionTime,
+    // Use closedAt and createdAt to calculate resolution time if not provided
+    resolutionTime: case_.closedAt && case_.createdAt ? 
+      Math.round((new Date(case_.closedAt).getTime() - new Date(case_.createdAt).getTime()) / (1000 * 60 * 60)) : 0,
     satisfactionRating: case_.satisfactionRating,
-    resolvedAt: case_.resolvedAt,
+    updatedAt: case_.updatedAt,
     upvotes: case_.upvotes,
   }));
 
@@ -580,14 +500,15 @@ const ResolvedCasesPage: React.FC = () => {
                     label="From Date"
                     value={dateFrom}
                     onChange={setDateFrom}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        fullWidth
-                        data-testid="cs-resolved-date-from"
-                      />
-                    )}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true,
+                        inputProps: {
+                          'data-testid': "cs-resolved-date-from"
+                        }
+                      }
+                    }}
                   />
                 </Grid>
                 
@@ -596,14 +517,15 @@ const ResolvedCasesPage: React.FC = () => {
                     label="To Date"
                     value={dateTo}
                     onChange={setDateTo}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        fullWidth
-                        data-testid="cs-resolved-date-to"
-                      />
-                    )}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true,
+                        inputProps: {
+                          'data-testid': "cs-resolved-date-to"
+                        }
+                      }
+                    }}
                   />
                 </Grid>
                 
@@ -631,6 +553,28 @@ const ResolvedCasesPage: React.FC = () => {
 
           {/* Data Table */}
           <Card data-testid="cs-resolved-cases-table">
+                      {loading && cases.length === 0 ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant="body1">Loading resolved cases...</Typography>
+            </Box>
+          ) : error ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+              <Button 
+                variant="contained" 
+                onClick={() => refetchCases()}
+                data-testid="cs-retry-fetch"
+              >
+                Retry
+              </Button>
+            </Box>
+          ) : cases.length === 0 ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant="body1">No resolved cases found matching your criteria.</Typography>
+            </Box>
+          ) : (
             <DataTable
               rows={rows}
               columns={columns}
@@ -646,6 +590,7 @@ const ResolvedCasesPage: React.FC = () => {
               onRowClick={(params) => handleViewCase(params.row.id)}
               testId="cs-resolved-cases-grid"
             />
+          )}
           </Card>
         </Box>
       </Container>
