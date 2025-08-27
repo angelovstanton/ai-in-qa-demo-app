@@ -15,15 +15,21 @@ Instructions for developing and maintaining a comprehensive municipal service ma
 - **Testing Focus**: Comprehensive test selectors, feature flags, and complex workflows
 - **Deployment**: Docker containerization for consistent environments
 - **Validation**: Comprehensive form validation with Zod schemas and security measures
+- **Internationalization**: Full i18n support with Bulgarian and English translations
+- **Accessibility**: WCAG 2.1 AA compliance with comprehensive accessibility features
+- **Content Moderation**: AI-powered content analysis and moderation system
 
 ## Core Technologies
 - **Frontend**: React 18+ with TypeScript, Material-UI (MUI), Vite
 - **Backend**: Node.js 18+ with Express, TypeScript, Prisma ORM
 - **Database**: SQLite with Prisma (easily switchable to PostgreSQL/MySQL)
-- **Authentication**: JWT with bcrypt password hashing
+- **Authentication**: JWT with bcrypt password hashing and account lockout
 - **Validation**: Zod schemas with real-time validation and sanitization
 - **Documentation**: OpenAPI/Swagger for API documentation
 - **Container**: Docker with multi-stage builds and development hot-reload
+- **Testing**: Comprehensive test coverage with React Testing Library and Jest
+- **Accessibility**: Full WCAG 2.1 AA compliance with ARIA support
+- **Internationalization**: Complete i18n with language switching
 
 ## User Roles & Access Levels
 ```typescript
@@ -35,6 +41,41 @@ enum UserRole {
   ADMIN = 'ADMIN'                // System configuration and feature flags
 }
 ```
+
+## Enhanced Application Features
+
+### Core Service Request Management
+- **Multi-step Request Wizard**: 5-step form with conditional fields and validation
+- **Status Workflow**: Complete state machine with 7 status states
+- **File Attachments**: Secure image upload with drag-and-drop support
+- **Location Services**: Address input with geocoding preparation
+- **Comments System**: Public and internal comments with role-based visibility
+- **Upvoting System**: Community engagement with request prioritization
+- **Search & Filtering**: Advanced search with real-time results and debouncing
+
+### Advanced User Features
+- **Community Ranklist**: Gamified leaderboard with badges and achievement system
+- **Resolved Cases Tracking**: Historical view with satisfaction ratings
+- **Public Request Board**: Community visibility of public service requests
+- **Profile Management**: Comprehensive user profiles with preferences
+- **Request Editing**: Time-limited editing with optimistic locking
+- **Multi-language Support**: Full internationalization with EN/BG language switching
+
+### Administrative & Security Features
+- **Feature Flag System**: Dynamic configuration for testing scenarios
+- **Content Moderation**: AI-powered content analysis with spam/hate speech detection
+- **Security Monitoring**: XSS prevention, input sanitization, and rate limiting
+- **Admin Dashboard**: System management with database seeding and monitoring
+- **Audit Logging**: Comprehensive logging for all administrative actions
+- **Account Security**: Login attempt tracking, account lockout, and security measures
+
+### Accessibility & UX Features
+- **WCAG 2.1 AA Compliance**: Full accessibility support with ARIA attributes
+- **Keyboard Navigation**: Complete keyboard accessibility throughout the application
+- **Screen Reader Support**: Comprehensive screen reader announcements and descriptions
+- **High Contrast Mode**: Support for high contrast and reduced motion preferences
+- **Focus Management**: Proper focus trapping and management in modals and forms
+- **Color Accessibility**: Validated color contrast ratios and alternative indicators
 
 ## Development Standards
 
@@ -139,6 +180,7 @@ const useRateLimit = (maxAttempts: number = 5, timeWindow: number = 60000) => {
 - **Component Testing**: Use React Testing Library for component tests
 - **API Testing**: Implement integration tests for all endpoints
 - **E2E Testing**: Design workflows for Playwright/Cypress automation
+- **Accessibility Testing**: Test keyboard navigation and screen reader compatibility
 
 ### Enhanced Test ID Patterns
 ```typescript
@@ -173,7 +215,20 @@ const TestIds = {
   
   // Admin features
   ADMIN_FLAG_TOGGLE: (flag: string) => `cs-admin-flag-toggle-${flag}`,
-  ADMIN_SEED_DB: 'cs-admin-seed-database'
+  ADMIN_SEED_DB: 'cs-admin-seed-database',
+  
+  // Content moderation
+  CONTENT_MODERATION_PAGE: 'cs-content-moderation-page',
+  CONTENT_MODERATION_TABLE: 'cs-flagged-content-table',
+  MODERATION_ACTION: (action: string) => `cs-moderation-${action}`,
+  
+  // Accessibility
+  SCREEN_READER_TEXT: 'cs-sr-text',
+  FOCUS_TRAP: 'cs-focus-trap',
+  
+  // Internationalization
+  LANGUAGE_SWITCHER: 'cs-language-switcher',
+  LANGUAGE_OPTION: (lang: string) => `cs-language-${lang}`,
 };
 ```
 
@@ -188,6 +243,8 @@ const TestIds = {
 - **XSS prevention in all text fields and rich content**
 - **Rate limiting for all form submissions**
 - **Content Security Policy (CSP) headers**
+- **Content moderation for user-generated content**
+- **Account lockout after failed login attempts**
 
 ### Database Patterns
 - Use Prisma schema for type-safe database operations
@@ -196,6 +253,9 @@ const TestIds = {
 - Use transactions for operations that span multiple tables
 - Implement soft deletes where appropriate for audit trails
 - Include proper indexes for performance-critical queries
+- **Enhanced user profile fields for comprehensive testing**
+- **Upvoting system for community engagement**
+- **Content moderation audit trails**
 
 ### API Design
 - Follow RESTful conventions with proper HTTP methods and status codes
@@ -206,12 +266,15 @@ const TestIds = {
 - Implement idempotency keys for critical operations
 - **Validate all inputs with Zod schemas on the server side**
 - **Return validation errors in a structured format**
+- **Implement content moderation endpoints**
+- **Add ranking and leaderboard APIs**
 
 ### Feature Flag System
 - **Purpose**: Simulate bugs and testing scenarios for QA demonstrations
 - **Flags**: `API_Random500`, `UI_WrongDefaultSort`, `API_SlowRequests`, `API_UploadIntermittentFail`
 - **Implementation**: Database-driven flags with real-time toggles
 - **Usage**: Inject via middleware and React context for dynamic behavior
+- **Admin Management**: Full CRUD operations with validation and audit logging
 
 ## Component Architecture
 
@@ -223,32 +286,65 @@ const TestIds = {
 - Implement proper loading states and error boundaries
 - Create reusable components for common patterns
 - **Mandatory comprehensive form validation for all input components**
+- **Full accessibility support with ARIA attributes**
+- **Internationalization support with translation keys**
+
+### Advanced Component Library
+```typescript
+// Enhanced UI Components
+- ValidatedTextField      // Real-time validation with accessibility
+- ValidatedSelect        // Dropdown with proper error handling
+- ValidatedDatePicker    // Date selection with range validation
+- PasswordField          // Password input with strength meter
+- ImageUpload           // Drag-and-drop file upload with security
+- LocationPicker        // Address input with geocoding
+- MapView              // Interactive map display
+- DataTable            // Enhanced data grid with server-side operations
+- LanguageSwitcher     // Language toggle with flag icons
+- AccessibilityWrapper // WCAG compliance wrapper
+
+// Specialized Components
+- RequestWizard        // Multi-step form with validation
+- CommentSystem       // Threaded comments with moderation
+- UpvoteButton        // Community engagement component
+- StatusBadge         // Request status with color coding
+- UserRanking         // Leaderboard display
+- ContentModerator    // Content analysis and moderation
+- FeatureFlagToggle   // Admin feature flag management
+```
 
 ### Form Component Standards
 ```typescript
-// All form components must follow this pattern
+// All form components must follow this enhanced pattern
 function FormComponent() {
-  // 1. Define comprehensive validation schema
+  // 1. Define comprehensive validation schema with i18n
+  const { t } = useLanguage();
   const validationSchema = z.object({
-    // Use ValidationPatterns for common fields
-    email: ValidationPatterns.email,
+    email: ValidationPatterns.email.refine(
+      async (email) => await checkEmailUniqueness(email),
+      { message: t('validation.email-taken') }
+    ),
     password: ValidationPatterns.password,
     // Add custom validation as needed
   });
 
-  // 2. Setup form with validation
+  // 2. Setup form with validation and accessibility
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(validationSchema),
-    mode: 'onBlur', // Real-time validation
+    mode: 'onBlur',
     reValidateMode: 'onChange'
   });
 
-  // 3. Implement security measures
+  // 3. Implement security and accessibility measures
   const { isBlocked, checkRateLimit } = useRateLimit(5, 60000);
+  const { announceToScreenReader } = useAccessibility();
 
-  // 4. Form submission with sanitization
+  // 4. Form submission with comprehensive error handling
   const onSubmit = async (data) => {
-    if (!checkRateLimit()) return;
+    if (!checkRateLimit()) {
+      announceToScreenReader(t('validation.rate-limited'), 'assertive');
+      return;
+    }
     
     // Sanitize all inputs before submission
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -258,40 +354,99 @@ function FormComponent() {
       return acc;
     }, {});
     
-    // Submit sanitized data
-    await api.post('/endpoint', sanitizedData);
+    try {
+      await api.post('/endpoint', sanitizedData);
+      announceToScreenReader(t('form.success'), 'polite');
+    } catch (error) {
+      announceToScreenReader(t('form.error'), 'assertive');
+    }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} data-testid="cs-form">
-      {/* Use ValidatedTextField for all inputs */}
+    <Box 
+      component="form" 
+      onSubmit={handleSubmit(onSubmit)} 
+      data-testid="cs-form"
+      role="form"
+      aria-label={t('form.title')}
+    >
       <ValidatedTextField
         name="email"
-        label="Email"
+        label={t('form.email')}
         control={control}
         error={errors.email}
         required
         testId="cs-form-email"
+        ariaDescribedBy="email-help"
       />
       
       <Button
         type="submit"
         disabled={isBlocked}
         data-testid="cs-form-submit"
+        aria-label={t('form.submit')}
       >
-        Submit
+        {t('form.submit')}
       </Button>
     </Box>
   );
 }
 ```
 
+### Internationalization Standards
+```typescript
+// Language Context Usage
+const { t, language, setLanguage } = useLanguage();
+
+// Translation Key Patterns
+'nav.{page}'           // Navigation items
+'form.{field}'         // Form labels and placeholders
+'validation.{type}'    // Validation error messages
+'status.{state}'       // Request status labels
+'common.{action}'      // Common UI actions
+'error.{type}'         // Error messages
+'success.{action}'     // Success messages
+'accessibility.{element}' // Screen reader text
+
+// Component Example with I18n
+<TextField
+  label={t('form.email')}
+  placeholder={t('form.email-placeholder')}
+  helperText={error ? t(error.message) : t('form.email-help')}
+  aria-label={t('accessibility.email-input')}
+/>
+```
+
+### Accessibility Standards
+```typescript
+// Mandatory Accessibility Features
+- ARIA labels and descriptions for all interactive elements
+- Keyboard navigation support with proper focus management
+- Screen reader announcements for dynamic content changes
+- Color contrast validation (minimum 4.5:1 ratio)
+- Alternative text for all images and icons
+- Proper heading hierarchy (h1 > h2 > h3)
+- Focus indicators for all interactive elements
+- High contrast mode support
+- Reduced motion preference support
+
+// Accessibility Testing Requirements
+- Keyboard-only navigation testing
+- Screen reader compatibility testing
+- Color blindness simulation testing
+- High contrast mode validation
+- Focus management verification
+```
+
 ### State Management
-- Use React Context for global state (authentication, theme)
+- Use React Context for global state (authentication, theme, language)
 - Implement custom hooks for API data fetching and caching
 - Use React Hook Form with Zod validation for complex forms
 - Keep local component state minimal and focused
 - Implement optimistic updates for better user experience
+- **Language state management with persistence**
+- **Accessibility preferences state management**
+- **Content moderation state tracking**
 
 ### Form Handling
 - Use React Hook Form with Zod validation schemas
@@ -302,6 +457,8 @@ function FormComponent() {
 - Include comprehensive test IDs for form automation
 - **Mandatory input sanitization for all text inputs**
 - **Comprehensive validation error handling**
+- **Internationalized error messages**
+- **Content moderation integration**
 
 ## Backend Architecture
 
@@ -314,43 +471,57 @@ src/
 ??? utils/               # Helper functions and utilities
 ??? validation/          # Zod schemas for API validation
 ??? config/              # Configuration and documentation
+??? types/               # TypeScript type definitions
+??? tests/               # API integration tests
 ```
 
-### Middleware Implementation
-- **Authentication**: JWT validation with user context injection
+### Enhanced Middleware Implementation
+- **Authentication**: JWT validation with user context injection and account lockout
+- **Authorization**: Role-based access control with fine-grained permissions
 - **Feature Flags**: Dynamic behavior injection for testing scenarios
 - **Error Handling**: Structured error responses with correlation IDs
 - **Logging**: Request/response logging with performance metrics
-- **Validation**: Zod schema validation for all inputs
+- **Validation**: Zod schema validation for all inputs with sanitization
 - **Rate Limiting**: Request rate limiting for API protection
 - **Input Sanitization**: Server-side input cleaning and validation
+- **Content Moderation**: Automated content analysis and flagging
+- **Internationalization**: Request locale detection and response localization
 
 ### Database Schema Design
-- **Users**: Authentication and role management
-- **ServiceRequests**: Core entity with status workflow
-- **Comments**: Threaded discussions on requests
-- **Attachments**: File uploads with metadata
-- **EventLogs**: Audit trail for all state changes
-- **FeatureFlags**: Dynamic configuration for testing
+- **Users**: Enhanced authentication and profile management with security fields
+- **ServiceRequests**: Core entity with comprehensive workflow and location data
+- **Comments**: Threaded discussions with moderation support
+- **Attachments**: Secure file uploads with metadata and virus scanning preparation
+- **EventLogs**: Comprehensive audit trail for all state changes
+- **FeatureFlags**: Dynamic configuration for testing with versioning
+- **Upvotes**: Community engagement tracking
+- **Rankings**: User performance metrics and leaderboard data
+- **ContentModeration**: AI analysis results and moderation actions
 
 ## Testing Implementation
 
 ### Complex Testing Scenarios
-- **Multi-step Forms**: 5-step request submission with conditional fields
-- **Role-based Workflows**: Different user journeys per role
-- **State Machine**: Request status transitions with validation
-- **Search and Filtering**: Debounced search with real-time results
-- **File Uploads**: Drag-and-drop with validation and progress
+- **Multi-step Forms**: 5-step request submission with conditional fields and validation
+- **Role-based Workflows**: Different user journeys per role with comprehensive permissions
+- **State Machine**: Request status transitions with business rule validation
+- **Search and Filtering**: Debounced search with real-time results and advanced filters
+- **File Uploads**: Drag-and-drop with validation, progress tracking, and security checks
 - **Error Conditions**: Feature flags for controlled error simulation
-- **Form Validation**: Comprehensive validation testing scenarios
+- **Form Validation**: Comprehensive validation testing scenarios with edge cases
 - **Security Testing**: XSS prevention and input sanitization testing
+- **Accessibility Testing**: Keyboard navigation and screen reader compatibility
+- **Internationalization Testing**: Language switching and translation validation
+- **Content Moderation Testing**: Spam detection and automated flagging scenarios
 
 ### Data Management for Testing
-- Implement database seeding with consistent test data
+- Implement database seeding with consistent test data including all new features
 - Provide reset functionality for test isolation
-- Include demo accounts for each user role
-- Generate realistic sample data for comprehensive testing
+- Include demo accounts for each user role with realistic data
+- Generate realistic sample data for comprehensive testing including rankings
 - Support test data cleanup and regeneration
+- **Enhanced seed data with community features (upvotes, rankings, resolved cases)**
+- **Content moderation test scenarios with flagged content**
+- **Multi-language test data for internationalization testing**
 
 ## Quality Assurance Features
 
@@ -363,12 +534,15 @@ interface FeatureFlag {
   category: 'API' | 'UI' | 'PERFORMANCE' | 'UPLOAD';
 }
 
-// Predefined flags for testing scenarios
+// Enhanced flags for comprehensive testing scenarios
 const DEFAULT_FLAGS = [
   { name: 'API_Random500', description: 'Introduces 5% random server errors' },
   { name: 'UI_WrongDefaultSort', description: 'Wrong default sorting behavior' },
   { name: 'API_SlowRequests', description: 'Simulates 10% slow API responses' },
-  { name: 'API_UploadIntermittentFail', description: 'Random file upload failures' }
+  { name: 'API_UploadIntermittentFail', description: 'Random file upload failures' },
+  { name: 'UI_MissingAria', description: 'Remove ARIA labels for accessibility testing' },
+  { name: 'API_ValidationBypass', description: 'Bypass validation for security testing' },
+  { name: 'UI_LanguageMismatch', description: 'Mix languages for i18n testing' }
 ];
 ```
 
@@ -384,7 +558,7 @@ enum RequestStatus {
   REJECTED = 'REJECTED'
 }
 
-// Valid state transitions for testing workflow scenarios
+// Enhanced state transitions with validation rules
 const VALID_TRANSITIONS = {
   SUBMITTED: ['TRIAGED', 'REJECTED'],
   TRIAGED: ['IN_PROGRESS', 'REJECTED'],
@@ -392,8 +566,33 @@ const VALID_TRANSITIONS = {
   WAITING_ON_CITIZEN: ['IN_PROGRESS', 'CLOSED'],
   RESOLVED: ['CLOSED', 'REOPENED'],
   CLOSED: [],
-  REJECTED: []
+  REJECTED: ['REOPENED']
 };
+```
+
+### Content Moderation System
+```typescript
+interface ContentAnalysis {
+  content: string;
+  isSpam: boolean;
+  isHate: boolean;
+  isOffensive: boolean;
+  hasSecurityThreat: boolean;
+  hasProfanity: boolean;
+  score: number;
+  flags: string[];
+  recommendations: string[];
+  detectedPatterns: string[];
+}
+
+// Automated content moderation with AI analysis
+const moderationCategories = [
+  'SPAM_DETECTION',
+  'HATE_SPEECH',
+  'SECURITY_THREATS',
+  'PROFANITY_FILTER',
+  'XSS_PREVENTION'
+];
 ```
 
 ## Performance Standards
@@ -406,6 +605,8 @@ const VALID_TRANSITIONS = {
 - Use proper dependency arrays in useEffect hooks
 - Implement proper loading states and skeleton screens
 - **Debounced validation to prevent excessive API calls**
+- **Lazy loading for image uploads and large content**
+- **Optimized internationalization with dynamic imports**
 
 ### Backend Optimization
 - Use database query optimization with proper indexes
@@ -414,6 +615,9 @@ const VALID_TRANSITIONS = {
 - Implement request rate limiting for API protection
 - Use compression middleware for response optimization
 - Monitor and log performance metrics
+- **Optimized content moderation with efficient pattern matching**
+- **Cached ranking calculations for performance**
+- **Efficient file upload handling with progress tracking**
 
 ## Deployment Standards
 
@@ -424,6 +628,8 @@ const VALID_TRANSITIONS = {
 - Volume management for data persistence
 - Environment variable configuration
 - Container security best practices
+- **Enhanced security with content scanning**
+- **Performance monitoring and alerting**
 
 ### Environment Management
 - Separate configurations for development, staging, production
@@ -432,6 +638,8 @@ const VALID_TRANSITIONS = {
 - Database migration handling in deployment
 - Logging configuration per environment
 - Feature flag environment-specific defaults
+- **Language pack deployment for internationalization**
+- **Content moderation service configuration**
 
 ## Documentation Requirements
 
@@ -443,6 +651,9 @@ const VALID_TRANSITIONS = {
 - Testing documentation with example scenarios
 - Deployment documentation with step-by-step instructions
 - **Validation schema documentation with examples**
+- **Accessibility implementation guide**
+- **Internationalization setup instructions**
+- **Content moderation configuration guide**
 
 ### Testing Documentation
 - Test scenario descriptions for manual testing
@@ -452,77 +663,103 @@ const VALID_TRANSITIONS = {
 - Performance testing guidelines and benchmarks
 - Security testing checklists and procedures
 - **Form validation testing scenarios and edge cases**
+- **Accessibility testing checklists and procedures**
+- **Internationalization testing scenarios**
+- **Content moderation testing scenarios**
 
 ## Implementation Guidelines
 
 ### New Feature Development
-1. **Design**: Plan component architecture and data flow
-2. **Backend**: Implement API endpoints with validation and tests
-3. **Frontend**: Create components with proper TypeScript types
-4. **Validation**: Implement comprehensive Zod schema validation
-5. **Security**: Add input sanitization and XSS prevention
-6. **Testing**: Add comprehensive test IDs and automation examples
-7. **Documentation**: Update API docs and testing guides
-8. **Feature Flags**: Consider controllable error scenarios
-9. **Performance**: Optimize for large datasets and concurrent users
+1. **Design**: Plan component architecture and data flow with accessibility in mind
+2. **Backend**: Implement API endpoints with validation, security, and internationalization
+3. **Frontend**: Create components with proper TypeScript types and accessibility
+4. **Validation**: Implement comprehensive Zod schema validation with security measures
+5. **Security**: Add input sanitization, XSS prevention, and content moderation
+6. **Accessibility**: Ensure WCAG 2.1 AA compliance with proper ARIA support
+7. **Internationalization**: Add translation keys and language support
+8. **Testing**: Add comprehensive test IDs and automation examples
+9. **Documentation**: Update API docs, testing guides, and accessibility documentation
+10. **Feature Flags**: Consider controllable error scenarios and testing configurations
+11. **Performance**: Optimize for large datasets and concurrent users
 
 ### Bug Fixes and Maintenance
-1. **Root Cause**: Identify and document the underlying issue
-2. **Test Cases**: Create test cases that reproduce the bug
-3. **Fix Implementation**: Implement fix with minimal side effects
-4. **Validation**: Ensure proper input validation is in place
-5. **Regression Testing**: Ensure fix doesn't break existing functionality
-6. **Documentation**: Update relevant documentation
+1. **Root Cause**: Identify and document the underlying issue with accessibility impact
+2. **Test Cases**: Create test cases that reproduce the bug across different scenarios
+3. **Fix Implementation**: Implement fix with minimal side effects and maintained accessibility
+4. **Validation**: Ensure proper input validation and content moderation is in place
+5. **Regression Testing**: Ensure fix doesn't break existing functionality or accessibility
+6. **Documentation**: Update relevant documentation including accessibility notes
 7. **Monitoring**: Add logging/monitoring to prevent recurrence
+8. **Internationalization**: Ensure fix works across all supported languages
 
 ## Quality Gates
 
 ### Code Review Checklist
 - [ ] TypeScript compilation passes without errors
-- [ ] All tests pass (unit, integration, e2e)
+- [ ] All tests pass (unit, integration, e2e, accessibility)
 - [ ] Test IDs added for new interactive elements
 - [ ] **Comprehensive form validation implemented with Zod schemas**
 - [ ] **Input sanitization and XSS prevention in place**
 - [ ] **Security measures implemented (rate limiting, content filtering)**
 - [ ] **All validation errors have proper test IDs and messages**
+- [ ] **WCAG 2.1 AA accessibility compliance verified**
+- [ ] **Internationalization support added for new strings**
+- [ ] **Content moderation integration where applicable**
 - [ ] API documentation updated for endpoint changes
 - [ ] Security review for authentication/authorization changes
 - [ ] Performance impact assessed for data-heavy operations
-- [ ] Accessibility compliance verified
+- [ ] Accessibility compliance verified with automated and manual testing
 - [ ] Error handling implemented and tested
 - [ ] Logging added for debugging and monitoring
 - [ ] Feature flags considered for testing scenarios
 
 ### Definition of Done
-- [ ] Feature works as specified in all supported browsers
+- [ ] Feature works as specified in all supported browsers and assistive technologies
 - [ ] Comprehensive test coverage with meaningful test IDs
 - [ ] **All forms implement comprehensive validation with security measures**
 - [ ] **Input sanitization and XSS prevention implemented**
 - [ ] **Validation errors are properly tested and accessible**
-- [ ] Documentation updated (code, API, testing guides)
+- [ ] **WCAG 2.1 AA accessibility standards met**
+- [ ] **Internationalization support complete with all required translations**
+- [ ] **Content moderation integration tested and functional**
+- [ ] Documentation updated (code, API, testing guides, accessibility documentation)
 - [ ] Security and performance requirements met
-- [ ] Accessibility standards followed (WCAG 2.1 AA)
-- [ ] Error scenarios handled gracefully
+- [ ] Accessibility standards followed with proper ARIA implementation
+- [ ] Error scenarios handled gracefully with proper user feedback
 - [ ] Code reviewed and approved by team
-- [ ] Integration testing completed
-- [ ] Feature flag integration considered
-- [ ] Demo/testing scenarios documented
+- [ ] Integration testing completed across all user roles
+- [ ] Feature flag integration considered and tested
+- [ ] Demo/testing scenarios documented with accessibility considerations
 
 ### Mandatory Form Validation Checklist
 Every form component must implement:
 
-- [ ] **Zod validation schema** with comprehensive rules
+- [ ] **Zod validation schema** with comprehensive rules and internationalization
 - [ ] **Real-time validation** with 300ms debounced feedback
-- [ ] **Input sanitization** for XSS prevention
-- [ ] **Comprehensive error messages** for all validation scenarios
+- [ ] **Input sanitization** for XSS prevention and content moderation
+- [ ] **Comprehensive error messages** for all validation scenarios in multiple languages
 - [ ] **Accessibility support** with ARIA attributes and screen reader announcements
 - [ ] **Character count indicators** for text fields with limits
-- [ ] **Password strength indicators** for password fields
+- [ ] **Password strength indicators** for password fields with visual and text feedback
 - [ ] **Rate limiting** for form submissions (5 attempts per minute)
 - [ ] **Test IDs** for all form elements and validation states
 - [ ] **Security measures** against common vulnerabilities
 - [ ] **Cross-field validation** for related inputs (e.g., password confirmation)
-- [ ] **Proper loading states** during submission
-- [ ] **Success and error feedback** with retry mechanisms
+- [ ] **Proper loading states** during submission with accessibility announcements
+- [ ] **Success and error feedback** with retry mechanisms and screen reader support
+- [ ] **Keyboard navigation** support with proper focus management
+- [ ] **High contrast mode** compatibility
 
-This AI in QA Demo Application is designed to be the ultimate testing playground for demonstrating AI-powered Quality Assurance capabilities while maintaining enterprise-level code quality, comprehensive form validation, and modern development practices with robust security measures.
+### Enhanced Accessibility Checklist
+- [ ] **Keyboard Navigation**: All interactive elements accessible via keyboard
+- [ ] **Focus Management**: Proper focus indicators and logical tab order
+- [ ] **Screen Reader Support**: ARIA labels, descriptions, and live regions
+- [ ] **Color Accessibility**: Sufficient contrast ratios and alternative indicators
+- [ ] **Semantic HTML**: Proper heading hierarchy and semantic elements
+- [ ] **Alternative Text**: Descriptive alt text for images and icons
+- [ ] **Form Accessibility**: Proper labels, descriptions, and error associations
+- [ ] **Dynamic Content**: Screen reader announcements for changes
+- [ ] **Reduced Motion**: Support for users who prefer reduced motion
+- [ ] **High Contrast**: Support for high contrast display preferences
+
+This AI in QA Demo Application is designed to be the ultimate testing playground for demonstrating AI-powered Quality Assurance capabilities while maintaining enterprise-level code quality, comprehensive form validation, full accessibility compliance, internationalization support, content moderation, and modern development practices with robust security measures.
