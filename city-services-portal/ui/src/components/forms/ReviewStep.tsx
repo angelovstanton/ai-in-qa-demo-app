@@ -161,7 +161,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   <Box>
                     <Typography variant="body2">?? {uploadedFile.name}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {(uploadedFile.size / 1024).toFixed(1)} KB
+                      {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
                     </Typography>
                   </Box>
                 </Box>

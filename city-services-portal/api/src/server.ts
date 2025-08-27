@@ -68,6 +68,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/requests', requestRoutes);
 app.use('/api/v1/requests', attachmentRoutes);
+app.use('/api/v1', attachmentRoutes); // Add this line for the image serving endpoint
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/rankings', rankingRoutes);
 

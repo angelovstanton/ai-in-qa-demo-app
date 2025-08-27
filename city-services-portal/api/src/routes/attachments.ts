@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { FeatureFlagService } from '../services/featureFlags';
@@ -9,30 +7,16 @@ import { FeatureFlagService } from '../services/featureFlags';
 const router = Router();
 const prisma = new PrismaClient();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = `${timestamp}-${sanitizedName}`;
-    cb(null, filename);
-  }
-});
+// Configure multer for memory storage (store in database instead of disk)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Only allow JPG and PNG files
-  const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png'];
+  // Allow JPG, PNG, and GIF files
+  const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPG and PNG files are allowed'));
+    cb(new Error('Only JPG, PNG, and GIF files are allowed'));
   }
 };
 
@@ -40,12 +24,71 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 1 * 1024 * 1024, // 1MB limit - exactly 1,048,576 bytes
+    files: 5 // Maximum 5 files
   }
 });
 
 // POST /api/v1/requests/:id/attachments - Upload attachments
-router.post('/:id/attachments', authenticateToken, upload.array('files', 5), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/attachments', authenticateToken, (req: AuthenticatedRequest, res: Response, next: any) => {
+  // Custom multer error handling middleware
+  upload.array('files', 5)(req, res, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          error: {
+            code: 'FILE_TOO_LARGE',
+            message: 'File size exceeds 1MB limit. Please compress your image or choose a smaller file.',
+            maxSize: '1MB',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({
+          error: {
+            code: 'TOO_MANY_FILES',
+            message: 'Maximum 5 files allowed per upload',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+      if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({
+          error: {
+            code: 'UNEXPECTED_FILE',
+            message: 'Unexpected file field',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+    }
+    
+    if (err && err.message === 'Only JPG, PNG, and GIF files are allowed') {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_FILE_TYPE',
+          message: 'Only JPG, PNG, and GIF files are allowed',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    if (err) {
+      console.error('File upload error:', err);
+      return res.status(500).json({
+        error: {
+          code: 'UPLOAD_ERROR',
+          message: 'An error occurred during file upload',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    // Continue to the main handler
+    next();
+  });
+}, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id: requestId } = req.params;
     const files = req.files as Express.Multer.File[];
@@ -60,19 +103,25 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
       });
     }
 
+    // Additional validation: Check individual file sizes (double-check)
+    const oversizedFiles = files.filter(file => file.size > 1 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'FILE_TOO_LARGE',
+          message: `File(s) exceed 1MB limit: ${oversizedFiles.map(f => f.originalname).join(', ')}`,
+          maxSize: '1MB',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
     // Check if request exists and user has permission
     const serviceRequest = await prisma.serviceRequest.findUnique({
       where: { id: requestId }
     });
 
     if (!serviceRequest) {
-      // Clean up uploaded files
-      files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-
       return res.status(404).json({
         error: {
           code: 'REQUEST_NOT_FOUND',
@@ -84,13 +133,6 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
 
     // Check permissions - citizens can only upload to their own requests
     if (req.user!.role === 'CITIZEN' && serviceRequest.createdBy !== req.user!.id) {
-      // Clean up uploaded files
-      files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-
       return res.status(403).json({
         error: {
           code: 'FORBIDDEN',
@@ -103,13 +145,6 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
     // Feature flag: API_UploadIntermittentFail
     const shouldFail = await FeatureFlagService.shouldApplyUploadIntermittentFail();
     if (shouldFail && Math.random() < (1/15)) {
-      // Clean up uploaded files
-      files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-
       return res.status(500).json({
         error: {
           code: 'UPLOAD_INTERMITTENT_FAILURE',
@@ -119,7 +154,7 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
       });
     }
 
-    // Create attachment records
+    // Create attachment records with image data stored in database
     const attachments = await Promise.all(
       files.map(async (file) => {
         const attachment = await prisma.attachment.create({
@@ -129,7 +164,8 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
             filename: file.originalname,
             mime: file.mimetype,
             size: file.size,
-            url: `/uploads/${file.filename}`
+            data: file.buffer, // Store the actual image data in database
+            url: `/api/v1/attachments/${requestId}/image` // Dynamic URL for serving images
           },
           include: {
             uploadedBy: {
@@ -139,8 +175,13 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
         });
 
         return {
-          ...attachment,
-          thumbnail: file.mimetype.startsWith('image/') ? `/uploads/thumb_${file.filename}` : null
+          id: attachment.id,
+          filename: attachment.filename,
+          mime: attachment.mime,
+          size: attachment.size,
+          url: `/api/v1/attachments/${attachment.id}/image`,
+          createdAt: attachment.createdAt,
+          uploadedBy: attachment.uploadedBy
         };
       })
     );
@@ -151,42 +192,67 @@ router.post('/:id/attachments', authenticateToken, upload.array('files', 5), asy
     });
 
   } catch (error) {
-    // Clean up uploaded files on error
-    if (req.files) {
-      const files = req.files as Express.Multer.File[];
-      files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-      });
-    }
-
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          error: {
-            code: 'FILE_TOO_LARGE',
-            message: 'File size exceeds 5MB limit',
-            correlationId: res.locals.correlationId
-          }
-        });
+    console.error('Attachment upload error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to upload attachments',
+        correlationId: res.locals.correlationId
       }
-    }
+    });
+  }
+});
 
-    if (error instanceof Error && error.message === 'Only JPG and PNG files are allowed') {
-      return res.status(400).json({
+// GET /api/v1/attachments/:id/image - Serve image data
+router.get('/attachments/:id/image', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id: attachmentId } = req.params;
+
+    const attachment = await prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        request: true
+      }
+    });
+
+    if (!attachment) {
+      return res.status(404).json({
         error: {
-          code: 'INVALID_FILE_TYPE',
-          message: 'Only JPG and PNG files are allowed',
+          code: 'ATTACHMENT_NOT_FOUND',
+          message: 'Attachment not found',
           correlationId: res.locals.correlationId
         }
       });
     }
 
+    // Check permissions - citizens can only view attachments from their own requests
+    if (req.user!.role === 'CITIZEN' && attachment.request.createdBy !== req.user!.id) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You can only view attachments from your own requests',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Set appropriate headers for image response
+    res.set({
+      'Content-Type': attachment.mime,
+      'Content-Length': attachment.size.toString(),
+      'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+      'ETag': `"${attachment.id}"`
+    });
+
+    // Send the image data
+    res.send(attachment.data);
+
+  } catch (error) {
+    console.error('Image serve error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to upload attachments',
+        message: 'Failed to serve image',
         correlationId: res.locals.correlationId
       }
     });
@@ -226,7 +292,12 @@ router.get('/:id/attachments', authenticateToken, async (req: AuthenticatedReque
 
     const attachments = await prisma.attachment.findMany({
       where: { requestId },
-      include: {
+      select: {
+        id: true,
+        filename: true,
+        mime: true,
+        size: true,
+        createdAt: true,
         uploadedBy: {
           select: { id: true, name: true, email: true }
         }
@@ -234,18 +305,18 @@ router.get('/:id/attachments', authenticateToken, async (req: AuthenticatedReque
       orderBy: { createdAt: 'desc' }
     });
 
-    const attachmentsWithThumbnails = attachments.map(attachment => ({
+    const attachmentsWithUrls = attachments.map(attachment => ({
       ...attachment,
-      thumbnail: attachment.mime.startsWith('image/') ? 
-        attachment.url.replace('/uploads/', '/uploads/thumb_') : null
+      url: `/api/v1/attachments/${attachment.id}/image`
     }));
 
     res.json({
-      data: attachmentsWithThumbnails,
+      data: attachmentsWithUrls,
       correlationId: res.locals.correlationId
     });
 
   } catch (error) {
+    console.error('Fetch attachments error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',

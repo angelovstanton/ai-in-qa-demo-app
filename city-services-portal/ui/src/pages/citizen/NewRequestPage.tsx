@@ -660,7 +660,7 @@ const NewRequestPage: React.FC = () => {
       // Upload file if one was selected - this is the critical fix for file persistence
       if (uploadedFile && result.id) {
         try {
-          console.log('Uploading file:', uploadedFile.name);
+          console.log('Uploading file:', uploadedFile.name, 'Size:', uploadedFile.size, 'bytes');
           
           const formData = new FormData();
           formData.append('files', uploadedFile);
@@ -674,10 +674,37 @@ const NewRequestPage: React.FC = () => {
           });
           
           console.log('File uploaded successfully:', uploadResponse.data);
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error('File upload failed:', uploadError);
+          
+          // Parse backend error response
+          let errorMessage = 'File upload failed. You can add attachments later by editing the request.';
+          
+          if (uploadError.response?.data?.error) {
+            const error = uploadError.response.data.error;
+            switch (error.code) {
+              case 'FILE_TOO_LARGE':
+                errorMessage = `File size is too large. Maximum allowed size is ${error.maxSize || '1MB'}. Please compress your image or choose a smaller file.`;
+                break;
+              case 'INVALID_FILE_TYPE':
+                errorMessage = 'Only JPG, PNG, and GIF files are allowed. Please choose a valid image file.';
+                break;
+              case 'TOO_MANY_FILES':
+                errorMessage = 'Maximum 5 files allowed per upload. Please select fewer files.';
+                break;
+              case 'NO_FILES_UPLOADED':
+                errorMessage = 'No files were uploaded. Please try again.';
+                break;
+              case 'UPLOAD_INTERMITTENT_FAILURE':
+                errorMessage = 'Upload failed due to a temporary server issue. Please try again.';
+                break;
+              default:
+                errorMessage = error.message || errorMessage;
+            }
+          }
+          
           // Show warning but don't fail the entire submission
-          setSubmitError('Request created successfully, but file upload failed. You can add attachments later by editing the request.');
+          setSubmitError(`Request created successfully, but ${errorMessage}`);
           return;
         }
       }
@@ -711,8 +738,11 @@ const NewRequestPage: React.FC = () => {
     // Clear any previous errors
     setSubmitError(null);
     
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      setSubmitError(`File size is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed size is 5MB.`);
+    const fileSizeMB = file.size / (1024 * 1024);
+    console.log(`File: ${file.name}, Size: ${file.size} bytes (${fileSizeMB.toFixed(2)}MB)`);
+    
+    if (file.size > 1 * 1024 * 1024) { // 1MB limit (exactly 1,048,576 bytes)
+      setSubmitError(`File size is ${fileSizeMB.toFixed(2)}MB. Maximum allowed size is 1MB. Please compress your image or choose a smaller file.`);
       return;
     }
 
@@ -738,7 +768,7 @@ const NewRequestPage: React.FC = () => {
       file: file // Store the actual file object
     }]);
     
-    console.log('File uploaded:', file.name, file.size, 'bytes');
+    console.log('File uploaded successfully:', file.name, fileSizeMB.toFixed(2), 'MB');
   }, [setValue]);
 
   // Handle file removal

@@ -167,7 +167,8 @@ model Attachment {
   filename     String
   mime         String
   size         Int
-  url          String
+  data         Bytes    // Store image data directly in database
+  url          String?  // Optional external URL (for backward compatibility)
   createdAt    DateTime @default(now())
 
   request    ServiceRequest @relation(fields: [requestId], references: [id])

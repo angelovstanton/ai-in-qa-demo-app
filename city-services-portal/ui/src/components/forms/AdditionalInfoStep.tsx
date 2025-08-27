@@ -51,7 +51,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
           Attach Photo (Optional)
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Upload a photo to help illustrate the issue. Supported formats: JPG, PNG, GIF (max 5MB)
+          Upload a photo to help illustrate the issue. Supported formats: JPG, PNG, GIF (max 1MB)
         </Typography>
         <Box
           sx={{
@@ -116,7 +116,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
                   ? {uploadedFile.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {(uploadedFile.size / 1024).toFixed(1)} KB
+                  {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB ({uploadedFile.size.toLocaleString()} bytes)
                 </Typography>
               </Box>
               <Button
