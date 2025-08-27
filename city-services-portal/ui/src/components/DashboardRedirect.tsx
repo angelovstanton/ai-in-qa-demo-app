@@ -12,7 +12,7 @@ const DashboardRedirect: React.FC = () => {
   // Redirect based on user role
   switch (user.role) {
     case 'CITIZEN':
-      return <Navigate to="/citizen/requests" replace />;
+      return <Navigate to="/dashboard" replace />;
     case 'CLERK':
       return <Navigate to="/clerk/inbox" replace />;
     case 'SUPERVISOR':

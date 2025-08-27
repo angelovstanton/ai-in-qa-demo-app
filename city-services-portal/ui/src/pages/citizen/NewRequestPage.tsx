@@ -57,7 +57,7 @@ const useRateLimit = (maxAttempts: number = 5, timeWindow: number = 60000) => {
 
   const checkRateLimit = useCallback(() => {
     const now = Date.now();
-    const recentAttempts = attempts.filter(time => now - time < timeWindow);
+    const recentAttempts = (Array.isArray(attempts) ? attempts : []).filter(time => now - time < timeWindow);
     
     if (recentAttempts.length >= maxAttempts) {
       setIsBlocked(true);
@@ -328,8 +328,11 @@ const NewRequestPage: React.FC = () => {
   // Step validation function
   const validateStep = useCallback(async (stepIndex: number): Promise<{ isValid: boolean; errors: string[] }> => {
     const stepFields = getStepFields(stepIndex);
+    if (!Array.isArray(stepFields)) {
+      return { isValid: false, errors: ['Invalid step configuration'] };
+    }
     const results = await Promise.all(stepFields.map(field => trigger(field as any)));
-    const isValid = results.every(result => result);
+    const isValid = Array.isArray(results) ? results.every(result => result) : false;
     
     // Collect errors for this step
     const stepErrors: string[] = [];
@@ -918,10 +921,10 @@ const NewRequestPage: React.FC = () => {
               <Autocomplete
                 multiple
                 options={['Water Supply', 'Electrical', 'Gas', 'Internet/Cable', 'Garbage Collection']}
-                value={field.value || []}
-                onChange={(_, value) => field.onChange(value)}
+                value={Array.isArray(field.value) ? field.value : []}
+                onChange={(_, value) => field.onChange(Array.isArray(value) ? value : [])}
                 renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
+                  (Array.isArray(value) ? value : []).map((option, index) => (
                     <Chip
                       variant="outlined"
                       label={option}
@@ -963,6 +966,65 @@ const NewRequestPage: React.FC = () => {
       <Typography variant="h6" gutterBottom>
         Additional Information
       </Typography>
+
+      {/* Image Upload */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Attach Photo (Optional)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Upload a photo to help illustrate the issue. Supported formats: JPG, PNG, GIF (max 5MB)
+        </Typography>
+        <Box
+          sx={{
+            border: '2px dashed #ddd',
+            borderRadius: 2,
+            p: 3,
+            textAlign: 'center',
+            backgroundColor: '#fafafa',
+            '&:hover': {
+              borderColor: 'primary.main',
+              backgroundColor: '#f5f5f5',
+            },
+          }}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                // For demo purposes, we'll just store the filename
+                // In a real app, you'd upload to a server or cloud storage
+                setValue('attachments', [{ name: file.name, size: file.size, type: file.type }]);
+              }
+            }}
+            style={{ display: 'none' }}
+            id="image-upload"
+            data-testid="cs-new-request-image-upload"
+          />
+          <label htmlFor="image-upload" style={{ cursor: 'pointer' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" color="primary">
+                📷
+              </Typography>
+              <Typography variant="body1">
+                Click to upload an image
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                or drag and drop here
+              </Typography>
+            </Box>
+          </label>
+          {watchedValues.attachments && watchedValues.attachments.length > 0 && (
+            <Box sx={{ mt: 2, p: 1, backgroundColor: 'success.light', borderRadius: 1 }}>
+              <Typography variant="body2" color="success.dark">
+                ✓ {watchedValues.attachments[0].name} uploaded
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
 
       <Controller
         name="agreesToTerms"
@@ -1019,9 +1081,12 @@ const NewRequestPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="subtitle1" color="primary" gutterBottom>Location</Typography>
-              <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress}</Typography>
-              <Typography variant="body2"><strong>City:</strong> {watchedValues.city}</Typography>
-              <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode}</Typography>
+              <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress || 'Not provided'}</Typography>
+              <Typography variant="body2"><strong>City:</strong> {watchedValues.city || 'Not provided'}</Typography>
+              <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode || 'Not provided'}</Typography>
+              <Typography variant="body2"><strong>Location Details:</strong> {watchedValues.locationText || 'Not provided'}</Typography>
+              {watchedValues.landmark && <Typography variant="body2"><strong>Landmark:</strong> {watchedValues.landmark}</Typography>}
+              {watchedValues.accessInstructions && <Typography variant="body2"><strong>Access Instructions:</strong> {watchedValues.accessInstructions}</Typography>}
             </CardContent>
           </Card>
         </Grid>
@@ -1035,6 +1100,87 @@ const NewRequestPage: React.FC = () => {
           </Card>
         </Grid>
 
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" color="primary" gutterBottom>Contact Information</Typography>
+              <Typography variant="body2"><strong>Preferred Contact Method:</strong> {watchedValues.contactMethod || 'EMAIL'}</Typography>
+              {watchedValues.alternatePhone && <Typography variant="body2"><strong>Alternate Phone:</strong> {watchedValues.alternatePhone}</Typography>}
+              {watchedValues.bestTimeToContact && <Typography variant="body2"><strong>Best Time to Contact:</strong> {watchedValues.bestTimeToContact}</Typography>}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" color="primary" gutterBottom>Issue Details</Typography>
+              {watchedValues.issueType && <Typography variant="body2"><strong>Issue Type:</strong> {watchedValues.issueType}</Typography>}
+              {watchedValues.severity && <Typography variant="body2"><strong>Severity:</strong> {watchedValues.severity}/10</Typography>}
+              <Typography variant="body2"><strong>Recurring Issue:</strong> {watchedValues.isRecurring ? 'Yes' : 'No'}</Typography>
+              <Typography variant="body2"><strong>Has Permits:</strong> {watchedValues.hasPermits ? 'Yes' : 'No'}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {watchedValues.affectedServices && watchedValues.affectedServices.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" color="primary" gutterBottom>Affected Services</Typography>
+                {watchedValues.affectedServices.map((service, index) => (
+                  <Typography key={index} variant="body2">• {service}</Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {watchedValues.estimatedValue && watchedValues.estimatedValue > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" color="primary" gutterBottom>Estimated Value</Typography>
+                <Typography variant="body2"><strong>Estimated Impact Value:</strong> ${watchedValues.estimatedValue}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {watchedValues.preferredDate && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" color="primary" gutterBottom>Scheduling Preferences</Typography>
+                <Typography variant="body2"><strong>Preferred Date:</strong> {new Date(watchedValues.preferredDate).toLocaleDateString()}</Typography>
+                {watchedValues.preferredTime && <Typography variant="body2"><strong>Preferred Time:</strong> {watchedValues.preferredTime}</Typography>}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {watchedValues.attachments && watchedValues.attachments.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" color="primary" gutterBottom>Attachments</Typography>
+                <Typography variant="body2">📷 {watchedValues.attachments[0].name}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {watchedValues.formComments && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" color="primary" gutterBottom>Additional Comments</Typography>
+                <Typography variant="body1">{watchedValues.formComments}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
         <Grid item xs={12}>
           <Card>
             <CardContent>
@@ -1047,16 +1193,6 @@ const NewRequestPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-
-      {submitError && (
-        <Alert 
-          severity="error" 
-          sx={{ mt: 2 }}
-          data-testid={FormValidationTestIds.FORM_ERROR('new-request')}
-        >
-          {submitError}
-        </Alert>
-      )}
 
       {isBlocked && (
         <Alert severity="warning" sx={{ mt: 2 }}>

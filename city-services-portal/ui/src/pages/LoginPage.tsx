@@ -11,6 +11,11 @@ import {
   Divider,
   Grid,
   IconButton,
+  Link,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Person, Work, AdminPanelSettings, Build, SupervisorAccount } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
@@ -23,8 +28,8 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Demo account credentials
-  const demoAccounts = [
+  // Demo account credentials - Main accounts
+  const mainDemoAccounts = [
     {
       role: 'Citizen',
       email: 'john@example.com',
@@ -67,9 +72,69 @@ const LoginPage: React.FC = () => {
     }
   ];
 
+  // All demo accounts including additional ones
+  const allDemoAccounts = [
+    ...mainDemoAccounts,
+    // Additional Citizens
+    ...Array.from({ length: 20 }, (_, i) => ({
+      role: 'Citizen',
+      email: `citizen${i + 1}@example.com`,
+      password: 'password123',
+      icon: <Person />,
+      color: 'primary' as const,
+      description: `Citizen ${i + 1}`
+    })),
+    // Additional Clerks
+    ...Array.from({ length: 5 }, (_, i) => ({
+      role: 'Clerk',
+      email: `clerk${i + 1}@city.gov`,
+      password: 'password123',
+      icon: <Work />,
+      color: 'secondary' as const,
+      description: `Clerk ${i + 1}`
+    })),
+    // Additional Supervisors
+    ...Array.from({ length: 3 }, (_, i) => ({
+      role: 'Supervisor',
+      email: `supervisor${i + 1}@city.gov`,
+      password: 'password123',
+      icon: <SupervisorAccount />,
+      color: 'warning' as const,
+      description: `Supervisor ${i + 1}`
+    })),
+    // Additional Field Agents
+    ...Array.from({ length: 3 }, (_, i) => ({
+      role: 'Field Agent',
+      email: `agent${i + 1}@city.gov`,
+      password: 'password123',
+      icon: <Build />,
+      color: 'info' as const,
+      description: `Field Agent ${i + 1}`
+    })),
+    // Additional Admins
+    ...Array.from({ length: 2 }, (_, i) => ({
+      role: 'Admin',
+      email: `admin${i + 1}@city.gov`,
+      password: 'password123',
+      icon: <AdminPanelSettings />,
+      color: 'error' as const,
+      description: `Admin ${i + 1}`
+    }))
+  ];
+
+  const [selectedDemoAccount, setSelectedDemoAccount] = useState('');
+
   const handlePrefillAccount = (demoEmail: string, demoPassword: string) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
+  };
+
+  const handleDemoAccountSelect = (accountEmail: string) => {
+    const account = allDemoAccounts.find(acc => acc.email === accountEmail);
+    if (account) {
+      handlePrefillAccount(account.email, account.password);
+      setSelectedDemoAccount(accountEmail);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,8 +240,34 @@ const LoginPage: React.FC = () => {
               <Typography variant="subtitle2" gutterBottom fontWeight="bold" data-testid="cs-demo-accounts-title">
                 Demo Accounts - Click to Prefill:
               </Typography>
+              
+              {/* Dropdown for all demo accounts */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Select Demo Account</InputLabel>
+                <Select
+                  value={selectedDemoAccount}
+                  label="Select Demo Account"
+                  onChange={(e) => handleDemoAccountSelect(e.target.value)}
+                  data-testid="cs-demo-account-dropdown"
+                >
+                  <MenuItem value="">
+                    <em>Choose an account...</em>
+                  </MenuItem>
+                  {allDemoAccounts.map((account, index) => (
+                    <MenuItem key={`${account.role}-${index}`} value={account.email}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {account.icon}
+                        <Typography variant="body2">
+                          <strong>{account.role}</strong> - {account.email}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <Grid container spacing={1}>
-                {demoAccounts.map((account, index) => (
+                {mainDemoAccounts.map((account, index) => (
                   <Grid item xs={12} sm={6} key={account.role}>
                     <Button
                       fullWidth

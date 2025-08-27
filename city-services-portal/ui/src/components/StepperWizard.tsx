@@ -186,12 +186,12 @@ const StepperWizard: React.FC<StepperWizardProps> = ({
 
   return (
     <Box data-testid={testId}>
-      {/* Validation Summary */}
-      {allErrors.length > 0 && (
-        <Alert severity="error" sx={{ mb: 3 }} data-testid={`${testId}-validation-summary`}>
-          <AlertTitle>Please fix the following errors before proceeding:</AlertTitle>
+      {/* Validation Summary - only show if current step has errors and has been attempted */}
+      {currentStepErrors.length > 0 && attemptedSteps.has(activeStep) && (
+        <Alert severity="error" sx={{ mb: 3 }} data-testid={`${testId}-step-validation-summary`}>
+          <AlertTitle>Please fix the following errors in this step:</AlertTitle>
           <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
-            {allErrors.map((error, index) => (
+            {currentStepErrors.map((error, index) => (
               <li key={index} style={{ marginBottom: '4px' }}>
                 {error}
               </li>
@@ -346,7 +346,7 @@ const StepperWizard: React.FC<StepperWizardProps> = ({
             <Button
               onClick={handleSubmit}
               variant="contained"
-              disabled={isSubmitting || (!isCurrentStepValid && attemptedSteps.has(activeStep))}
+              disabled={isSubmitting || (validatingStep === activeStep)}
               data-testid={`${testId}-submit`}
               startIcon={isSubmitting ? <CircularProgress size={16} /> : undefined}
             >
@@ -356,7 +356,7 @@ const StepperWizard: React.FC<StepperWizardProps> = ({
             <Button
               onClick={handleNext}
               variant="contained"
-              disabled={isSubmitting || (!isCurrentStepValid && attemptedSteps.has(activeStep))}
+              disabled={isSubmitting || (validatingStep === activeStep)}
               data-testid={`${testId}-next`}
               endIcon={validatingStep === activeStep ? <CircularProgress size={16} /> : undefined}
             >
@@ -372,7 +372,7 @@ const StepperWizard: React.FC<StepperWizardProps> = ({
           Progress: {Object.values(stepValidation).filter(v => v.isValid).length} of {steps.length} steps completed
           {allErrors.length > 0 && (
             <Typography component="span" color="error" sx={{ ml: 2 }}>
-              • {allErrors.length} error(s) remaining
+              ï¿½ {allErrors.length} error(s) remaining
             </Typography>
           )}
         </Typography>

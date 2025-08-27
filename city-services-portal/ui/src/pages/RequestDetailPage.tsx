@@ -243,7 +243,7 @@ const RequestDetailPage: React.FC = () => {
       case 'HIGH': return 'warning';
       case 'MEDIUM': return 'primary';
       case 'LOW': return 'secondary';
-      default: return 'default';
+      default: return 'secondary';
     }
   };
 
@@ -254,9 +254,9 @@ const RequestDetailPage: React.FC = () => {
       case 'IN_PROGRESS': return 'warning';
       case 'WAITING_ON_CITIZEN': return 'secondary';
       case 'RESOLVED': return 'success';
-      case 'CLOSED': return 'default';
+      case 'CLOSED': return 'secondary';
       case 'REJECTED': return 'error';
-      default: return 'default';
+      default: return 'secondary';
     }
   };
 
@@ -321,7 +321,7 @@ const RequestDetailPage: React.FC = () => {
   }
 
   return (
-    <Box data-testid="cs-request-detail-page">
+    <Box data-testid="cs-request-detail-page" sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <IconButton
           onClick={() => navigate(-1)}
@@ -335,11 +335,12 @@ const RequestDetailPage: React.FC = () => {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        <Grid container spacing={3}>
         {/* Main Content */}
         <Grid item xs={12} md={8}>
-          <Card data-testid="cs-request-detail-main">
-            <CardContent>
+          <Card data-testid="cs-request-detail-main" sx={{ height: 'fit-content' }}>
+            <CardContent sx={{ maxHeight: '80vh', overflow: 'auto' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                 <Box>
                   <Typography variant="h5" gutterBottom>
@@ -461,22 +462,230 @@ const RequestDetailPage: React.FC = () => {
                 </Typography>
               )}
 
+              {/* Location Information */}
               <Typography variant="h6" gutterBottom>
-                Location
+                Location Information
               </Typography>
-              {isEditing ? (
-                <TextField
-                  value={editData.locationText}
-                  onChange={(e) => setEditData({ ...editData, locationText: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  sx={{ mb: 3 }}
-                />
-              ) : (
-                <Typography variant="body1" paragraph>
-                  {request.locationText}
-                </Typography>
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                {request.streetAddress && (
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Street Address</Typography>
+                    <Typography variant="body1">{request.streetAddress}</Typography>
+                  </Grid>
+                )}
+                {request.city && (
+                  <Grid item xs={12} md={3}>
+                    <Typography variant="body2" color="text.secondary">City</Typography>
+                    <Typography variant="body1">{request.city}</Typography>
+                  </Grid>
+                )}
+                {request.postalCode && (
+                  <Grid item xs={12} md={3}>
+                    <Typography variant="body2" color="text.secondary">Postal Code</Typography>
+                    <Typography variant="body1">{request.postalCode}</Typography>
+                  </Grid>
+                )}
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary">Location Details</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.locationText}
+                      onChange={(e) => setEditData({ ...editData, locationText: e.target.value })}
+                      fullWidth
+                      variant="outlined"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.locationText}</Typography>
+                  )}
+                </Grid>
+                {request.landmark && (
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Landmark</Typography>
+                    <Typography variant="body1">{request.landmark}</Typography>
+                  </Grid>
+                )}
+                {request.accessInstructions && (
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Access Instructions</Typography>
+                    <Typography variant="body1">{request.accessInstructions}</Typography>
+                  </Grid>
+                )}
+              </Grid>
+
+              {/* Contact Information */}
+              {(request.contactMethod || request.alternatePhone || request.bestTimeToContact) && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Contact Information
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.contactMethod && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
+                        <Typography variant="body1">{request.contactMethod}</Typography>
+                      </Grid>
+                    )}
+                    {request.alternatePhone && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
+                        <Typography variant="body1">{request.alternatePhone}</Typography>
+                      </Grid>
+                    )}
+                    {request.bestTimeToContact && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
+                        <Typography variant="body1">{request.bestTimeToContact}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </>
               )}
+
+              {/* Issue Details */}
+              {(request.issueType || request.severity || request.isRecurring || request.isEmergency || request.hasPermits) && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Issue Details
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.issueType && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Issue Type</Typography>
+                        <Typography variant="body1">{request.issueType}</Typography>
+                      </Grid>
+                    )}
+                    {request.severity && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Severity (1-10)</Typography>
+                        <Typography variant="body1">{request.severity}</Typography>
+                      </Grid>
+                    )}
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" color="text.secondary">Issue Characteristics</Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {request.isRecurring && <Chip label="Recurring Issue" size="small" color="info" />}
+                        {request.isEmergency && <Chip label="Emergency" size="small" color="error" />}
+                        {request.hasPermits && <Chip label="Has Permits" size="small" color="success" />}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+
+              {/* Service Impact */}
+              {(request.affectedServices || request.estimatedValue) && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Service Impact
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.affectedServices && request.affectedServices.length > 0 && (
+                      <Grid item xs={12} md={8}>
+                        <Typography variant="body2" color="text.secondary">Affected Services</Typography>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                          {request.affectedServices.map((service, index) => (
+                            <Chip key={index} label={service} size="small" variant="outlined" />
+                          ))}
+                        </Box>
+                      </Grid>
+                    )}
+                    {request.estimatedValue && (
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Estimated Value</Typography>
+                        <Typography variant="body1">${request.estimatedValue.toLocaleString()}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </>
+              )}
+
+              {/* Additional Contacts */}
+              {request.additionalContacts && request.additionalContacts.length > 0 && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Additional Contacts
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.additionalContacts.map((contact, index) => (
+                      <Grid item xs={12} md={6} key={index}>
+                        <Paper sx={{ p: 2 }}>
+                          <Typography variant="body2" color="text.secondary">Contact {index + 1}</Typography>
+                          <Typography variant="body1" fontWeight="bold">{contact.name}</Typography>
+                          <Typography variant="body2">{contact.phone}</Typography>
+                          <Typography variant="body2" color="text.secondary">{contact.relationship}</Typography>
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
+              )}
+
+              {/* Scheduled Service */}
+              {(request.preferredDate || request.preferredTime) && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Preferred Schedule
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.preferredDate && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" color="text.secondary">Preferred Date</Typography>
+                        <Typography variant="body1">{format(new Date(request.preferredDate), 'PPP')}</Typography>
+                      </Grid>
+                    )}
+                    {request.preferredTime && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" color="text.secondary">Preferred Time</Typography>
+                        <Typography variant="body1">{request.preferredTime}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </>
+              )}
+
+              {/* User Experience */}
+              {(request.satisfactionRating || request.formComments) && (
+                <>
+                  <Typography variant="h6" gutterBottom>
+                    Additional Information
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {request.satisfactionRating && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="body2" color="text.secondary">Satisfaction Rating (1-5)</Typography>
+                        <Typography variant="body1">{request.satisfactionRating}/5</Typography>
+                      </Grid>
+                    )}
+                    {request.formComments && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">Additional Comments</Typography>
+                        <Typography variant="body1">{request.formComments}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </>
+              )}
+
+              {/* Default Image */}
+              <Typography variant="h6" gutterBottom>
+                Attachments
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <img 
+                  src="/images/service-request-default-image.png" 
+                  alt="Service Request" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    height: 'auto', 
+                    maxHeight: '300px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px'
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </Box>
 
               {/* Upvotes Section */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
@@ -631,7 +840,7 @@ const RequestDetailPage: React.FC = () => {
                               sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}
                               data-testid={`cs-comment-content-${comment.id || index}`}
                             >
-                              {comment.content}
+                              {comment.body}
                             </Typography>
                           }
                         />
@@ -654,12 +863,15 @@ const RequestDetailPage: React.FC = () => {
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
           {/* Request Info */}
-          <Card sx={{ mb: 2 }} data-testid="cs-request-detail-info">
+          <Card sx={{ mb: 2, height: 'fit-content' }} data-testid="cs-request-detail-info">
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Request Information
               </Typography>
               <Box sx={{ '& > *': { mb: 1 } }}>
+                <Typography variant="body2">
+                  <strong>Date of Request:</strong> {format(new Date(request.dateOfRequest), 'PPP')}
+                </Typography>
                 <Typography variant="body2">
                   <strong>Created:</strong> {format(new Date(request.createdAt), 'PPpp')}
                 </Typography>
@@ -705,7 +917,7 @@ const RequestDetailPage: React.FC = () => {
 
           {/* Event History */}
           {request.eventLogs && request.eventLogs.length > 0 && (
-            <Card data-testid="cs-request-detail-history">
+            <Card sx={{ height: 'fit-content' }} data-testid="cs-request-detail-history">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   <HistoryIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -728,7 +940,8 @@ const RequestDetailPage: React.FC = () => {
             </Card>
           )}
         </Grid>
-      </Grid>
+        </Grid>
+      </Box>
 
       {/* Status Change Dialog */}
       <Dialog

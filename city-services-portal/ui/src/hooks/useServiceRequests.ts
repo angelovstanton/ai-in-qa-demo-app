@@ -13,6 +13,7 @@ interface UseServiceRequestsParams {
   assignedTo?: string;
   text?: string;
   createdBy?: string;
+  showAll?: boolean; // If true, don't filter by current user for citizens
 }
 
 interface UseServiceRequestsResult {
@@ -46,12 +47,16 @@ export const useServiceRequests = (params: UseServiceRequestsParams = {}): UseSe
       if (params.assignedTo) queryParams.append('assignedTo', params.assignedTo);
       if (params.text) queryParams.append('text', params.text);
       if (params.createdBy) queryParams.append('createdBy', params.createdBy);
+      if (params.showAll) queryParams.append('showAll', 'true');
 
       const response = await api.get<PaginatedResponse<ServiceRequest>>(`/requests?${queryParams.toString()}`);
       
-      setData(response.data.data);
-      setTotalCount(response.data.pagination.totalCount);
+      setData(response.data.data || []);
+      setTotalCount(response.data.pagination?.totalCount || 0);
     } catch (err: any) {
+      console.error('Service requests fetch error:', err);
+      setData([]);
+      setTotalCount(0);
       setError(err.response?.data?.error?.message || 'Failed to fetch service requests');
     } finally {
       setLoading(false);

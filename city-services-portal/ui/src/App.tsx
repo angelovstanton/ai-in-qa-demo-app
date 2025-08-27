@@ -6,16 +6,21 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import AppLayout from './components/AppLayout';
 import DashboardRedirect from './components/DashboardRedirect';
+import ErrorBoundary from './components/ErrorBoundary';
 import PublicBoardPage from './pages/PublicBoardPage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import RequestDetailPage from './pages/RequestDetailPage';
 import CitizenRequestsPage from './pages/citizen/CitizenRequestsPage';
 import NewRequestPage from './pages/citizen/NewRequestPage';
+import AllRequestsPage from './pages/AllRequestsPage';
+import ResolvedCasesPage from './pages/ResolvedCasesPage';
+import RanklistPage from './pages/RanklistPage';
 import ClerkInboxPage from './pages/clerk/ClerkInboxPage';
 import SupervisorAssignPage from './pages/supervisor/SupervisorAssignPage';
 import AgentTasksPage from './pages/agent/AgentTasksPage';
 import AdminFlagsPage from './pages/admin/AdminFlagsPage';
+import EditProfilePage from './pages/EditProfilePage';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ 
@@ -109,13 +114,27 @@ const AppRoutes: React.FC = () => {
           } 
         />
         
+        {/* Dashboard - All requests view for authenticated users */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <AllRequestsPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+
         {/* Citizen routes */}
         <Route 
           path="/citizen/requests" 
           element={
             <ProtectedRoute allowedRoles={['CITIZEN']}>
               <AppLayout>
-                <CitizenRequestsPage />
+                <ErrorBoundary>
+                  <CitizenRequestsPage />
+                </ErrorBoundary>
               </AppLayout>
             </ProtectedRoute>
           } 
@@ -126,6 +145,40 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute allowedRoles={['CITIZEN']}>
               <AppLayout>
                 <NewRequestPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Public pages accessible to all authenticated users */}
+        <Route 
+          path="/resolved-cases" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ResolvedCasesPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/ranklist" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <RanklistPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/profile/edit" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <EditProfilePage />
               </AppLayout>
             </ProtectedRoute>
           } 

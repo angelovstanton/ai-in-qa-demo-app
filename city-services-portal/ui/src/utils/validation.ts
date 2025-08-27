@@ -31,7 +31,7 @@ export const ValidationPatterns = {
     .min(2, 'Name must be at least 2 characters')
     .max(50, 'Name must be less than 50 characters')
     .regex(
-      /^[a-zA-ZÀ-ÿ\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
+      /^[a-zA-Zï¿½-ï¿½\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
       'Name can only contain letters, spaces, hyphens, and apostrophes'
     )
     .transform((name) => name.trim()),
@@ -53,12 +53,12 @@ export const ValidationPatterns = {
       'URL must start with http:// or https://'
     ),
 
-  // Postal codes supporting multiple international formats - minimum 5 symbols
+  // Postal codes supporting multiple international formats - minimum 3 symbols
   postalCode: z.string()
-    .min(5, 'Postal code must be at least 5 characters')
+    .min(3, 'Postal code must be at least 3 characters')
     .max(10, 'Postal code must be less than 10 characters')
     .regex(
-      /^[A-Za-z0-9\s-]{5,10}$/,
+      /^[A-Za-z0-9\s-]{3,10}$/,
       'Postal code format is invalid'
     ),
 
@@ -86,7 +86,17 @@ export const ValidationPatterns = {
     ),
 
   // Future date validation for scheduling
-  futureDate: z.date()
+  futureDate: z.union([z.string(), z.date()])
+    .transform((value) => {
+      if (typeof value === 'string') {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        return date;
+      }
+      return value;
+    })
     .refine(
       (date) => date > new Date(),
       'Date must be in the future'
@@ -111,7 +121,7 @@ export const ValidationPatterns = {
     .min(3, 'City name must be at least 3 characters')
     .max(50, 'City name is too long')
     .regex(
-      /^[a-zA-ZÀ-ÿ\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
+      /^[a-zA-Zï¿½-ï¿½\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
       'City name contains invalid characters'
     ),
 
@@ -167,7 +177,17 @@ export const ServiceRequestPatterns = {
     .transform((desc) => ValidationPatterns.safeText.parse(desc)),
 
   // Date of request validation - cannot be more than 1 month in the past
-  dateOfRequest: z.date()
+  dateOfRequest: z.union([z.string(), z.date()])
+    .transform((value) => {
+      if (typeof value === 'string') {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        return date;
+      }
+      return value;
+    })
     .refine(
       (date) => {
         const oneMonthAgo = new Date();

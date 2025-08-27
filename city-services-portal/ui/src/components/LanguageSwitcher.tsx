@@ -27,13 +27,13 @@ const languages: LanguageOption[] = [
     code: 'EN',
     name: 'English',
     nativeName: 'English',
-    flag: '????',
+    flag: '🇺🇸',
   },
   {
     code: 'BG',
     name: 'Bulgarian',
-    nativeName: '?????????',
-    flag: '????',
+    nativeName: 'Български',
+    flag: '🇧🇬',
   },
 ];
 

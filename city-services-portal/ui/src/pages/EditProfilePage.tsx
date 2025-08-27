@@ -562,16 +562,16 @@ const EditProfilePage: React.FC = () => {
               <CardContent>
                 <Typography variant="h6" gutterBottom>Security Tips</Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  • Use a strong password with at least 8 characters
+                  ï¿½ Use a strong password with at least 8 characters
                 </Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  • Include uppercase, lowercase, numbers, and symbols
+                  ï¿½ Include uppercase, lowercase, numbers, and symbols
                 </Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  • Don't reuse passwords from other accounts
+                  ï¿½ Don't reuse passwords from other accounts
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  • Change your password regularly
+                  ï¿½ Change your password regularly
                 </Typography>
               </CardContent>
             </Card>
@@ -582,4 +582,4 @@ const EditProfilePage: React.FC = () => {
   );
 };
 
-export default EditProfilePage;export default EditProfilePage;
+export default EditProfilePage;

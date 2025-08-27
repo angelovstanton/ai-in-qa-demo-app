@@ -22,6 +22,7 @@ interface DataTableProps {
   onPaginationModelChange?: (model: GridPaginationModel) => void;
   onSortModelChange?: (model: GridSortModel) => void;
   onFilterModelChange?: (model: GridFilterModel) => void;
+  onRowClick?: (params: any) => void;
   testId?: string;
 }
 
@@ -37,6 +38,7 @@ const DataTable: React.FC<DataTableProps> = ({
   onPaginationModelChange,
   onSortModelChange,
   onFilterModelChange,
+  onRowClick,
   testId = 'cs-data-grid',
 }) => {
   const handlePaginationModelChange = (model: GridPaginationModel) => {
@@ -54,20 +56,21 @@ const DataTable: React.FC<DataTableProps> = ({
   return (
     <Paper sx={{ height: 600, width: '100%' }}>
       <DataGrid
-        rows={rows}
-        columns={columns}
+        rows={rows || []}
+        columns={columns || []}
         loading={loading}
-        rowCount={rowCount}
+        rowCount={rowCount || 0}
         paginationMode="server"
         sortingMode="server"
         filterMode="server"
-        paginationModel={{ page, pageSize }}
+        paginationModel={{ page: page || 0, pageSize: pageSize || 10 }}
         pageSizeOptions={[5, 10, 25, 50]}
-        sortModel={sortModel}
-        filterModel={filterModel}
+        sortModel={sortModel || []}
+        filterModel={filterModel || { items: [] }}
         onPaginationModelChange={handlePaginationModelChange}
         onSortModelChange={handleSortModelChange}
         onFilterModelChange={handleFilterModelChange}
+        onRowClick={onRowClick}
         slots={{
           toolbar: GridToolbar,
         }}
@@ -82,8 +85,20 @@ const DataTable: React.FC<DataTableProps> = ({
           '& .MuiDataGrid-toolbarContainer': {
             padding: 2,
           },
+          ...(onRowClick && {
+            '& .MuiDataGrid-row': {
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
+            },
+          }),
         }}
         data-testid={testId}
+        // Add error handling for DataGrid
+        onError={(error) => {
+          console.error('DataGrid error:', error);
+        }}
       />
     </Paper>
   );

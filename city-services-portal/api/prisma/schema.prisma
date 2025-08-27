@@ -14,6 +14,29 @@ model User {
   role         String   // CITIZEN, CLERK, FIELD_AGENT, SUPERVISOR, ADMIN
   passwordHash String
   departmentId String?
+  
+  // Profile fields
+  firstName    String?
+  lastName     String?
+  phone        String?
+  alternatePhone String?
+  streetAddress String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  
+  // Preferences
+  preferredLanguage String? @default("EN")
+  communicationMethod String? @default("EMAIL")
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean @default(false)
+  marketingEmails Boolean @default(false)
+  serviceUpdates Boolean @default(true)
+  twoFactorEnabled Boolean @default(false)
+  securityQuestion String?
+  securityAnswer String?
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -24,6 +47,7 @@ model User {
   attachments      Attachment[]
   assignments      Assignment[]     @relation("AssignedBy")
   assignedTasks    Assignment[]     @relation("AssignedTo")
+  upvotes          Upvote[]
 
   @@map("users")
 }
@@ -47,9 +71,52 @@ model ServiceRequest {
   category     String
   priority     String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   status       String    @default("DRAFT")  // DRAFT, SUBMITTED, TRIAGED, etc.
-  locationText String
-  lat          Float?
-  lng          Float?
+  
+  // Date fields
+  dateOfRequest DateTime
+  
+  // Location fields
+  streetAddress String?
+  city          String?
+  postalCode    String?
+  locationText  String
+  landmark      String?
+  accessInstructions String?
+  lat           Float?
+  lng           Float?
+  
+  // Contact fields
+  contactMethod     String?    // EMAIL, PHONE, SMS
+  alternatePhone    String?
+  bestTimeToContact String?
+  
+  // Issue details
+  issueType         String?
+  severity          Int?       // 1-10 scale
+  isRecurring       Boolean    @default(false)
+  isEmergency       Boolean    @default(false)
+  hasPermits        Boolean    @default(false)
+  
+  // Service impact
+  affectedServices  String?    // JSON array stored as string
+  estimatedValue    Float?
+  
+  // Additional contacts (JSON array stored as string)
+  additionalContacts String?
+  
+  // User experience
+  satisfactionRating Int?      // 1-5 scale
+  formComments       String?   // Additional comments from form (renamed to avoid conflict)
+  
+  // Legal and preferences
+  agreesToTerms      Boolean   @default(true)
+  wantsUpdates       Boolean   @default(true)
+  
+  // Scheduled service
+  preferredDate      DateTime?
+  preferredTime      String?
+  
+  // System fields
   createdBy    String
   assignedTo   String?
   departmentId String?
@@ -67,6 +134,7 @@ model ServiceRequest {
   attachments Attachment[]
   assignments Assignment[]
   eventLogs   EventLog[]
+  upvotes     Upvote[]
 
   @@map("service_requests")
 }
@@ -125,6 +193,19 @@ model EventLog {
   request ServiceRequest @relation(fields: [requestId], references: [id])
 
   @@map("event_logs")
+}
+
+model Upvote {
+  id        String   @id @default(uuid())
+  userId    String
+  requestId String
+  createdAt DateTime @default(now())
+
+  user    User           @relation(fields: [userId], references: [id])
+  request ServiceRequest @relation(fields: [requestId], references: [id])
+
+  @@unique([userId, requestId])
+  @@map("upvotes")
 }
 
 model FeatureFlag {

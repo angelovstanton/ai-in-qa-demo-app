@@ -39,7 +39,14 @@ import {
   Sanitization,
   XSSPrevention 
 } from '../utils/validation';
-import { debounce } from 'lodash';
+// Custom debounce function to replace lodash
+const debounce = <T extends (...args: any[]) => any>(func: T, delay: number): T => {
+  let timeoutId: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  }) as T;
+};
 
 /**
  * Comprehensive Registration Form Component
@@ -540,7 +547,7 @@ export default function RegistrationForm({
                           color="textSecondary"
                           display="block"
                         >
-                          • {feedback}
+                          ï¿½ {feedback}
                         </Typography>
                       ))}
                     </Box>

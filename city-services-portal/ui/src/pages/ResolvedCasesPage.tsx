@@ -96,8 +96,8 @@ const ResolvedCasesPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPriority, setSelectedPriority] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [dateFrom, setDateFrom] = useState<Date | null>(startOfMonth(new Date()));
-  const [dateTo, setDateTo] = useState<Date | null>(endOfMonth(new Date()));
+  const [dateFrom, setDateFrom] = useState<Date | null>(new Date('2024-01-01'));
+  const [dateTo, setDateTo] = useState<Date | null>(new Date());
   const [minSatisfactionRating, setMinSatisfactionRating] = useState('');
 
   // Pagination and sorting
@@ -271,7 +271,7 @@ const ResolvedCasesPage: React.FC = () => {
   };
 
   const handleViewCase = (caseId: string) => {
-    navigate(`/request/${caseId}`);
+    navigate(`/requests/${caseId}`);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -280,7 +280,7 @@ const ResolvedCasesPage: React.FC = () => {
       case 'HIGH': return 'warning';
       case 'MEDIUM': return 'primary';
       case 'LOW': return 'secondary';
-      default: return 'default';
+      default: return 'secondary';
     }
   };
 
@@ -291,7 +291,7 @@ const ResolvedCasesPage: React.FC = () => {
   };
 
   const getSatisfactionColor = (rating?: number) => {
-    if (!rating) return 'default';
+    if (!rating) return 'secondary';
     if (rating >= 4.5) return 'success';
     if (rating >= 3.5) return 'warning';
     return 'error';
@@ -643,6 +643,7 @@ const ResolvedCasesPage: React.FC = () => {
               onPaginationModelChange={setPaginationModel}
               onSortModelChange={setSortModel}
               onFilterModelChange={setFilterModel}
+              onRowClick={(params) => handleViewCase(params.row.id)}
               testId="cs-resolved-cases-grid"
             />
           </Card>

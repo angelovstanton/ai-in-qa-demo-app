@@ -134,7 +134,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'CLERK':
         roleSpecificItems.push(
           { 
-            label: 'Inbox', 
+            label: t('nav.inbox') || 'Inbox', 
             href: '/clerk/inbox', 
             icon: <InboxIcon />,
             testId: 'cs-nav-inbox'
@@ -144,7 +144,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'SUPERVISOR':
         roleSpecificItems.push(
           { 
-            label: 'Assign Tasks', 
+            label: t('nav.assign-tasks') || 'Assign Tasks', 
             href: '/supervisor/assign', 
             icon: <AssignIcon />,
             testId: 'cs-nav-assign'
@@ -154,7 +154,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'FIELD_AGENT':
         roleSpecificItems.push(
           { 
-            label: 'My Tasks', 
+            label: t('nav.my-tasks') || 'My Tasks', 
             href: '/agent/my-tasks', 
             icon: <TasksIcon />,
             testId: 'cs-nav-my-tasks'
@@ -164,7 +164,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'ADMIN':
         roleSpecificItems.push(
           { 
-            label: 'Feature Flags', 
+            label: t('nav.admin-flags') || 'Feature Flags', 
             href: '/admin/flags', 
             icon: <SettingsIcon />,
             testId: 'cs-nav-feature-flags'
@@ -337,10 +337,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           <Typography 
             variant="h6" 
-            component="div" 
+            component={Link}
+            to="/dashboard"
             sx={{ 
               flexGrow: 1,
               fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
+              textDecoration: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8,
+              }
             }}
           >
             {isMobile ? 'City Services' : 'City Services Portal'}
@@ -465,6 +472,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           sx={{ 
             py: { xs: 2, sm: 3 }, // Responsive padding
             px: { xs: 1, sm: 2, md: 3 }, // Responsive horizontal padding
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {children}
@@ -488,7 +498,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             px: 1
           }}
         >
-          © 2025 City Services Portal - Built with React & MUI
+          ï¿½ 2025 City Services Portal - Built with React & MUI
         </Typography>
       </Box>
     </Box>

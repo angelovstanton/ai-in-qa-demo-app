@@ -22,6 +22,8 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Clear as ClearIcon,
+  ThumbUp as ThumbUpIcon,
+  Comment as CommentIcon,
 } from '@mui/icons-material';
 import {
   GridColDef,
@@ -98,12 +100,13 @@ const CitizenRequestsPage: React.FC = () => {
     : 'createdAt:desc';
 
   const { data, loading, error, totalCount } = useServiceRequests({
-    page: paginationModel.page + 1, // API uses 1-based indexing
+    page: paginationModel.page + 1, // API is 1-based
     pageSize: paginationModel.pageSize,
     sort: sortParam,
-    status: statusFilter,
-    category: categoryFilter,
-    priority: priorityFilter,
+    status: statusFilter || undefined,
+    category: categoryFilter || undefined,
+    priority: priorityFilter || undefined,
+    text: searchTerm || undefined,
   });
 
   const getPriorityColor = (priority: string) => {
@@ -113,11 +116,11 @@ const CitizenRequestsPage: React.FC = () => {
       case 'HIGH':
         return 'warning';
       case 'MEDIUM':
-        return 'primary';
+        return 'info';
       case 'LOW':
-        return 'secondary';
+        return 'success';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -126,28 +129,20 @@ const CitizenRequestsPage: React.FC = () => {
       case 'SUBMITTED':
         return 'info';
       case 'TRIAGED':
-        return 'primary';
-      case 'IN_PROGRESS':
         return 'warning';
+      case 'IN_PROGRESS':
+        return 'primary';
       case 'WAITING_ON_CITIZEN':
-        return 'secondary';
+        return 'warning';
       case 'RESOLVED':
         return 'success';
       case 'CLOSED':
-        return 'default';
+        return 'secondary';
       case 'REJECTED':
         return 'error';
       default:
-        return 'default';
+        return 'secondary';
     }
-  };
-
-  const handleViewRequest = (requestId: string) => {
-    navigate(`/request/${requestId}`);
-  };
-
-  const handleCreateNew = () => {
-    navigate('/citizen/requests/new');
   };
 
   const clearAllFilters = () => {
@@ -160,39 +155,43 @@ const CitizenRequestsPage: React.FC = () => {
     setResolvedFilter('');
   };
 
-  const hasActiveFilters = () => {
-    return searchTerm || statusFilter || categoryFilter || priorityFilter || 
-           dateFromFilter || dateToFilter || resolvedFilter;
+  const handleRowClick = (params: any) => {
+    navigate(`/requests/${params.row.id}`);
   };
 
-  // Add new columns for the required fields: Date of Request, Upvotes, Comments, Resolved Status, and Correspondence History
+  const hasActiveFilters = searchTerm || statusFilter || categoryFilter || 
+    priorityFilter || dateFromFilter || dateToFilter || resolvedFilter;
+
+  // Column definitions with proper error handling
   const columns: GridColDef[] = [
     {
       field: 'code',
       headerName: 'Request ID',
-      width: 150,
+      width: 130,
       filterable: true,
     },
     {
       field: 'title',
       headerName: 'Title',
-      width: 250,
+      width: 200,
       filterable: true,
+      flex: 1, // Make title column flexible
     },
     {
       field: 'category',
       headerName: 'Category',
-      width: 180,
+      width: 160,
       filterable: true,
+      valueGetter: (params) => categoryLabels[params.value] || params.value,
     },
     {
       field: 'priority',
       headerName: 'Priority',
-      width: 120,
+      width: 100,
       filterable: true,
       renderCell: (params) => (
         <Chip
-          label={params.value}
+          label={params.value || 'N/A'}
           color={getPriorityColor(params.value) as any}
           size="small"
           data-testid={`cs-requests-priority-${params.row.id}`}
@@ -202,11 +201,11 @@ const CitizenRequestsPage: React.FC = () => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
+      width: 130,
       filterable: true,
       renderCell: (params) => (
         <Chip
-          label={params.value.replace(/_/g, ' ')}
+          label={params.value ? params.value.replace(/_/g, ' ') : 'N/A'}
           color={getStatusColor(params.value) as any}
           size="small"
           variant="outlined"
@@ -219,26 +218,41 @@ const CitizenRequestsPage: React.FC = () => {
       headerName: 'Created',
       width: 150,
       filterable: true,
-      valueFormatter: (params) => format(new Date(params.value), 'MMM dd, yyyy'),
+      valueFormatter: (params) => {
+        try {
+          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
+        } catch {
+          return 'Invalid Date';
+        }
+      },
     },
     {
       field: 'updatedAt',
       headerName: 'Last Updated',
       width: 150,
       filterable: true,
-      valueFormatter: (params) => format(new Date(params.value), 'MMM dd, yyyy'),
+      hide: true, // Hidden by default to reduce horizontal scroll
+      valueFormatter: (params) => {
+        try {
+          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
+        } catch {
+          return 'Invalid Date';
+        }
+      },
     },
     {
       field: 'dateOfRequest',
       headerName: 'Date of Request',
       width: 150,
       filterable: true,
-      valueFormatter: (params) => format(new Date(params.value), 'MMM dd, yyyy'),
-      renderCell: (params) => (
-        <Typography data-testid={`cs-requests-date-${params.row.id}`}>
-          {format(new Date(params.value), 'MMM dd, yyyy')}
-        </Typography>
-      ),
+      hide: true, // Hidden by default to reduce horizontal scroll
+      valueFormatter: (params) => {
+        try {
+          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
+        } catch {
+          return 'Invalid Date';
+        }
+      },
     },
     {
       field: 'upvotes',
@@ -246,64 +260,53 @@ const CitizenRequestsPage: React.FC = () => {
       width: 100,
       filterable: false,
       renderCell: (params) => (
-        <Typography data-testid={`cs-requests-upvotes-${params.row.id}`}>
-          {params.value}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <ThumbUpIcon fontSize="small" color="action" />
+          <Typography variant="body2">{params.value || 0}</Typography>
+        </Box>
       ),
     },
     {
       field: 'comments',
       headerName: 'Comments',
-      width: 120,
+      width: 100,
       filterable: false,
+      valueGetter: (params) => params.row.comments?.length || 0,
       renderCell: (params) => (
-        <Typography data-testid={`cs-requests-comments-${params.row.id}`}>
-          {params.value}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <CommentIcon fontSize="small" color="action" />
+          <Typography variant="body2">{params.value || 0}</Typography>
+        </Box>
       ),
     },
     {
       field: 'resolvedStatus',
-      headerName: 'Resolved Status',
-      width: 150,
+      headerName: 'Resolved',
+      width: 100,
       filterable: true,
       renderCell: (params) => (
         <Chip
-          label={params.value ? 'Resolved' : 'Unresolved'}
+          label={params.value ? 'Yes' : 'No'}
           color={params.value ? 'success' : 'default'}
           size="small"
-          data-testid={`cs-requests-resolved-${params.row.id}`}
-        />
-      ),
-    },
-    {
-      field: 'correspondenceHistory',
-      headerName: 'Correspondence History',
-      width: 200,
-      filterable: false,
-      renderCell: (params) => (
-        <Button
           variant="outlined"
-          size="small"
-          onClick={() => handleViewRequest(params.row.id)}
-          data-testid={`cs-requests-history-${params.row.id}`}
-        >
-          View History
-        </Button>
+        />
       ),
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 100,
-      sortable: false,
+      width: 120,
       filterable: false,
+      sortable: false,
       renderCell: (params) => (
         <IconButton
-          size="small"
-          onClick={() => handleViewRequest(params.row.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/requests/${params.row.id}`);
+          }}
           data-testid={`cs-requests-view-${params.row.id}`}
-          title="View request details"
+          size="small"
         >
           <ViewIcon />
         </IconButton>
@@ -311,26 +314,25 @@ const CitizenRequestsPage: React.FC = () => {
     },
   ];
 
-  // Update rows to include the new fields
-  const rows = data.map((request: ServiceRequest) => ({
+  // Transform data for DataGrid with error handling
+  const rows = (data || []).map((request: ServiceRequest) => ({
     id: request.id,
-    code: request.code,
-    title: request.title,
-    category: request.category,
-    priority: request.priority,
-    status: request.status,
+    code: request.code || 'N/A',
+    title: request.title || 'Untitled',
+    category: request.category || 'other',
+    priority: request.priority || 'MEDIUM',
+    status: request.status || 'DRAFT',
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
-    dateOfRequest: request.dateOfRequest,
-    upvotes: request.upvotes,
-    comments: request.comments,
-    resolvedStatus: request.resolvedStatus,
-    correspondenceHistory: request.correspondenceHistory,
+    dateOfRequest: request.dateOfRequest || request.createdAt,
+    upvotes: request.upvotes || 0,
+    comments: request.comments || [],
+    resolvedStatus: request.resolvedStatus || false,
   }));
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box data-testid="cs-citizen-requests-page">
+      <Box sx={{ p: 3 }} data-testid="cs-citizen-requests-page">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
             My Service Requests
@@ -338,10 +340,10 @@ const CitizenRequestsPage: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-            data-testid="cs-requests-create-button"
+            onClick={() => navigate('/citizen/requests/new')}
+            data-testid="cs-requests-new-button"
           >
-            Create New Request
+            New Request
           </Button>
         </Box>
 
@@ -351,28 +353,29 @@ const CitizenRequestsPage: React.FC = () => {
           </Alert>
         )}
 
-        {/* Enhanced Filters */}
-        <Card sx={{ mb: 3 }} data-testid="cs-requests-filters">
+        {/* Enhanced Filter Panel */}
+        <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FilterIcon sx={{ mr: 1 }} />
-              <Typography variant="h6">Filters</Typography>
-              {hasActiveFilters() && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterIcon />
+                Filters
+              </Typography>
+              {hasActiveFilters && (
                 <Button
+                  variant="outlined"
                   size="small"
-                  onClick={clearAllFilters}
                   startIcon={<ClearIcon />}
-                  sx={{ ml: 'auto' }}
+                  onClick={clearAllFilters}
                   data-testid="cs-requests-clear-filters"
                 >
-                  Clear All Filters
+                  Clear All
                 </Button>
               )}
             </Box>
             
             <Grid container spacing={2}>
-              {/* Search */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   size="small"
@@ -389,9 +392,8 @@ const CitizenRequestsPage: React.FC = () => {
                   data-testid="cs-requests-search"
                 />
               </Grid>
-              
-              {/* Status Filter */}
-              <Grid item xs={12} md={2}>
+
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Status</InputLabel>
                   <Select
@@ -400,20 +402,18 @@ const CitizenRequestsPage: React.FC = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     data-testid="cs-requests-status-filter"
                   >
-                    <MenuItem value="">All Statuses</MenuItem>
+                    <MenuItem value="">All Status</MenuItem>
                     <MenuItem value="SUBMITTED">Submitted</MenuItem>
                     <MenuItem value="TRIAGED">Triaged</MenuItem>
                     <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
                     <MenuItem value="WAITING_ON_CITIZEN">Waiting on Citizen</MenuItem>
-                    <MenuItem value="PENDING_MORE_INFO">Pending More Info</MenuItem>
                     <MenuItem value="RESOLVED">Resolved</MenuItem>
                     <MenuItem value="CLOSED">Closed</MenuItem>
                     <MenuItem value="REJECTED">Rejected</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              
-              {/* Category Filter */}
+
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Category</InputLabel>
@@ -432,9 +432,8 @@ const CitizenRequestsPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
-              {/* Priority Filter */}
-              <Grid item xs={12} md={2}>
+
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Priority</InputLabel>
                   <Select
@@ -451,25 +450,23 @@ const CitizenRequestsPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
-              {/* Resolved Status Filter */}
-              <Grid item xs={12} md={1}>
+
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Resolved</InputLabel>
+                  <InputLabel>Resolved Status</InputLabel>
                   <Select
                     value={resolvedFilter}
-                    label="Resolved"
+                    label="Resolved Status"
                     onChange={(e) => setResolvedFilter(e.target.value)}
                     data-testid="cs-requests-resolved-filter"
                   >
                     <MenuItem value="">All</MenuItem>
                     <MenuItem value="true">Resolved</MenuItem>
-                    <MenuItem value="false">Unresolved</MenuItem>
+                    <MenuItem value="false">Not Resolved</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              
-              {/* Date Range Filters */}
+
               <Grid item xs={12} md={3}>
                 <DatePicker
                   label="From Date"
@@ -513,6 +510,7 @@ const CitizenRequestsPage: React.FC = () => {
           onPaginationModelChange={setPaginationModel}
           onSortModelChange={setSortModel}
           onFilterModelChange={setFilterModel}
+          onRowClick={handleRowClick}
           testId="cs-citizen-requests-grid"
         />
       </Box>

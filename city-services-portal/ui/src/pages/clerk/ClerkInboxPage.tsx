@@ -46,7 +46,7 @@ const ClerkInboxPage: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setSearchQuery(searchText);
-    }, 500);
+    }, 300); // Reduced from 500ms to 300ms for faster response
     return () => clearTimeout(timeoutId);
   }, [searchText]);
 
@@ -70,7 +70,7 @@ const ClerkInboxPage: React.FC = () => {
       case 'LOW':
         return 'secondary';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -87,11 +87,11 @@ const ClerkInboxPage: React.FC = () => {
       case 'RESOLVED':
         return 'success';
       case 'CLOSED':
-        return 'default';
+        return 'secondary';
       case 'REJECTED':
         return 'error';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -161,7 +161,7 @@ const ClerkInboxPage: React.FC = () => {
     }
     
     if (currentStatus === 'RESOLVED') {
-      actions.push({ action: 'close', label: 'Close', color: 'default' });
+      actions.push({ action: 'close', label: 'Close', color: 'secondary' });
     }
     
     // Always allow reject (with reason)
@@ -173,7 +173,8 @@ const ClerkInboxPage: React.FC = () => {
   };
 
   return (
-    <Box data-testid="cs-clerk-inbox-page">
+    <>
+      <Box data-testid="cs-clerk-inbox-page" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           Clerk Inbox
@@ -191,7 +192,7 @@ const ClerkInboxPage: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={2} sx={{ height: 'calc(100vh - 200px)' }}>
+      <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
         {/* Left Panel - Request List */}
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -249,6 +250,16 @@ const ClerkInboxPage: React.FC = () => {
                       onChange={(e) => setSearchText(e.target.value)}
                       placeholder="Search by title, description, or request ID"
                       data-testid="cs-inbox-search"
+                      InputProps={{
+                        endAdornment: searchQuery && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pr: 1 }}>
+                            <Typography variant="caption" color="primary" sx={{ whiteSpace: 'nowrap' }}>
+                              {requests.length} result{requests.length !== 1 ? 's' : ''}
+                            </Typography>
+                          </Box>
+                        )
+                      }}
+                      helperText={searchQuery ? `Searching for: "${searchQuery}"` : 'Search by title, description, request ID, location, category, etc.'}
                     />
                   </Grid>
                   <Grid item xs={12}>
@@ -266,7 +277,30 @@ const ClerkInboxPage: React.FC = () => {
             </CardContent>
 
             {/* Request List */}
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
+            <Box sx={{ 
+              flex: 1, 
+              overflow: 'auto',
+              minHeight: 0, // Important for flex child to shrink
+              '&::-webkit-scrollbar': {
+                width: '12px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                borderRadius: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                borderRadius: '6px',
+                border: '2px solid transparent',
+                backgroundClip: 'padding-box',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                backgroundColor: 'rgba(0,0,0,0.5)',
+              },
+              // For Firefox
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
+            }}>
               {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                   <CircularProgress />
@@ -284,9 +318,9 @@ const ClerkInboxPage: React.FC = () => {
                       <ListItemText
                         primary={
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body2" fontWeight="medium">
+                            <Box component="span" sx={{ fontWeight: 'medium', fontSize: '0.875rem' }}>
                               {request.code}
-                            </Typography>
+                            </Box>
                             <Box sx={{ display: 'flex', gap: 0.5 }}>
                               <Chip
                                 label={request.priority}
@@ -304,12 +338,12 @@ const ClerkInboxPage: React.FC = () => {
                         }
                         secondary={
                           <Box>
-                            <Typography variant="body2" color="text.primary" sx={{ fontWeight: 'medium' }}>
+                            <Box component="span" sx={{ display: 'block', fontWeight: 'medium', fontSize: '0.875rem', color: 'text.primary' }}>
                               {request.title}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {request.category} • {format(new Date(request.createdAt), 'MMM dd, yyyy')}
-                            </Typography>
+                            </Box>
+                            <Box component="span" sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary' }}>
+                              {request.category} â€¢ {format(new Date(request.createdAt), 'MMM dd, yyyy')}
+                            </Box>
                           </Box>
                         }
                       />
@@ -332,8 +366,32 @@ const ClerkInboxPage: React.FC = () => {
 
         {/* Right Panel - Request Details */}
         <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%' }} data-testid="cs-inbox-details-panel">
-            <CardContent>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-testid="cs-inbox-details-panel">
+            <CardContent sx={{ 
+              flex: 1, 
+              overflow: 'auto', 
+              p: 3,
+              minHeight: 0, // Important for flex child to shrink
+              '&::-webkit-scrollbar': {
+                width: '12px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                borderRadius: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                borderRadius: '6px',
+                border: '2px solid transparent',
+                backgroundClip: 'padding-box',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                backgroundColor: 'rgba(0,0,0,0.5)',
+              },
+              // For Firefox
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
+            }}>
               {selectedRequest ? (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -391,12 +449,154 @@ const ClerkInboxPage: React.FC = () => {
                         {selectedRequest.description}
                       </Typography>
 
+                      {/* Location Information */}
                       <Typography variant="h6" gutterBottom>
-                        Location
+                        Location Information
                       </Typography>
-                      <Typography variant="body1" paragraph>
-                        {selectedRequest.locationText}
+                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                        {selectedRequest.streetAddress && (
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body2" color="text.secondary">Street Address</Typography>
+                            <Typography variant="body1">{selectedRequest.streetAddress}</Typography>
+                          </Grid>
+                        )}
+                        {selectedRequest.city && (
+                          <Grid item xs={12} md={3}>
+                            <Typography variant="body2" color="text.secondary">City</Typography>
+                            <Typography variant="body1">{selectedRequest.city}</Typography>
+                          </Grid>
+                        )}
+                        {selectedRequest.postalCode && (
+                          <Grid item xs={12} md={3}>
+                            <Typography variant="body2" color="text.secondary">Postal Code</Typography>
+                            <Typography variant="body1">{selectedRequest.postalCode}</Typography>
+                          </Grid>
+                        )}
+                        <Grid item xs={12}>
+                          <Typography variant="body2" color="text.secondary">Location Details</Typography>
+                          <Typography variant="body1">{selectedRequest.locationText}</Typography>
+                        </Grid>
+                        {selectedRequest.landmark && (
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body2" color="text.secondary">Landmark</Typography>
+                            <Typography variant="body1">{selectedRequest.landmark}</Typography>
+                          </Grid>
+                        )}
+                        {selectedRequest.accessInstructions && (
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body2" color="text.secondary">Access Instructions</Typography>
+                            <Typography variant="body1">{selectedRequest.accessInstructions}</Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+
+                      {/* Contact Information */}
+                      {(selectedRequest.contactMethod || selectedRequest.alternatePhone || selectedRequest.bestTimeToContact) && (
+                        <>
+                          <Typography variant="h6" gutterBottom>
+                            Contact Information
+                          </Typography>
+                          <Grid container spacing={2} sx={{ mb: 3 }}>
+                            {selectedRequest.contactMethod && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
+                                <Typography variant="body1">{selectedRequest.contactMethod}</Typography>
+                              </Grid>
+                            )}
+                            {selectedRequest.alternatePhone && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
+                                <Typography variant="body1">{selectedRequest.alternatePhone}</Typography>
+                              </Grid>
+                            )}
+                            {selectedRequest.bestTimeToContact && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
+                                <Typography variant="body1">{selectedRequest.bestTimeToContact}</Typography>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </>
+                      )}
+
+                      {/* Issue Details */}
+                      {(selectedRequest.issueType || selectedRequest.severity || selectedRequest.isRecurring || selectedRequest.isEmergency || selectedRequest.hasPermits) && (
+                        <>
+                          <Typography variant="h6" gutterBottom>
+                            Issue Details
+                          </Typography>
+                          <Grid container spacing={2} sx={{ mb: 3 }}>
+                            {selectedRequest.issueType && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Issue Type</Typography>
+                                <Typography variant="body1">{selectedRequest.issueType}</Typography>
+                              </Grid>
+                            )}
+                            {selectedRequest.severity && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Severity (1-10)</Typography>
+                                <Typography variant="body1">{selectedRequest.severity}</Typography>
+                              </Grid>
+                            )}
+                            <Grid item xs={12} md={4}>
+                              <Typography variant="body2" color="text.secondary">Issue Characteristics</Typography>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {selectedRequest.isRecurring && <Chip label="Recurring Issue" size="small" color="info" />}
+                                {selectedRequest.isEmergency && <Chip label="Emergency" size="small" color="error" />}
+                                {selectedRequest.hasPermits && <Chip label="Has Permits" size="small" color="success" />}
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </>
+                      )}
+
+                      {/* Service Impact */}
+                      {(selectedRequest.affectedServices || selectedRequest.estimatedValue) && (
+                        <>
+                          <Typography variant="h6" gutterBottom>
+                            Service Impact
+                          </Typography>
+                          <Grid container spacing={2} sx={{ mb: 3 }}>
+                            {selectedRequest.affectedServices && selectedRequest.affectedServices.length > 0 && (
+                              <Grid item xs={12} md={8}>
+                                <Typography variant="body2" color="text.secondary">Affected Services</Typography>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                                  {selectedRequest.affectedServices.map((service, index) => (
+                                    <Chip key={index} label={service} size="small" variant="outlined" />
+                                  ))}
+                                </Box>
+                              </Grid>
+                            )}
+                            {selectedRequest.estimatedValue && (
+                              <Grid item xs={12} md={4}>
+                                <Typography variant="body2" color="text.secondary">Estimated Value</Typography>
+                                <Typography variant="body1">${selectedRequest.estimatedValue.toLocaleString()}</Typography>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </>
+                      )}
+
+                      {/* Default Image */}
+                      <Typography variant="h6" gutterBottom>
+                        Attachments
                       </Typography>
+                      <Box sx={{ mb: 3 }}>
+                        <img 
+                          src="/images/service-request-default-image.png" 
+                          alt="Service Request" 
+                          style={{ 
+                            maxWidth: '100%', 
+                            height: 'auto', 
+                            maxHeight: '300px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </Box>
                     </Grid>
 
                     <Grid item xs={12} md={4}>
@@ -404,6 +604,9 @@ const ClerkInboxPage: React.FC = () => {
                         Request Details
                       </Typography>
                       <Box sx={{ '& > *': { mb: 1 } }}>
+                        <Typography variant="body2">
+                          <strong>Date of Request:</strong> {format(new Date(selectedRequest.dateOfRequest), 'PPP')}
+                        </Typography>
                         <Typography variant="body2">
                           <strong>Created:</strong> {format(new Date(selectedRequest.createdAt), 'PPpp')}
                         </Typography>
@@ -444,9 +647,10 @@ const ClerkInboxPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+    </Box>
 
-      {/* Status Change Dialog */}
-      <Dialog
+    {/* Status Change Dialog */}
+    <Dialog
         open={statusDialogOpen}
         onClose={() => setStatusDialogOpen(false)}
         maxWidth="sm"
@@ -502,7 +706,7 @@ const ClerkInboxPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

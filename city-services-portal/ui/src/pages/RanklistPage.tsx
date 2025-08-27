@@ -60,7 +60,7 @@ const RanklistPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState<'all' | 'year' | 'month'>('all');
-  const [category, setCategory] = useState<string>('all');
+  const [category, setCategory] = useState<string>('street-lighting');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -199,7 +199,7 @@ const RanklistPage: React.FC = () => {
     if (rank === 1) return 'success';
     if (rank <= 3) return 'warning';
     if (rank <= 10) return 'primary';
-    return 'default';
+    return 'secondary';
   };
 
   return (

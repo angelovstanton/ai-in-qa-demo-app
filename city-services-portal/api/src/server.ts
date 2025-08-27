@@ -13,6 +13,7 @@ import authRoutes from './routes/auth';
 import requestRoutes from './routes/requests';
 import attachmentRoutes from './routes/attachments';
 import adminRoutes from './routes/admin';
+import rankingRoutes from './routes/rankings';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -29,7 +30,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  max: 10000, // Increased limit for development - 10000 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
 });
 app.use('/api', limiter);
@@ -58,6 +59,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/requests', requestRoutes);
 app.use('/api/v1/requests', attachmentRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/rankings', rankingRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
