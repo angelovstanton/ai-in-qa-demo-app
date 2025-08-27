@@ -41,8 +41,15 @@ const createRequestSchema = z.object({
   
   // Contact fields
   contactMethod: z.enum(['EMAIL', 'PHONE', 'SMS']).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   alternatePhone: z.string().optional(),
   bestTimeToContact: z.string().optional(),
+  
+  // Mailing address
+  mailingStreetAddress: z.string().optional(),
+  mailingCity: z.string().optional(),
+  mailingPostalCode: z.string().optional(),
   
   // Issue details
   issueType: z.string().optional(),
@@ -325,8 +332,15 @@ router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req:
         
         // Contact fields
         contactMethod: validatedData.contactMethod,
+        email: validatedData.email,
+        phone: validatedData.phone,
         alternatePhone: validatedData.alternatePhone,
         bestTimeToContact: validatedData.bestTimeToContact,
+        
+        // Mailing address
+        mailingStreetAddress: validatedData.mailingStreetAddress,
+        mailingCity: validatedData.mailingCity,
+        mailingPostalCode: validatedData.mailingPostalCode,
         
         // Issue details
         issueType: validatedData.issueType,
@@ -506,7 +520,7 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
 });
 
 // PATCH /api/v1/requests/:id - Update basic fields with optimistic locking
-router.patch('/:id', authenticateToken, rbacGuard(['CLERK', 'FIELD_AGENT', 'SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:id', authenticateToken, rbacGuard(['CITIZEN', 'CLERK', 'FIELD_AGENT', 'SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const ifMatch = req.headers['if-match'] as string;
@@ -561,6 +575,35 @@ router.patch('/:id', authenticateToken, rbacGuard(['CLERK', 'FIELD_AGENT', 'SUPE
           correlationId: res.locals.correlationId
         }
       });
+    }
+
+    // Additional permission checks for citizens
+    if (req.user!.role === 'CITIZEN') {
+      // Citizens can only edit their own requests
+      if (currentRequest.createdBy !== req.user!.id) {
+        return res.status(403).json({
+          error: {
+            code: 'FORBIDDEN',
+            message: 'You can only edit your own requests',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+
+      // Citizens can only edit within 10 minutes of creation
+      const createdAt = new Date(currentRequest.createdAt);
+      const now = new Date();
+      const minutesSinceCreation = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+      
+      if (minutesSinceCreation > 10) {
+        return res.status(403).json({
+          error: {
+            code: 'EDIT_TIME_EXPIRED',
+            message: 'Requests can only be edited within 10 minutes of creation',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
     }
 
     // Update the request

@@ -29,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('Token validation failed, clearing auth data');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('user');
+          // Clear any saved form data
+          localStorage.removeItem('new-request-form-data');
           setUser(null);
         }
       } else {
@@ -54,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
+    // Clear any saved form data
+    localStorage.removeItem('new-request-form-data');
     setUser(null);
   };
 

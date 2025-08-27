@@ -87,8 +87,15 @@ model ServiceRequest {
   
   // Contact fields
   contactMethod     String?    // EMAIL, PHONE, SMS
+  email             String?
+  phone             String?
   alternatePhone    String?
   bestTimeToContact String?
+  
+  // Mailing address
+  mailingStreetAddress String?
+  mailingCity          String?
+  mailingPostalCode    String?
   
   // Issue details
   issueType         String?

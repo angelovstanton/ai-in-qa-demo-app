@@ -23,6 +23,7 @@ import {
   Avatar,
   Paper,
   InputAdornment,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -72,6 +73,37 @@ const RequestDetailPage: React.FC = () => {
   const [statusReason, setStatusReason] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
+
+  // Initialize edit data when entering edit mode
+  const initializeEditData = () => {
+    if (request) {
+      setEditData({
+        title: request.title || '',
+        description: request.description || '',
+        locationText: request.locationText || '',
+        streetAddress: request.streetAddress || '',
+        city: request.city || '',
+        postalCode: request.postalCode || '',
+        landmark: request.landmark || '',
+        accessInstructions: request.accessInstructions || '',
+        contactMethod: request.contactMethod || 'EMAIL',
+        email: request.email || '',
+        phone: request.phone || '',
+        alternatePhone: request.alternatePhone || '',
+        bestTimeToContact: request.bestTimeToContact || '',
+        mailingStreetAddress: request.mailingStreetAddress || '',
+        mailingCity: request.mailingCity || '',
+        mailingPostalCode: request.mailingPostalCode || '',
+        priority: request.priority || 'MEDIUM',
+        category: request.category || '',
+        issueType: request.issueType || '',
+        severity: request.severity || 5,
+        isRecurring: request.isRecurring || false,
+        isEmergency: request.isEmergency || false,
+        hasPermits: request.hasPermits || false,
+      });
+    }
+  };
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [upvoteCount, setUpvoteCount] = useState(0);
   const [isUpvoting, setIsUpvoting] = useState(false);
@@ -339,6 +371,13 @@ const RequestDetailPage: React.FC = () => {
         <Grid container spacing={3}>
         {/* Main Content */}
         <Grid item xs={12} md={8}>
+          {/* Error display for edit actions */}
+          {error && request && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+          
           <Card data-testid="cs-request-detail-main" sx={{ height: 'fit-content' }}>
             <CardContent sx={{ maxHeight: '80vh', overflow: 'auto' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -411,7 +450,12 @@ const RequestDetailPage: React.FC = () => {
                               variant="outlined"
                               size="small"
                               startIcon={canEditRequest() ? <EditIcon /> : <LockIcon />}
-                              onClick={() => canEditRequest() && setIsEditing(true)}
+                              onClick={() => {
+                                if (canEditRequest()) {
+                                  initializeEditData();
+                                  setIsEditing(true);
+                                }
+                              }}
                               disabled={!canEditRequest()}
                               data-testid="cs-request-detail-edit"
                             >
@@ -467,24 +511,45 @@ const RequestDetailPage: React.FC = () => {
                 Location Information
               </Typography>
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                {request.streetAddress && (
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" color="text.secondary">Street Address</Typography>
-                    <Typography variant="body1">{request.streetAddress}</Typography>
-                  </Grid>
-                )}
-                {request.city && (
-                  <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">City</Typography>
-                    <Typography variant="body1">{request.city}</Typography>
-                  </Grid>
-                )}
-                {request.postalCode && (
-                  <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">Postal Code</Typography>
-                    <Typography variant="body1">{request.postalCode}</Typography>
-                  </Grid>
-                )}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary">Street Address</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.streetAddress || ''}
+                      onChange={(e) => setEditData({ ...editData, streetAddress: e.target.value })}
+                      fullWidth
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.streetAddress || 'Not specified'}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" color="text.secondary">City</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.city || ''}
+                      onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                      fullWidth
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.city || 'Not specified'}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" color="text.secondary">Postal Code</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.postalCode || ''}
+                      onChange={(e) => setEditData({ ...editData, postalCode: e.target.value })}
+                      fullWidth
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.postalCode || 'Not specified'}</Typography>
+                  )}
+                </Grid>
                 <Grid item xs={12}>
                   <Typography variant="body2" color="text.secondary">Location Details</Typography>
                   {isEditing ? (
@@ -498,48 +563,167 @@ const RequestDetailPage: React.FC = () => {
                     <Typography variant="body1">{request.locationText}</Typography>
                   )}
                 </Grid>
-                {request.landmark && (
+                {(request.landmark || isEditing) && (
                   <Grid item xs={12} md={6}>
                     <Typography variant="body2" color="text.secondary">Landmark</Typography>
-                    <Typography variant="body1">{request.landmark}</Typography>
+                    {isEditing ? (
+                      <TextField
+                        value={editData.landmark || ''}
+                        onChange={(e) => setEditData({ ...editData, landmark: e.target.value })}
+                        fullWidth
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">{request.landmark || 'Not specified'}</Typography>
+                    )}
                   </Grid>
                 )}
-                {request.accessInstructions && (
+                {(request.accessInstructions || isEditing) && (
                   <Grid item xs={12} md={6}>
                     <Typography variant="body2" color="text.secondary">Access Instructions</Typography>
-                    <Typography variant="body1">{request.accessInstructions}</Typography>
+                    {isEditing ? (
+                      <TextField
+                        value={editData.accessInstructions || ''}
+                        onChange={(e) => setEditData({ ...editData, accessInstructions: e.target.value })}
+                        fullWidth
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">{request.accessInstructions || 'Not specified'}</Typography>
+                    )}
                   </Grid>
                 )}
               </Grid>
 
               {/* Contact Information */}
-              {(request.contactMethod || request.alternatePhone || request.bestTimeToContact) && (
-                <>
-                  <Typography variant="h6" gutterBottom>
-                    Contact Information
-                  </Typography>
-                  <Grid container spacing={2} sx={{ mb: 3 }}>
-                    {request.contactMethod && (
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
-                        <Typography variant="body1">{request.contactMethod}</Typography>
-                      </Grid>
-                    )}
-                    {request.alternatePhone && (
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
-                        <Typography variant="body1">{request.alternatePhone}</Typography>
-                      </Grid>
-                    )}
-                    {request.bestTimeToContact && (
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
-                        <Typography variant="body1">{request.bestTimeToContact}</Typography>
-                      </Grid>
+              <Typography variant="h6" gutterBottom>
+                Contact Information
+              </Typography>
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
+                  {isEditing ? (
+                    <TextField
+                      select
+                      value={editData.contactMethod || 'EMAIL'}
+                      onChange={(e) => setEditData({ ...editData, contactMethod: e.target.value })}
+                      fullWidth
+                      size="small"
+                    >
+                      <MenuItem value="EMAIL">Email</MenuItem>
+                      <MenuItem value="PHONE">Phone</MenuItem>
+                      <MenuItem value="SMS">SMS</MenuItem>
+                      <MenuItem value="MAIL">Mail</MenuItem>
+                    </TextField>
+                  ) : (
+                    <Typography variant="body1">{request.contactMethod || 'Not specified'}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="text.secondary">Email</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.email || ''}
+                      onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                      fullWidth
+                      size="small"
+                      type="email"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.email || 'Not specified'}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="text.secondary">Phone</Typography>
+                  {isEditing ? (
+                    <TextField
+                      value={editData.phone || ''}
+                      onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                      fullWidth
+                      size="small"
+                      type="tel"
+                    />
+                  ) : (
+                    <Typography variant="body1">{request.phone || 'Not specified'}</Typography>
+                  )}
+                </Grid>
+                {(request.alternatePhone || isEditing) && (
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
+                    {isEditing ? (
+                      <TextField
+                        value={editData.alternatePhone || ''}
+                        onChange={(e) => setEditData({ ...editData, alternatePhone: e.target.value })}
+                        fullWidth
+                        size="small"
+                        type="tel"
+                      />
+                    ) : (
+                      <Typography variant="body1">{request.alternatePhone || 'Not specified'}</Typography>
                     )}
                   </Grid>
-                </>
-              )}
+                )}
+                {(request.bestTimeToContact || isEditing) && (
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
+                    {isEditing ? (
+                      <TextField
+                        value={editData.bestTimeToContact || ''}
+                        onChange={(e) => setEditData({ ...editData, bestTimeToContact: e.target.value })}
+                        fullWidth
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">{request.bestTimeToContact || 'Not specified'}</Typography>
+                    )}
+                  </Grid>
+                )}
+                {/* Mailing Address Fields (when contact method is MAIL) */}
+                {((request.contactMethod === 'MAIL' && (request.mailingStreetAddress || request.mailingCity || request.mailingPostalCode)) || 
+                  (isEditing && editData.contactMethod === 'MAIL')) && (
+                  <>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" color="text.secondary">Mailing Address</Typography>
+                      {isEditing ? (
+                        <TextField
+                          value={editData.mailingStreetAddress || ''}
+                          onChange={(e) => setEditData({ ...editData, mailingStreetAddress: e.target.value })}
+                          fullWidth
+                          size="small"
+                        />
+                      ) : (
+                        <Typography variant="body1">{request.mailingStreetAddress || 'Not specified'}</Typography>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" color="text.secondary">Mailing City</Typography>
+                      {isEditing ? (
+                        <TextField
+                          value={editData.mailingCity || ''}
+                          onChange={(e) => setEditData({ ...editData, mailingCity: e.target.value })}
+                          fullWidth
+                          size="small"
+                        />
+                      ) : (
+                        <Typography variant="body1">{request.mailingCity || 'Not specified'}</Typography>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" color="text.secondary">Mailing Postal Code</Typography>
+                      {isEditing ? (
+                        <TextField
+                          value={editData.mailingPostalCode || ''}
+                          onChange={(e) => setEditData({ ...editData, mailingPostalCode: e.target.value })}
+                          fullWidth
+                          size="small"
+                        />
+                      ) : (
+                        <Typography variant="body1">{request.mailingPostalCode || 'Not specified'}</Typography>
+                      )}
+                    </Grid>
+                  </>
+                )}
+              </Grid>
 
               {/* Issue Details */}
               {(request.issueType || request.severity || request.isRecurring || request.isEmergency || request.hasPermits) && (
@@ -666,25 +850,70 @@ const RequestDetailPage: React.FC = () => {
                 </>
               )}
 
-              {/* Default Image */}
+              {/* Attachments */}
               <Typography variant="h6" gutterBottom>
                 Attachments
               </Typography>
               <Box sx={{ mb: 3 }}>
-                <img 
-                  src="/images/service-request-default-image.png" 
-                  alt="Service Request" 
-                  style={{ 
-                    maxWidth: '100%', 
-                    height: 'auto', 
-                    maxHeight: '300px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                {request.attachments && request.attachments.length > 0 ? (
+                  <Grid container spacing={2}>
+                    {request.attachments.map((attachment, index) => (
+                      <Grid item xs={12} sm={6} md={4} key={attachment.id || index}>
+                        <Card>
+                          <CardContent sx={{ p: 2 }}>
+                            {attachment.mime?.startsWith('image/') ? (
+                              <Box
+                                component="img"
+                                src={`http://localhost:3001${attachment.url}`}
+                                alt={attachment.filename || `Attachment ${index + 1}`}
+                                sx={{
+                                  width: '100%',
+                                  height: 200,
+                                  objectFit: 'cover',
+                                  borderRadius: 1,
+                                  mb: 1,
+                                }}
+                                onError={(e) => {
+                                  // Fallback to default image if attachment fails to load
+                                  e.currentTarget.src = '/images/service-request-default-image.png';
+                                }}
+                              />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  height: 200,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  bgcolor: 'grey.100',
+                                  borderRadius: 1,
+                                  mb: 1,
+                                }}
+                              >
+                                <Typography variant="h4" color="text.secondary">
+                                  📄
+                                </Typography>
+                              </Box>
+                            )}
+                            <Typography variant="body2" noWrap>
+                              {attachment.filename || 'Attachment'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No attachments uploaded for this request
+                    </Typography>
+                  </Box>
+                )}
               </Box>
 
               {/* Upvotes Section */}

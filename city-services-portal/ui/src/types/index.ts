@@ -108,9 +108,16 @@ export interface ServiceRequest {
   attachments?: { // Attachments associated with the request
     id: string;
     filename: string;
-    fileSize: number;
+    url: string;
+    mime: string;
+    size: number;
     createdAt: string;
-  }[]; // Corrected to an array of objects
+    uploadedBy: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  }[]; // Updated to match API response
   eventLogs?: { // Event logs for the request
     id: string;
     type: string;

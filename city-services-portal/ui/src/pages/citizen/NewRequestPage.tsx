@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import api from '../../lib/api';
 import {
   Box,
   Typography,
@@ -22,6 +23,7 @@ import {
   LinearProgress,
   FormHelperText,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import { Warning as WarningIcon } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
@@ -200,8 +202,11 @@ const categoryLabels: Record<string, string> = {
 
 const NewRequestPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isAsyncValidating, setIsAsyncValidating] = useState<Record<string, boolean>>({});
-  const { createRequest, loading: isSubmitting } = useCreateServiceRequest();
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { createRequest, loading: isSubmitting, error: createError } = useCreateServiceRequest();
   const { isBlocked, checkRateLimit } = useRateLimit(5, 60000);
 
   // Load saved form data from localStorage
@@ -209,11 +214,23 @@ const NewRequestPage: React.FC = () => {
     try {
       const saved = localStorage.getItem(FORM_STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsedData = JSON.parse(saved);
+        console.log('Loading saved form data from localStorage:', parsedData);
+        
+        // Check for data corruption (contactMethod data in address fields)
+        if (parsedData.streetAddress === 'PHONE' || parsedData.streetAddress === 'EMAIL' || parsedData.streetAddress === 'SMS' || parsedData.streetAddress === 'MAIL') {
+          console.warn('Detected corrupted localStorage data, clearing...');
+          localStorage.removeItem(FORM_STORAGE_KEY);
+          return null;
+        }
+        
+        return parsedData;
       }
     } catch (error) {
       console.warn('Failed to load saved form data:', error);
+      localStorage.removeItem(FORM_STORAGE_KEY);
     }
+    console.log('No saved form data found, using defaults');
     return null;
   }, []);
 
@@ -242,8 +259,13 @@ const NewRequestPage: React.FC = () => {
       landmark: '',
       accessInstructions: '',
       contactMethod: 'EMAIL',
+      email: '',
+      phone: '',
       alternatePhone: '',
       bestTimeToContact: '',
+      mailingStreetAddress: '',
+      mailingCity: '',
+      mailingPostalCode: '',
       issueType: '',
       severity: 5,
       isRecurring: false,
@@ -252,7 +274,7 @@ const NewRequestPage: React.FC = () => {
       affectedServices: [],
       estimatedValue: 0,
       additionalContacts: [],
-      attachments: [],
+      // attachments: undefined, // Don't set default, let it be undefined
       satisfactionRating: undefined,
       comments: '',
       agreesToTerms: false,
@@ -267,7 +289,21 @@ const NewRequestPage: React.FC = () => {
   // Save form data to localStorage whenever form values change
   const debouncedSave = useDebounce((data: ServiceRequestFormData) => {
     try {
-      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+      // Create a copy without File objects for localStorage (Files can't be serialized)
+      const dataToSave = {
+        ...data,
+        // Convert Date objects to ISO strings for serialization (with validation)
+        dateOfRequest: data.dateOfRequest instanceof Date && !isNaN(data.dateOfRequest.getTime()) ? data.dateOfRequest.toISOString() : data.dateOfRequest,
+        preferredDate: data.preferredDate instanceof Date && !isNaN(data.preferredDate.getTime()) ? data.preferredDate.toISOString() : data.preferredDate,
+        attachments: data.attachments?.map(att => ({
+          name: att.name,
+          size: att.size,
+          type: att.type,
+          // Don't save the actual File object
+        })) // Leave as undefined if no attachments
+      };
+      console.log('Saving form data to localStorage:', dataToSave);
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
     } catch (error) {
       console.warn('Failed to save form data:', error);
     }
@@ -308,6 +344,9 @@ const NewRequestPage: React.FC = () => {
       if (!['HIGH', 'URGENT'].includes(getValues('priority'))) {
         setValue('priority', 'HIGH');
       }
+    } else {
+      // Clear alternate phone when emergency is disabled
+      setValue('alternatePhone', '');
     }
     trigger(['isEmergency', 'priority', 'alternatePhone']);
   }, [setValue, getValues, trigger]);
@@ -352,10 +391,7 @@ const NewRequestPage: React.FC = () => {
       }
     });
 
-    // Check for emergency request validation
-    if (stepIndex === 2 && watchedValues.isEmergency && !watchedValues.alternatePhone) {
-      stepErrors.push('Emergency requests require alternate phone number');
-    }
+    // Emergency validation is handled by schema, no need for duplicate check
 
     const finalResult = {
       isValid: isValid && stepErrors.length === 0,
@@ -373,9 +409,26 @@ const NewRequestPage: React.FC = () => {
       case 0: // Basic Information
         return ['title', 'description', 'category', 'priority', 'dateOfRequest'];
       case 1: // Location
-        return ['streetAddress', 'city', 'postalCode', 'locationText'];
+        // Only require locationText for location step
+        // Address fields are optional and can be filled in contact step for MAIL method
+        return ['locationText'];
       case 2: // Contact & Services
-        return ['contactMethod', 'affectedServices', ...(watchedValues.isEmergency ? ['alternatePhone'] : [])];
+        const contactFields = ['contactMethod'];
+        
+        // Add required contact field based on method
+        if (watchedValues.contactMethod === 'EMAIL' || !watchedValues.contactMethod) {
+          contactFields.push('email');
+        } else if (watchedValues.contactMethod === 'PHONE' || watchedValues.contactMethod === 'SMS') {
+          contactFields.push('phone');
+        }
+        // MAIL contact method doesn't require any additional fields (address is optional)
+        
+        // Add emergency phone if needed (only when emergency is enabled)
+        if (watchedValues.isEmergency) {
+          contactFields.push('alternatePhone');
+        }
+        
+        return contactFields;
       case 3: // Additional Info
         return ['agreesToTerms'];
       case 4: // Review
@@ -422,6 +475,12 @@ const NewRequestPage: React.FC = () => {
   // Handle step change
   const handleStepChange = useCallback((fromStep: number, toStep: number) => {
     console.log(`Moving from step ${fromStep} to step ${toStep}`);
+    
+    // Clear any errors when navigating between steps to prevent conflicts
+    if (toStep < fromStep) {
+      // Going back - clear errors for current step
+      setSubmitError(null);
+    }
   }, []);
 
   const handleFormSubmit = async () => {
@@ -431,57 +490,219 @@ const NewRequestPage: React.FC = () => {
     }
 
     setSubmitError(null);
+    setSubmitSuccess(null);
     
     try {
-      // Use handleSubmit correctly - it returns a promise
-      await handleSubmit(async (data) => {
-        console.log('Form data being submitted:', data);
+      // Use handleSubmit to validate and get form data
+      const formData = getValues();
+      console.log('Form data being submitted:', formData);
+      console.log('Current form errors:', errors);
+      console.log('Form values for debugging:', {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        locationText: formData.locationText,
+        agreesToTerms: formData.agreesToTerms,
+        affectedServices: formData.affectedServices
+      });
+      
+      // Validate all required fields
+      const isValid = await trigger();
+      if (!isValid) {
+        console.log('Form validation failed:', errors);
         
-        // Final XSS check before submission
-        const textFields = ['title', 'description', 'locationText', 'formComments'];
-        for (const field of textFields) {
-          const value = data[field as keyof ServiceRequestFormData] as string;
-          if (value && /<script|javascript:|on\w+=/i.test(value)) {
-            throw new Error(`${field} contains potentially harmful content. Please remove any script tags or suspicious content.`);
-          }
+        // Collect specific validation errors
+        const errorMessages: string[] = [];
+        
+        if (errors.title) errorMessages.push(`Title: ${errors.title.message}`);
+        if (errors.description) errorMessages.push(`Description: ${errors.description.message}`);
+        if (errors.category) errorMessages.push(`Category: ${errors.category.message}`);
+        if (errors.priority) errorMessages.push(`Priority: ${errors.priority.message}`);
+        if (errors.dateOfRequest) errorMessages.push(`Date: ${errors.dateOfRequest.message}`);
+        if (errors.streetAddress) errorMessages.push(`Street Address: ${errors.streetAddress.message}`);
+        if (errors.city) errorMessages.push(`City: ${errors.city.message}`);
+        if (errors.postalCode) errorMessages.push(`Postal Code: ${errors.postalCode.message}`);
+        if (errors.locationText) errorMessages.push(`Location Details: ${errors.locationText.message}`);
+        if (errors.contactMethod) errorMessages.push(`Contact Method: ${errors.contactMethod.message}`);
+        if (errors.affectedServices) errorMessages.push(`Affected Services: ${errors.affectedServices.message}`);
+        if (errors.agreesToTerms) errorMessages.push(`Terms Agreement: ${errors.agreesToTerms.message}`);
+        if (errors.alternatePhone) errorMessages.push(`Alternate Phone: ${errors.alternatePhone.message}`);
+        if (errors.issueType) errorMessages.push(`Issue Type: ${errors.issueType.message}`);
+        if (errors.preferredTime) errorMessages.push(`Preferred Time: ${errors.preferredTime.message}`);
+        // Don't show attachment errors since they're completely optional
+        
+        const errorMessage = errorMessages.length > 0 
+          ? `Please fix the following errors:\n• ${errorMessages.join('\n• ')}`
+          : 'Please fix all validation errors before submitting.';
+          
+        setSubmitError(errorMessage);
+        return;
+      }
+      
+      // Check minimum required fields manually
+      if (!formData.title || formData.title.trim().length < 5) {
+        setSubmitError('Title must be at least 5 characters long.');
+        return;
+      }
+      
+      if (!formData.description || formData.description.trim().length < 30) {
+        setSubmitError('Description must be at least 30 characters long.');
+        return;
+      }
+      
+      if (!formData.category) {
+        setSubmitError('Please select a category.');
+        return;
+      }
+      
+      if (!formData.locationText || formData.locationText.trim().length < 1) {
+        setSubmitError('Please provide location details.');
+        return;
+      }
+      
+      if (!formData.agreesToTerms) {
+        setSubmitError('You must agree to the terms and conditions.');
+        return;
+      }
+      
+      // Final XSS check before submission
+      const textFields = ['title', 'description', 'locationText', 'comments'];
+      for (const field of textFields) {
+        const value = formData[field as keyof ServiceRequestFormData] as string;
+        if (value && /<script|javascript:|on\w+=/i.test(value)) {
+          setSubmitError(`${field} contains potentially harmful content. Please remove any script tags or suspicious content.`);
+          return;
         }
+      }
 
-        // Generate idempotency key
-        const idempotencyKey = `new-request-${Date.now()}-${Math.random()}`;
-        
-        // Build location text from available fields
-        let locationText = data.locationText || '';
-        if (data.streetAddress || data.city || data.postalCode) {
-          const addressParts = [data.streetAddress, data.city, data.postalCode].filter(Boolean);
-          locationText = addressParts.join(', ');
-          if (data.landmark) {
-            locationText += ` (Near: ${data.landmark})`;
-          }
+      // Generate idempotency key
+      const idempotencyKey = `new-request-${Date.now()}-${Math.random()}`;
+      
+      // Build location text from available fields
+      let locationText = formData.locationText || '';
+      if (formData.streetAddress || formData.city || formData.postalCode) {
+        const addressParts = [formData.streetAddress, formData.city, formData.postalCode].filter(Boolean);
+        locationText = addressParts.join(', ');
+        if (formData.landmark) {
+          locationText += ` (Near: ${formData.landmark})`;
         }
+      }
+      
+      // Convert the enhanced data to the API format
+      const apiData = {
+        // Basic fields
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority || 'MEDIUM',
         
-        // Convert the enhanced data to the basic API format
-        const apiData = {
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          priority: data.priority || 'MEDIUM',
-          locationText: locationText,
-        };
+        // Date fields (with validation)
+        dateOfRequest: (() => {
+          if (formData.dateOfRequest) {
+            const date = new Date(formData.dateOfRequest);
+            return !isNaN(date.getTime()) ? date.toISOString() : new Date().toISOString();
+          }
+          return new Date().toISOString();
+        })(),
         
-        console.log('API data being sent:', apiData);
+        // Location fields
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        locationText: locationText,
+        landmark: formData.landmark,
+        accessInstructions: formData.accessInstructions,
         
-        await createRequest(apiData, idempotencyKey);
+        // Contact fields
+        contactMethod: formData.contactMethod,
+        email: formData.email,
+        phone: formData.phone,
+        alternatePhone: formData.alternatePhone,
+        bestTimeToContact: formData.bestTimeToContact,
         
-        // Clear saved form data on successful submission
-        clearSavedFormData();
+        // Mailing address (use mailing fields if provided, otherwise fall back to location fields)
+        mailingStreetAddress: formData.mailingStreetAddress || formData.streetAddress,
+        mailingCity: formData.mailingCity || formData.city,
+        mailingPostalCode: formData.mailingPostalCode || formData.postalCode,
         
-        // Redirect to requests list on success
+        // Issue details
+        issueType: formData.issueType,
+        severity: formData.severity,
+        isRecurring: formData.isRecurring,
+        isEmergency: formData.isEmergency,
+        hasPermits: formData.hasPermits,
+        
+        // Service impact
+        affectedServices: formData.affectedServices,
+        estimatedValue: formData.estimatedValue,
+        
+        // Additional contacts
+        additionalContacts: formData.additionalContacts,
+        
+        // User experience
+        satisfactionRating: formData.satisfactionRating,
+        formComments: formData.comments, // Map comments field to formComments
+        
+        // Legal and preferences
+        agreesToTerms: formData.agreesToTerms,
+        wantsUpdates: formData.wantsUpdates,
+        
+        // Scheduled service
+        preferredDate: (() => {
+          if (formData.preferredDate) {
+            const date = new Date(formData.preferredDate);
+            return !isNaN(date.getTime()) ? date.toISOString() : undefined;
+          }
+          return undefined;
+        })(),
+        preferredTime: formData.preferredTime,
+      };
+      
+      console.log('API data being sent:', apiData);
+      
+      // Call the API to create the request
+      const result = await createRequest(apiData, idempotencyKey);
+      
+      console.log('Request created successfully:', result);
+      
+      // Upload file if one was selected
+      if (uploadedFile && result.id) {
+        try {
+          console.log('Uploading file:', uploadedFile.name);
+          
+          const formData = new FormData();
+          formData.append('files', uploadedFile);
+          
+          const uploadResponse = await api.post(`/requests/${result.id}/attachments`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          
+          console.log('File uploaded successfully:', uploadResponse.data);
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          // Don't fail the entire submission if file upload fails
+          setSubmitError('Request created successfully, but file upload failed. You can add attachments later.');
+          return;
+        }
+      }
+      
+      // Clear saved form data on successful submission
+      clearSavedFormData();
+      
+      // Show success message
+      setSubmitSuccess('Your service request has been submitted successfully! Redirecting...');
+      
+      // Redirect to requests list on success after a short delay
+      setTimeout(() => {
         window.location.href = '/citizen/requests';
-      })();
+      }, 2000);
+      
     } catch (error) {
       console.error('Form submission error:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Failed to submit request');
-      throw error;
+      const errorMessage = createError || (error instanceof Error ? error.message : 'Failed to submit request');
+      setSubmitError(errorMessage);
     }
   };
 
@@ -490,6 +711,56 @@ const NewRequestPage: React.FC = () => {
     clearSavedFormData();
     window.location.href = '/citizen/requests';
   };
+
+  // Handle file upload
+  const handleFileUpload = useCallback((file: File) => {
+    // Clear any previous errors
+    setSubmitError(null);
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setSubmitError(`File size is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed size is 5MB.`);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setSubmitError('Please upload an image file (JPG, PNG, GIF)');
+      return;
+    }
+
+    setUploadedFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    // Update form with file info (for validation)
+    setValue('attachments', [{
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file // Store the actual file object
+    }]);
+    
+    console.log('File uploaded:', file.name, file.size, 'bytes');
+  }, [setValue]);
+
+  // Handle file removal
+  const handleFileRemove = useCallback(() => {
+    setUploadedFile(null);
+    setImagePreview(null);
+    setValue('attachments', undefined); // Set to undefined instead of empty array
+    
+    // Reset the file input
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    console.log('File removed');
+  }, [setValue]);
 
   // Step 1: Basic Information
   const BasicInfoStep = (
@@ -588,10 +859,28 @@ const NewRequestPage: React.FC = () => {
               margin="normal"
               error={!!errors.dateOfRequest}
               required
-              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+              value={(() => {
+                if (!field.value) return '';
+                try {
+                  const date = new Date(field.value);
+                  return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : '';
+                } catch {
+                  return '';
+                }
+              })()}
               onChange={(e) => {
-                const dateValue = e.target.value ? new Date(e.target.value) : null;
-                field.onChange(dateValue);
+                try {
+                  const dateValue = e.target.value ? new Date(e.target.value) : null;
+                  // Validate the date before setting it
+                  if (dateValue && !isNaN(dateValue.getTime())) {
+                    field.onChange(dateValue);
+                  } else if (!e.target.value) {
+                    field.onChange(null);
+                  }
+                } catch {
+                  // If date parsing fails, set to null
+                  field.onChange(null);
+                }
               }}
               inputProps={{
                 max: new Date().toISOString().split('T')[0],
@@ -725,10 +1014,9 @@ const NewRequestPage: React.FC = () => {
             <TextField
               {...field}
               fullWidth
-              label="Street Address"
+              label="Street Address (Optional)"
               margin="normal"
               error={!!errors.streetAddress}
-              required
               inputProps={{
                 maxLength: 100,
                 'aria-describedby': errors.streetAddress ? FormValidationTestIds.FIELD_ERROR('new-request', 'streetAddress') : undefined,
@@ -763,10 +1051,9 @@ const NewRequestPage: React.FC = () => {
                 <TextField
                   {...field}
                   fullWidth
-                  label="City"
+                  label="City (Optional)"
                   margin="normal"
                   error={!!errors.city}
-                  required
                   inputProps={{
                     maxLength: 50,
                     'aria-describedby': errors.city ? FormValidationTestIds.FIELD_ERROR('new-request', 'city') : undefined,
@@ -800,10 +1087,9 @@ const NewRequestPage: React.FC = () => {
                 <TextField
                   {...field}
                   fullWidth
-                  label="Postal Code"
+                  label="Postal Code (Optional)"
                   margin="normal"
                   error={!!errors.postalCode}
-                  required
                   inputProps={{
                     maxLength: 10,
                     'aria-describedby': errors.postalCode ? FormValidationTestIds.FIELD_ERROR('new-request', 'postalCode') : undefined,
@@ -886,9 +1172,14 @@ const NewRequestPage: React.FC = () => {
             <InputLabel>Preferred Contact Method</InputLabel>
             <Select
               {...field}
+              value={field.value || 'EMAIL'} // Ensure there's always a value
               label="Preferred Contact Method"
               data-testid="cs-new-request-contact-method"
               aria-describedby={errors.contactMethod ? FormValidationTestIds.FIELD_ERROR('new-request', 'contactMethod') : undefined}
+              onChange={(e) => {
+                console.log('Contact method changed to:', e.target.value);
+                field.onChange(e.target.value);
+              }}
             >
               <MenuItem value="EMAIL">Email</MenuItem>
               <MenuItem value="PHONE">Phone</MenuItem>
@@ -904,6 +1195,191 @@ const NewRequestPage: React.FC = () => {
           </FormControl>
         )}
       />
+
+      {/* Email field - shown when EMAIL is selected */}
+      {(watchedValues.contactMethod === 'EMAIL' || !watchedValues.contactMethod) && (
+        <Controller
+          name="email"
+          control={control}
+          render={({ field }) => (
+            <Box>
+              <TextField
+                {...field}
+                fullWidth
+                label="Email Address"
+                type="email"
+                margin="normal"
+                error={!!errors.email}
+                required
+                inputProps={{
+                  maxLength: 254,
+                  'aria-describedby': errors.email ? FormValidationTestIds.FIELD_ERROR('new-request', 'email') : undefined,
+                }}
+                data-testid="cs-new-request-email"
+                onChange={(e) => {
+                  field.onChange(e);
+                  handleInputChange('email', e.target.value);
+                }}
+              />
+              <ValidationFeedback
+                field={field}
+                error={errors.email}
+                fieldName="email"
+                formName="new-request"
+                isValidating={isAsyncValidating.email}
+              />
+            </Box>
+          )}
+        />
+      )}
+
+      {/* Phone field - shown when PHONE or SMS is selected */}
+      {(watchedValues.contactMethod === 'PHONE' || watchedValues.contactMethod === 'SMS') && (
+        <Controller
+          name="phone"
+          control={control}
+          render={({ field }) => (
+            <Box>
+              <TextField
+                {...field}
+                fullWidth
+                label="Phone Number"
+                type="tel"
+                margin="normal"
+                error={!!errors.phone}
+                required
+                inputProps={{
+                  maxLength: 15,
+                  'aria-describedby': errors.phone ? FormValidationTestIds.FIELD_ERROR('new-request', 'phone') : undefined,
+                }}
+                data-testid="cs-new-request-phone"
+                onChange={(e) => {
+                  field.onChange(e);
+                  handleInputChange('phone', e.target.value);
+                }}
+              />
+              <ValidationFeedback
+                field={field}
+                error={errors.phone}
+                fieldName="phone"
+                formName="new-request"
+                isValidating={isAsyncValidating.phone}
+              />
+            </Box>
+          )}
+        />
+      )}
+
+      {/* Address fields - shown when MAIL is selected */}
+      {watchedValues.contactMethod === 'MAIL' && (
+        <Box>
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+            Mailing Address (Optional)
+          </Typography>
+          
+          <Controller
+            name="mailingStreetAddress"
+            control={control}
+            render={({ field }) => (
+              <Box>
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="Street Address"
+                  margin="normal"
+                  error={!!errors.mailingStreetAddress}
+                  inputProps={{
+                    maxLength: 100,
+                    'aria-describedby': errors.mailingStreetAddress ? FormValidationTestIds.FIELD_ERROR('new-request', 'mailingStreetAddress') : undefined,
+                  }}
+                  data-testid="cs-new-request-mail-address"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleInputChange('mailingStreetAddress', e.target.value);
+                  }}
+                />
+                <ValidationFeedback
+                  field={field}
+                  error={errors.mailingStreetAddress}
+                  fieldName="mailingStreetAddress"
+                  formName="new-request"
+                  isValidating={isAsyncValidating.mailingStreetAddress}
+                />
+              </Box>
+            )}
+          />
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="mailingCity"
+                control={control}
+                render={({ field }) => (
+                  <Box>
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="City"
+                      margin="normal"
+                      error={!!errors.mailingCity}
+                      inputProps={{
+                        maxLength: 50,
+                        'aria-describedby': errors.mailingCity ? FormValidationTestIds.FIELD_ERROR('new-request', 'mailingCity') : undefined,
+                      }}
+                      data-testid="cs-new-request-mail-city"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleInputChange('mailingCity', e.target.value);
+                      }}
+                    />
+                    <ValidationFeedback
+                      field={field}
+                      error={errors.mailingCity}
+                      fieldName="mailingCity"
+                      formName="new-request"
+                      isValidating={isAsyncValidating.mailingCity}
+                    />
+                  </Box>
+                )}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="mailingPostalCode"
+                control={control}
+                render={({ field }) => (
+                  <Box>
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="Postal Code"
+                      margin="normal"
+                      error={!!errors.mailingPostalCode}
+                      inputProps={{
+                        maxLength: 10,
+                        'aria-describedby': errors.mailingPostalCode ? FormValidationTestIds.FIELD_ERROR('new-request', 'mailingPostalCode') : undefined,
+                      }}
+                      data-testid="cs-new-request-mail-postal"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleInputChange('mailingPostalCode', e.target.value);
+                      }}
+                    />
+                    <ValidationFeedback
+                      field={field}
+                      error={errors.mailingPostalCode}
+                      fieldName="mailingPostalCode"
+                      formName="new-request"
+                      isValidating={isAsyncValidating.mailingPostalCode}
+                    />
+                  </Box>
+                )}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      )}
 
       {watchedValues.isEmergency && (
         <Controller
@@ -940,12 +1416,12 @@ const NewRequestPage: React.FC = () => {
         />
       )}
 
-      <Controller
-        name="affectedServices"
-        control={control}
-        render={({ field }) => (
-          <FormControl fullWidth margin="normal" error={!!errors.affectedServices} required>
-            <FormLabel component="legend">Affected Services</FormLabel>
+              <Controller
+          name="affectedServices"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth margin="normal" error={!!errors.affectedServices}>
+              <FormLabel component="legend">Affected Services (Optional)</FormLabel>
             <Box>
               <Autocomplete
                 multiple
@@ -1017,39 +1493,68 @@ const NewRequestPage: React.FC = () => {
             },
           }}
         >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                // For demo purposes, we'll just store the filename
-                // In a real app, you'd upload to a server or cloud storage
-                setValue('attachments', [{ name: file.name, size: file.size, type: file.type }]);
-              }
-            }}
-            style={{ display: 'none' }}
-            id="image-upload"
-            data-testid="cs-new-request-image-upload"
-          />
-          <label htmlFor="image-upload" style={{ cursor: 'pointer' }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" color="primary">
-                📷
-              </Typography>
-              <Typography variant="body1">
-                Click to upload an image
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                or drag and drop here
-              </Typography>
-            </Box>
-          </label>
-          {watchedValues.attachments && watchedValues.attachments.length > 0 && (
-            <Box sx={{ mt: 2, p: 1, backgroundColor: 'success.light', borderRadius: 1 }}>
-              <Typography variant="body2" color="success.dark">
-                ✓ {watchedValues.attachments[0].name} uploaded
-              </Typography>
+          {!uploadedFile ? (
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileUpload(file);
+                  }
+                }}
+                style={{ display: 'none' }}
+                id="image-upload"
+                data-testid="cs-new-request-image-upload"
+              />
+              <label htmlFor="image-upload" style={{ cursor: 'pointer' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" color="primary">
+                    📷
+                  </Typography>
+                  <Typography variant="body1">
+                    Click to upload an image
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    or drag and drop here
+                  </Typography>
+                </Box>
+              </label>
+            </>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, backgroundColor: 'success.light', borderRadius: 1 }}>
+              {imagePreview && (
+                <Box
+                  component="img"
+                  src={imagePreview}
+                  alt="Preview"
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    objectFit: 'cover',
+                    borderRadius: 1,
+                    border: '1px solid #ddd'
+                  }}
+                />
+              )}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" color="success.dark">
+                  ✓ {uploadedFile.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {(uploadedFile.size / 1024).toFixed(1)} KB
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                onClick={handleFileRemove}
+                data-testid="cs-remove-image"
+              >
+                Remove
+              </Button>
             </Box>
           )}
         </Box>
@@ -1134,8 +1639,18 @@ const NewRequestPage: React.FC = () => {
             <CardContent>
               <Typography variant="subtitle1" color="primary" gutterBottom>Contact Information</Typography>
               <Typography variant="body2"><strong>Preferred Contact Method:</strong> {watchedValues.contactMethod || 'EMAIL'}</Typography>
+              {watchedValues.email && <Typography variant="body2"><strong>Email:</strong> {watchedValues.email}</Typography>}
+              {watchedValues.phone && <Typography variant="body2"><strong>Phone:</strong> {watchedValues.phone}</Typography>}
               {watchedValues.alternatePhone && <Typography variant="body2"><strong>Alternate Phone:</strong> {watchedValues.alternatePhone}</Typography>}
               {watchedValues.bestTimeToContact && <Typography variant="body2"><strong>Best Time to Contact:</strong> {watchedValues.bestTimeToContact}</Typography>}
+              {/* Mailing Address (when MAIL is selected) */}
+              {watchedValues.contactMethod === 'MAIL' && (
+                <>
+                  {watchedValues.mailingStreetAddress && <Typography variant="body2"><strong>Mailing Address:</strong> {watchedValues.mailingStreetAddress}</Typography>}
+                  {watchedValues.mailingCity && <Typography variant="body2"><strong>Mailing City:</strong> {watchedValues.mailingCity}</Typography>}
+                  {watchedValues.mailingPostalCode && <Typography variant="body2"><strong>Mailing Postal Code:</strong> {watchedValues.mailingPostalCode}</Typography>}
+                </>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -1152,7 +1667,7 @@ const NewRequestPage: React.FC = () => {
           </Card>
         </Grid>
 
-        {watchedValues.affectedServices && watchedValues.affectedServices.length > 0 && (
+        {watchedValues.affectedServices && watchedValues.affectedServices.length > 0 ? (
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
@@ -1163,7 +1678,7 @@ const NewRequestPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-        )}
+        ) : null}
 
         {watchedValues.estimatedValue && watchedValues.estimatedValue > 0 && (
           <Grid item xs={12} md={6}>
@@ -1188,12 +1703,31 @@ const NewRequestPage: React.FC = () => {
           </Grid>
         )}
 
-        {watchedValues.attachments && watchedValues.attachments.length > 0 && (
+        {uploadedFile && imagePreview && (
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" color="primary" gutterBottom>Attachments</Typography>
-                <Typography variant="body2">📷 {watchedValues.attachments[0].name}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="Attached image"
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      border: '1px solid #ddd'
+                    }}
+                  />
+                  <Box>
+                    <Typography variant="body2">📷 {uploadedFile.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {(uploadedFile.size / 1024).toFixed(1)} KB
+                    </Typography>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -1210,18 +1744,20 @@ const NewRequestPage: React.FC = () => {
           </Grid>
         )}
 
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Contact Information</Typography>
-              <Typography variant="body2"><strong>Preferred Method:</strong> {watchedValues.contactMethod}</Typography>
-              {watchedValues.alternatePhone && (
-                <Typography variant="body2"><strong>Alternate Phone:</strong> {watchedValues.alternatePhone}</Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+
       </Grid>
+
+      {submitError && (
+        <Alert severity="error" sx={{ mt: 2 }} data-testid="cs-submit-error">
+          {submitError}
+        </Alert>
+      )}
+
+      {submitSuccess && (
+        <Alert severity="success" sx={{ mt: 2 }} data-testid="cs-submit-success">
+          {submitSuccess}
+        </Alert>
+      )}
 
       {isBlocked && (
         <Alert severity="warning" sx={{ mt: 2 }}>
@@ -1231,26 +1767,42 @@ const NewRequestPage: React.FC = () => {
     </Box>
   );
 
+  // Wrap step components to prevent rendering errors
+  const safeStepWrapper = (stepComponent: React.ReactNode, stepName: string) => {
+    try {
+      return stepComponent;
+    } catch (error) {
+      console.error(`Error rendering ${stepName}:`, error);
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="error">
+            Error loading {stepName}. Please try refreshing the page.
+          </Typography>
+        </Box>
+      );
+    }
+  };
+
   const steps: StepperStep[] = [
     {
       label: 'Basic Information',
-      component: BasicInfoStep,
+      component: safeStepWrapper(BasicInfoStep, 'Basic Information'),
     },
     {
       label: 'Location',
-      component: LocationStep,
+      component: safeStepWrapper(LocationStep, 'Location'),
     },
     {
       label: 'Contact & Services',
-      component: ContactServicesStep,
+      component: safeStepWrapper(ContactServicesStep, 'Contact & Services'),
     },
     {
       label: 'Additional Details',
-      component: AdditionalInfoStep,
+      component: safeStepWrapper(AdditionalInfoStep, 'Additional Details'),
     },
     {
       label: 'Review',
-      component: ReviewStep,
+      component: safeStepWrapper(ReviewStep, 'Review'),
     },
   ];
 
@@ -1268,6 +1820,35 @@ const NewRequestPage: React.FC = () => {
           </Typography>
         </Box>
       )}
+
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 2 }} data-testid="cs-form-submit-error">
+          {submitError}
+        </Alert>
+      )}
+
+      {submitSuccess && (
+        <Alert severity="success" sx={{ mb: 2 }} data-testid="cs-form-submit-success">
+          {submitSuccess}
+        </Alert>
+      )}
+
+      {/* Temporary debug button - remove in production */}
+      <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Typography variant="subtitle2" gutterBottom>Debug Info:</Typography>
+        <Button 
+          size="small" 
+          onClick={() => {
+            console.log('=== DEBUG INFO ===');
+            console.log('Form Values:', getValues());
+            console.log('Form Errors:', errors);
+            console.log('Form Valid:', Object.keys(errors).length === 0);
+            console.log('=================');
+          }}
+        >
+          Log Form State
+        </Button>
+      </Box>
 
       <StepperWizard
         steps={steps}

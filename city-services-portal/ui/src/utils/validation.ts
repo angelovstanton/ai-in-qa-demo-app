@@ -41,8 +41,8 @@ export const ValidationPatterns = {
     .min(10, 'Phone number must be at least 10 digits')
     .max(15, 'Phone number must be less than 15 digits')
     .regex(
-      /^[\+]?[1-9][\d]{0,15}$/,
-      'Please enter a valid phone number (digits only, optional + prefix)'
+      /^[\+]?[1-9][\d]{9,14}$/,
+      'Please enter a valid phone number (10-15 digits, optional + prefix)'
     ),
 
   // URLs with protocol validation

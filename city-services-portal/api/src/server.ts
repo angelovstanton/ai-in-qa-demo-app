@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/error';
 import { logger } from './utils/logger';
@@ -56,6 +57,9 @@ app.get('/health', (req, res) => {
     service: 'city-services-portal-api'
   });
 });
+
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

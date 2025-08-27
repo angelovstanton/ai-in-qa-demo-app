@@ -27,7 +27,14 @@ export const registrationSchema = z.object({
 
   // Contact Information
   phone: ValidationPatterns.phone,
-  alternatePhone: ValidationPatterns.phone.optional(),
+  alternatePhone: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid (optional)
+    if (!val || val.trim().length === 0) return true;
+    // If provided, must match phone pattern
+    return /^[\+]?[1-9][\d]{9,14}$/.test(val) && val.length >= 10 && val.length <= 15;
+  }, {
+    message: 'Please enter a valid phone number (10-15 digits, optional + prefix)'
+  }),
 
   // Address Information
   streetAddress: ValidationPatterns.streetAddress,
@@ -119,10 +126,10 @@ export const serviceRequestSchema = z.object({
   // Date of Request - new field with validation
   dateOfRequest: ServiceRequestPatterns.dateOfRequest,
 
-  // Location Information
-  streetAddress: ValidationPatterns.streetAddress,
-  city: ValidationPatterns.city,
-  postalCode: ValidationPatterns.postalCode,
+  // Location Information (address fields are optional, can be used for mailing)
+  streetAddress: ValidationPatterns.streetAddress.optional(),
+  city: ValidationPatterns.city.optional(),
+  postalCode: ValidationPatterns.postalCode.optional(),
   locationText: ServiceRequestPatterns.locationText,
   
   landmark: z.string()
@@ -135,13 +142,27 @@ export const serviceRequestSchema = z.object({
 
   // Contact Information
   contactMethod: ServiceRequestPatterns.contactMethod,
-  alternatePhone: ValidationPatterns.phone.optional(),
+  email: ValidationPatterns.email.optional(),
+  phone: ValidationPatterns.phone.optional(),
+  alternatePhone: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid (optional)
+    if (!val || val.trim().length === 0) return true;
+    // If provided, must match phone pattern
+    return /^[\+]?[1-9][\d]{9,14}$/.test(val) && val.length >= 10 && val.length <= 15;
+  }, {
+    message: 'Please enter a valid phone number (10-15 digits, optional + prefix)'
+  }),
   bestTimeToContact: z.string()
     .max(100, 'Best time to contact description is too long')
     .optional(),
+  
+  // Mailing Address (separate from location address)
+  mailingStreetAddress: ValidationPatterns.streetAddress.optional(),
+  mailingCity: ValidationPatterns.city.optional(),
+  mailingPostalCode: ValidationPatterns.postalCode.optional(),
 
   // Issue Details
-  issueType: ServiceRequestPatterns.issueType,
+  issueType: z.string().optional(),
   severity: ServiceRequestPatterns.severity,
   isRecurring: z.boolean().default(false),
   isEmergency: z.boolean().default(false),
@@ -149,8 +170,9 @@ export const serviceRequestSchema = z.object({
 
   // Service Impact
   affectedServices: z.array(z.string())
-    .min(1, 'Please select at least one affected service')
-    .max(10, 'Too many affected services selected'),
+    .max(10, 'Too many affected services selected')
+    .default([])
+    .optional(),
 
   estimatedValue: ServiceRequestPatterns.estimatedValue,
 
@@ -167,9 +189,11 @@ export const serviceRequestSchema = z.object({
       )
   })).max(5, 'Maximum 5 additional contacts allowed'),
 
-  // File Attachments
+  // File Attachments (completely optional)
   attachments: z.array(FilePatterns.attachment)
-    .max(5, 'Maximum 5 file attachments allowed'),
+    .max(5, 'Maximum 5 file attachments allowed')
+    .optional()
+    .default([]),
 
   // User Experience
   satisfactionRating: z.number()
@@ -190,17 +214,35 @@ export const serviceRequestSchema = z.object({
 
   // Scheduled Service (if applicable)
   preferredDate: ValidationPatterns.futureDate.optional(),
-  preferredTime: ValidationPatterns.time.optional(),
+  preferredTime: z.string().optional(),
 
 }).refine((data) => {
-  // Emergency requests require alternate contact method
+  // Emergency requests require alternate phone number
   if (data.isEmergency) {
-    return data.alternatePhone || data.contactMethod === 'EMAIL';
+    return data.alternatePhone && data.alternatePhone.trim().length > 0;
   }
   return true;
 }, {
-  message: "Emergency requests require alternate phone number or email contact",
+  message: "Emergency requests require alternate phone number",
   path: ["alternatePhone"],
+}).refine((data) => {
+  // Email is required when EMAIL contact method is selected
+  if (data.contactMethod === 'EMAIL' || !data.contactMethod) {
+    return data.email && data.email.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Email address is required for email contact method",
+  path: ["email"],
+}).refine((data) => {
+  // Phone is required when PHONE or SMS contact method is selected
+  if (data.contactMethod === 'PHONE' || data.contactMethod === 'SMS') {
+    return data.phone && data.phone.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Phone number is required for phone/SMS contact method",
+  path: ["phone"],
 }).refine((data) => {
   // Scheduled service requires both date and time
   if (data.preferredTime) {
@@ -325,7 +367,14 @@ export const profileUpdateSchema = z.object({
   
   // Contact Information (optional)
   phone: ValidationPatterns.phone.optional(),
-  alternatePhone: ValidationPatterns.phone.optional(),
+  alternatePhone: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid (optional)
+    if (!val || val.trim().length === 0) return true;
+    // If provided, must match phone pattern
+    return /^[\+]?[1-9][\d]{9,14}$/.test(val) && val.length >= 10 && val.length <= 15;
+  }, {
+    message: 'Please enter a valid phone number (10-15 digits, optional + prefix)'
+  }),
   
   // Address Information (optional)
   streetAddress: ValidationPatterns.streetAddress.optional(),
