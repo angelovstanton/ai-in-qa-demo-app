@@ -53,7 +53,7 @@ export const ValidationPatterns = {
       'URL must start with http:// or https://'
     ),
 
-  // Postal codes supporting multiple international formats
+  // Postal codes supporting multiple international formats - minimum 5 symbols
   postalCode: z.string()
     .min(5, 'Postal code must be at least 5 characters')
     .max(10, 'Postal code must be less than 10 characters')
@@ -106,9 +106,9 @@ export const ValidationPatterns = {
       'Street address contains invalid characters'
     ),
 
-  // City name validation with international support
+  // City name validation with international support - minimum 3 symbols
   city: z.string()
-    .min(2, 'City name must be at least 2 characters')
+    .min(3, 'City name must be at least 3 characters')
     .max(50, 'City name is too long')
     .regex(
       /^[a-zA-ZÀ-ÿ\u0100-\u017f\u0180-\u024f\u1e00-\u1eff\s'-]+$/,
@@ -165,6 +165,21 @@ export const ServiceRequestPatterns = {
       'Description must contain at least 10 words'
     )
     .transform((desc) => ValidationPatterns.safeText.parse(desc)),
+
+  // Date of request validation - cannot be more than 1 month in the past
+  dateOfRequest: z.date()
+    .refine(
+      (date) => {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        return date >= oneMonthAgo;
+      },
+      'Date cannot be more than 1 month in the past'
+    )
+    .refine(
+      (date) => date <= new Date(),
+      'Date cannot be in the future'
+    ),
 
   // Location text validation
   locationText: z.string()

@@ -38,6 +38,35 @@ export interface ServiceRequest {
     name: string;
     slug: string;
   };
+  dateOfRequest: string; // Date when the request was created
+  upvotes: number; // Number of upvotes for the request
+  comments: { // Comments associated with the request
+    id: string;
+    content: string;
+    author: {
+      id: string;
+      name: string;
+    };
+    createdAt: string;
+  }[]; // Corrected to an array of objects
+  resolvedStatus: boolean; // Whether the request is resolved
+  correspondenceHistory: { // History of correspondence related to the request
+    message: string;
+    date: string;
+  }[];
+  attachments: { // Attachments associated with the request
+    id: string;
+    filename: string;
+    fileSize: number;
+    createdAt: string;
+  }[]; // Corrected to an array of objects
+  closedAt?: string; // Date when the request was closed
+  eventLogs: { // Event logs for the request
+    id: string;
+    type: string;
+    payload: string;
+    createdAt: string;
+  }[]; // Corrected to an array of objects
 }
 
 export interface ApiResponse<T> {

@@ -29,7 +29,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import StepperWizard, { StepperStep } from '../../components/StepperWizard';
 import { useCreateServiceRequest } from '../../hooks/useServiceRequests';
 import { serviceRequestSchema, ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
-import { XSSPrevention, Sanitization } from '../../utils/validation';
 
 // Local storage key for form persistence
 const FORM_STORAGE_KEY = 'new-request-form-data';
@@ -115,7 +114,7 @@ const ValidationFeedback: React.FC<{
   securityCheck?: boolean;
 }> = ({ field, error, fieldName, formName, isValidating, maxLength, showCharCount, securityCheck }) => {
   const value = field.value || '';
-  const hasXSS = securityCheck && XSSPrevention.containsXSS(value);
+  const hasXSS = securityCheck && value && /<script|javascript:|on\w+=/i.test(value);
   
   return (
     <Box>
@@ -235,6 +234,7 @@ const NewRequestPage: React.FC = () => {
       description: '',
       category: '',
       priority: 'MEDIUM',
+      dateOfRequest: new Date(), // Default to today
       streetAddress: '',
       city: '',
       postalCode: '',
@@ -314,7 +314,13 @@ const NewRequestPage: React.FC = () => {
 
   // Sanitize input on change
   const handleInputChange = useCallback((fieldName: string, value: string) => {
-    const sanitized = Sanitization.sanitizeForDatabase(value);
+    // Simple sanitization
+    const sanitized = value
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+    
     setValue(fieldName as any, sanitized);
     debouncedValidation(fieldName);
   }, [setValue, debouncedValidation]);
@@ -349,7 +355,7 @@ const NewRequestPage: React.FC = () => {
   const getStepFields = (stepIndex: number): string[] => {
     switch (stepIndex) {
       case 0: // Basic Information
-        return ['title', 'description', 'category', 'priority'];
+        return ['title', 'description', 'category', 'priority', 'dateOfRequest'];
       case 1: // Location
         return ['streetAddress', 'city', 'postalCode', 'locationText'];
       case 2: // Contact & Services
@@ -384,6 +390,7 @@ const NewRequestPage: React.FC = () => {
       description: 'Description',
       category: 'Category',
       priority: 'Priority',
+      dateOfRequest: 'Date of Request',
       streetAddress: 'Street Address',
       city: 'City',
       postalCode: 'Postal Code',
@@ -415,7 +422,7 @@ const NewRequestPage: React.FC = () => {
         const textFields = ['title', 'description', 'locationText', 'comments'];
         for (const field of textFields) {
           const value = data[field as keyof ServiceRequestFormData] as string;
-          if (value && XSSPrevention.containsXSS(value)) {
+          if (value && /<script|javascript:|on\w+=/i.test(value)) {
             throw new Error(`${field} contains potentially harmful content. Please remove any script tags or suspicious content.`);
           }
         }
@@ -425,13 +432,11 @@ const NewRequestPage: React.FC = () => {
         
         // Convert the enhanced data to the basic API format with proper sanitization
         const apiData = {
-          title: Sanitization.sanitizeForDatabase(data.title),
-          description: Sanitization.sanitizeForDatabase(data.description),
+          title: data.title,
+          description: data.description,
           category: data.category,
           priority: data.priority,
-          locationText: Sanitization.sanitizeForDatabase(
-            `${data.streetAddress}, ${data.city}, ${data.postalCode}${data.landmark ? ` (Near: ${data.landmark})` : ''}`
-          ),
+          locationText: `${data.streetAddress}, ${data.city}, ${data.postalCode}${data.landmark ? ` (Near: ${data.landmark})` : ''}`,
         };
         
         await createRequest(apiData, idempotencyKey);
@@ -538,6 +543,49 @@ const NewRequestPage: React.FC = () => {
         )}
       />
 
+      <Controller
+        name="dateOfRequest"
+        control={control}
+        render={({ field }) => (
+          <Box>
+            <TextField
+              {...field}
+              fullWidth
+              type="date"
+              label="Date of Request"
+              margin="normal"
+              error={!!errors.dateOfRequest}
+              required
+              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+              onChange={(e) => {
+                const dateValue = e.target.value ? new Date(e.target.value) : null;
+                field.onChange(dateValue);
+              }}
+              inputProps={{
+                max: new Date().toISOString().split('T')[0],
+                min: (() => {
+                  const oneMonthAgo = new Date();
+                  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                  return oneMonthAgo.toISOString().split('T')[0];
+                })(),
+                'aria-describedby': errors.dateOfRequest ? FormValidationTestIds.FIELD_ERROR('new-request', 'dateOfRequest') : undefined,
+              }}
+              data-testid="cs-new-request-date"
+              helperText={errors.dateOfRequest?.message || "Select the date when the issue occurred (cannot be more than 1 month ago)"}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <ValidationFeedback
+              field={field}
+              error={errors.dateOfRequest}
+              fieldName="dateOfRequest"
+              formName="new-request"
+            />
+          </Box>
+        )}
+      />
+
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Controller
@@ -619,11 +667,13 @@ const NewRequestPage: React.FC = () => {
       />
 
       {watchedValues.isEmergency && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          <Typography variant="body2">
-            Emergency requests require alternate contact information and will be prioritized accordingly.
-          </Typography>
-        </Alert>
+        <Box>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              Emergency requests require alternate contact information and will be prioritized accordingly.
+            </Typography>
+          </Alert>
+        </Box>
       )}
     </Box>
   );
@@ -960,6 +1010,7 @@ const NewRequestPage: React.FC = () => {
               <Typography variant="body2"><strong>Category:</strong> {categoryLabels[watchedValues.category] || watchedValues.category}</Typography>
               <Typography variant="body2"><strong>Priority:</strong> {watchedValues.priority}</Typography>
               <Typography variant="body2"><strong>Emergency:</strong> {watchedValues.isEmergency ? 'Yes' : 'No'}</Typography>
+              <Typography variant="body2"><strong>Date of Request:</strong> {watchedValues.dateOfRequest ? new Date(watchedValues.dateOfRequest).toLocaleDateString() : 'Not selected'}</Typography>
             </CardContent>
           </Card>
         </Grid>

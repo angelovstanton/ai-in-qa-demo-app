@@ -115,6 +115,9 @@ export const serviceRequestSchema = z.object({
   description: ServiceRequestPatterns.description,
   category: ServiceRequestPatterns.category,
   priority: ServiceRequestPatterns.priority,
+  
+  // Date of Request - new field with validation
+  dateOfRequest: ServiceRequestPatterns.dateOfRequest,
 
   // Location Information
   streetAddress: ValidationPatterns.streetAddress,

@@ -6,7 +6,7 @@ This document contains **atomic, copy?paste tasks** for Cursor with clear **acce
 
 ## CURSOR TASK 0/18 — Update Details Page and Views
 
-```text
+```tex
 Update the details page and all views to include the following new fields:
 - Date of Request
 - Upvotes

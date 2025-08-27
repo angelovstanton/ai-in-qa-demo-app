@@ -19,24 +19,46 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  Select,
-  MenuItem,
+  Tooltip,
+  Avatar,
+  Paper,
+  InputAdornment,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Comment as CommentIcon,
-  Attachment as AttachmentIcon,
   History as HistoryIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  Lock as LockIcon,
+  ThumbUp as ThumbUpIcon,
+  ThumbUpOutlined as ThumbUpOutlinedIcon,
+  Send as SendIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import api from '../lib/api';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+
+// Comment validation schema
+const commentSchema = z.object({
+  content: z.string()
+    .min(10, 'Comment must be at least 10 characters')
+    .max(1000, 'Comment must be less than 1000 characters')
+    .refine(
+      (content) => content.trim().split(/\s+/).length >= 3,
+      'Comment must contain at least 3 words'
+    ),
+  isPrivate: z.boolean().default(false),
+});
+
+type CommentFormData = z.infer<typeof commentSchema>;
 
 const RequestDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +72,55 @@ const RequestDetailPage: React.FC = () => {
   const [statusReason, setStatusReason] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
+  const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(0);
+  const [isUpvoting, setIsUpvoting] = useState(false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // Comment form
+  const commentForm = useForm<CommentFormData>({
+    resolver: zodResolver(commentSchema),
+    mode: 'onChange',
+    defaultValues: {
+      content: '',
+      isPrivate: false,
+    }
+  });
+
+  // Check if request can be edited (within 10 minutes of creation)
+  const canEditRequest = (): boolean => {
+    if (!request) return false;
+    
+    // Only the creator can edit their own request
+    if (request.creator.id !== user?.id) return false;
+    
+    const createdAt = new Date(request.createdAt);
+    const now = new Date();
+    const minutesSinceCreation = differenceInMinutes(now, createdAt);
+    
+    return minutesSinceCreation <= 10;
+  };
+
+  // Get tooltip message for edit button
+  const getEditTooltipMessage = (): string => {
+    if (!request) return '';
+    
+    if (request.creator.id !== user?.id) {
+      return 'You can only edit your own requests';
+    }
+    
+    const createdAt = new Date(request.createdAt);
+    const now = new Date();
+    const minutesSinceCreation = differenceInMinutes(now, createdAt);
+    
+    if (minutesSinceCreation > 10) {
+      return `Editing is only allowed within 10 minutes of submission. This request was created ${minutesSinceCreation} minutes ago.`;
+    }
+    
+    const remainingMinutes = 10 - minutesSinceCreation;
+    return `You can edit this request for ${remainingMinutes} more minute(s).`;
+  };
 
   useEffect(() => {
     if (id) {
@@ -70,6 +141,10 @@ const RequestDetailPage: React.FC = () => {
         priority: response.data.data.priority,
         locationText: response.data.data.locationText,
       });
+      
+      // Set upvote data
+      setUpvoteCount(response.data.data.upvotes || 0);
+      setHasUpvoted(response.data.data.hasUserUpvoted || false);
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to fetch request details');
     } finally {
@@ -101,7 +176,7 @@ const RequestDetailPage: React.FC = () => {
     try {
       await api.patch(`/requests/${request.id}`, editData, {
         headers: {
-          'If-Match': request.version.toString(),
+          'If-Match': request.version?.toString() || '1',
         },
       });
       
@@ -109,6 +184,56 @@ const RequestDetailPage: React.FC = () => {
       fetchRequest(); // Refresh data
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to update request');
+    }
+  };
+
+  const handleUpvote = async () => {
+    if (!request || !user) return;
+    
+    // Prevent users from upvoting their own requests
+    if (request.creator.id === user.id) {
+      setError('You cannot upvote your own request');
+      return;
+    }
+
+    setIsUpvoting(true);
+    setError(null);
+
+    try {
+      const response = await api.post(`/requests/${request.id}/upvote`);
+      
+      // Update local state based on response
+      setHasUpvoted(response.data.data.hasUpvoted);
+      setUpvoteCount(response.data.data.upvoteCount);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Failed to update upvote');
+    } finally {
+      setIsUpvoting(false);
+    }
+  };
+
+  const handleCommentSubmit = async (data: CommentFormData) => {
+    if (!request || !user) return;
+
+    setIsSubmittingComment(true);
+    setError(null);
+
+    try {
+      await api.post(`/requests/${request.id}/comments`, {
+        content: data.content.trim(),
+        isPrivate: data.isPrivate,
+      });
+
+      // Reset form and hide comment form
+      commentForm.reset();
+      setShowCommentForm(false);
+      
+      // Refresh request data to show new comment
+      fetchRequest();
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Failed to submit comment');
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -143,19 +268,28 @@ const RequestDetailPage: React.FC = () => {
     
     if (currentStatus === 'SUBMITTED' && ['CLERK', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '')) {
       actions.push({ action: 'triage', label: 'Triage' });
+      actions.push({ action: 'request_more_info', label: 'Request More Information' });
     }
     
     if (currentStatus === 'TRIAGED' && ['CLERK', 'FIELD_AGENT', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '')) {
       actions.push({ action: 'start', label: 'Start Work' });
+      actions.push({ action: 'request_more_info', label: 'Request More Information' });
     }
     
     if (currentStatus === 'IN_PROGRESS' && ['FIELD_AGENT', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '')) {
       actions.push({ action: 'resolve', label: 'Resolve' });
       actions.push({ action: 'wait_for_citizen', label: 'Wait for Citizen' });
+      actions.push({ action: 'request_more_info', label: 'Request More Information' });
+    }
+    
+    if (currentStatus === 'WAITING_ON_CITIZEN' && ['CLERK', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '')) {
+      actions.push({ action: 'resume_progress', label: 'Resume Progress' });
+      actions.push({ action: 'close_no_response', label: 'Close (No Response)' });
     }
     
     if (currentStatus === 'RESOLVED' && ['CLERK', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '')) {
       actions.push({ action: 'close', label: 'Close' });
+      actions.push({ action: 'reopen', label: 'Reopen' });
     }
     
     return actions;
@@ -226,22 +360,7 @@ const RequestDetailPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <Chip
-                      label={isEditing ? (
-                        <FormControl size="small" sx={{ minWidth: 80 }}>
-                          <Select
-                            value={editData.priority}
-                            onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
-                            variant="standard"
-                          >
-                            <MenuItem value="LOW">Low</MenuItem>
-                            <MenuItem value="MEDIUM">Medium</MenuItem>
-                            <MenuItem value="HIGH">High</MenuItem>
-                            <MenuItem value="URGENT">Urgent</MenuItem>
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        request.priority
-                      )}
+                      label={request.priority}
                       color={getPriorityColor(request.priority) as any}
                       size="small"
                     />
@@ -261,7 +380,7 @@ const RequestDetailPage: React.FC = () => {
                 
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   {/* Edit/Save/Cancel buttons */}
-                  {['CLERK', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '') && (
+                  {user?.role === 'CITIZEN' && request.creator.id === user.id && (
                     <>
                       {isEditing ? (
                         <>
@@ -285,21 +404,26 @@ const RequestDetailPage: React.FC = () => {
                           </Button>
                         </>
                       ) : (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<EditIcon />}
-                          onClick={() => setIsEditing(true)}
-                          data-testid="cs-request-detail-edit"
-                        >
-                          Edit
-                        </Button>
+                        <Tooltip title={getEditTooltipMessage()} arrow>
+                          <span>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={canEditRequest() ? <EditIcon /> : <LockIcon />}
+                              onClick={() => canEditRequest() && setIsEditing(true)}
+                              disabled={!canEditRequest()}
+                              data-testid="cs-request-detail-edit"
+                            >
+                              {canEditRequest() ? 'Edit' : 'Edit Locked'}
+                            </Button>
+                          </span>
+                        </Tooltip>
                       )}
                     </>
                   )}
                   
                   {/* Status action buttons */}
-                  {getAvailableActions().map((actionItem) => (
+                  {['CLERK', 'SUPERVISOR', 'ADMIN'].includes(user?.role || '') && getAvailableActions().map((actionItem) => (
                     <Button
                       key={actionItem.action}
                       variant="contained"
@@ -354,47 +478,174 @@ const RequestDetailPage: React.FC = () => {
                 </Typography>
               )}
 
-              {/* Comments Section */}
-              {request.comments && request.comments.length > 0 && (
-                <>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    <CommentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Comments ({request.comments.length})
+              {/* Upvotes Section */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Typography variant="h6">
+                  Community Feedback
+                </Typography>
+                <Tooltip title={
+                  request.creator.id === user?.id 
+                    ? "You cannot upvote your own request" 
+                    : hasUpvoted 
+                      ? "Remove upvote" 
+                      : "Upvote this request"
+                }>
+                  <span>
+                    <Button
+                      variant={hasUpvoted ? "contained" : "outlined"}
+                      color="primary"
+                      startIcon={hasUpvoted ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                      onClick={handleUpvote}
+                      disabled={isUpvoting || request.creator.id === user?.id}
+                      data-testid="cs-request-upvote-button"
+                      sx={{ minWidth: 120 }}
+                    >
+                      {upvoteCount} {upvoteCount === 1 ? 'Upvote' : 'Upvotes'}
+                    </Button>
+                  </span>
+                </Tooltip>
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<CommentIcon />}
+                  onClick={() => setShowCommentForm(!showCommentForm)}
+                  data-testid="cs-request-comment-button"
+                >
+                  Add Comment
+                </Button>
+              </Box>
+
+              {/* Comment Form */}
+              {showCommentForm && (
+                <Paper sx={{ p: 2, mb: 3 }} data-testid="cs-comment-form">
+                  <Typography variant="subtitle1" gutterBottom>
+                    Add a Comment
                   </Typography>
-                  <List>
-                    {request.comments.map((comment: any) => (
-                      <ListItem key={comment.id} divider>
-                        <ListItemText
-                          primary={comment.content}
-                          secondary={`${comment.author.name} • ${format(new Date(comment.createdAt), 'PPpp')}`}
+                  
+                  <Box component="form" onSubmit={commentForm.handleSubmit(handleCommentSubmit)}>
+                    <Controller
+                      name="content"
+                      control={commentForm.control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          multiline
+                          rows={3}
+                          placeholder="Share your thoughts about this request... (minimum 10 characters)"
+                          error={!!commentForm.formState.errors.content}
+                          helperText={
+                            commentForm.formState.errors.content?.message ||
+                            `${field.value?.length || 0}/1000 characters`
+                          }
+                          data-testid="cs-comment-content"
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Tooltip title="Submit comment">
+                                  <IconButton
+                                    type="submit"
+                                    disabled={isSubmittingComment || !commentForm.formState.isValid}
+                                    data-testid="cs-comment-submit"
+                                  >
+                                    <SendIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
-                      </ListItem>
-                    ))}
-                  </List>
-                </>
+                      )}
+                    />
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                      <Controller
+                        name="isPrivate"
+                        control={commentForm.control}
+                        render={({ field }) => (
+                          <Box>
+                            <Chip
+                              label={field.value ? "Private Comment" : "Public Comment"}
+                              onClick={() => field.onChange(!field.value)}
+                              color={field.value ? "secondary" : "primary"}
+                              variant={field.value ? "filled" : "outlined"}
+                              size="small"
+                              data-testid="cs-comment-privacy"
+                            />
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {field.value ? "Only staff can see this comment" : "Everyone can see this comment"}
+                            </Typography>
+                          </Box>
+                        )}
+                      />
+                      
+                      <Button
+                        variant="text"
+                        onClick={() => {
+                          setShowCommentForm(false);
+                          commentForm.reset();
+                        }}
+                        data-testid="cs-comment-cancel"
+                      >
+                        Cancel
+                      </Button>
+                    </Box>
+                  </Box>
+                </Paper>
               )}
 
-              {/* Attachments Section */}
-              {request.attachments && request.attachments.length > 0 && (
-                <>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    <AttachmentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Attachments ({request.attachments.length})
-                  </Typography>
-                  <List>
-                    {request.attachments.map((attachment: any) => (
-                      <ListItem key={attachment.id}>
-                        <ListItemIcon>
-                          <AttachmentIcon />
+              {/* Comments Section */}
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                <CommentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Comments ({typeof request.comments === 'number' ? request.comments : request.comments?.length || 0})
+              </Typography>
+              
+              {typeof request.comments === 'number' ? (
+                <Typography variant="body2" color="text.secondary">
+                  {request.comments === 0 ? 'No comments yet' : `${request.comments} comments available`}
+                </Typography>
+              ) : (
+                request.comments && request.comments.length > 0 ? (
+                  <List data-testid="cs-comments-list">
+                    {request.comments.map((comment, index) => (
+                      <ListItem key={comment.id || index} divider sx={{ alignItems: 'flex-start', py: 2 }}>
+                        <ListItemIcon sx={{ mt: 1 }}>
+                          <Avatar sx={{ width: 32, height: 32 }}>
+                            <PersonIcon />
+                          </Avatar>
                         </ListItemIcon>
                         <ListItemText
-                          primary={attachment.filename}
-                          secondary={`${attachment.fileSize} bytes • ${format(new Date(attachment.createdAt), 'PPp')}`}
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {comment.author?.name || 'Anonymous'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {format(new Date(comment.createdAt), 'PPpp')}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Typography 
+                              variant="body2" 
+                              sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}
+                              data-testid={`cs-comment-content-${comment.id || index}`}
+                            >
+                              {comment.content}
+                            </Typography>
+                          }
                         />
                       </ListItem>
                     ))}
                   </List>
-                </>
+                ) : (
+                  <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
+                    <CommentIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      No comments yet. Be the first to share your thoughts!
+                    </Typography>
+                  </Paper>
+                )
               )}
             </CardContent>
           </Card>
@@ -414,6 +665,21 @@ const RequestDetailPage: React.FC = () => {
                 </Typography>
                 <Typography variant="body2">
                   <strong>Updated:</strong> {format(new Date(request.updatedAt), 'PPpp')}
+                </Typography>
+                <Typography variant="body2" data-testid="cs-request-detail-edit-status">
+                  <strong>Edit Status:</strong> {canEditRequest() ? (
+                    <Chip 
+                      label={`Editable (${10 - differenceInMinutes(new Date(), new Date(request.createdAt))} min left)`} 
+                      color="success" 
+                      size="small" 
+                    />
+                  ) : (
+                    <Chip 
+                      label="Edit Time Expired" 
+                      color="default" 
+                      size="small" 
+                    />
+                  )}
                 </Typography>
                 <Typography variant="body2">
                   <strong>Requested by:</strong> {request.creator.name} ({request.creator.email})
