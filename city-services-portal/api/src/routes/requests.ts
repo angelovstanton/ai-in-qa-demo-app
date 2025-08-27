@@ -127,7 +127,12 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     const query = querySchema.parse(req.query);
     
     if (query.status) {
-      where.status = query.status;
+      // Handle comma-separated status values (e.g., "RESOLVED,CLOSED")
+      if (query.status.includes(',')) {
+        where.status = { in: query.status.split(',').map(s => s.trim()) };
+      } else {
+        where.status = query.status;
+      }
     }
     
     if (query.category) {
@@ -820,205 +825,9 @@ router.post('/:id/comments', authenticateToken, async (req: AuthenticatedRequest
   }
 });
 
-// GET /api/v1/requests/resolved - Get resolved service requests with filtering and pagination
-router.get('/resolved', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const query = querySchema.parse(req.query);
-    
-    // Build where clause for filtering - only resolved/closed requests
-    const where: any = {
-      status: { in: ['RESOLVED', 'CLOSED'] }
-    };
 
-    // Apply user filtering like in the main requests endpoint
-    // Filter by createdBy for citizens (unless showAll is specified)
-    if (query.createdBy) {
-      // Specific user filter requested
-      where.createdBy = query.createdBy;
-    } else if (req.user!.role === 'CITIZEN' && query.showAll !== 'true') {
-      // Citizens can only see their own requests unless showAll=true is specified
-      where.createdBy = req.user!.id;
-    }
-    // Staff and citizens with showAll=true can see all requests
-    
-    if (query.category) {
-      where.category = { contains: query.category, mode: 'insensitive' };
-    }
-    
-    if (query.priority) {
-      where.priority = query.priority;
-    }
-    
-    if (query.text) {
-      where.OR = [
-        { title: { contains: query.text, mode: 'insensitive' } },
-        { description: { contains: query.text, mode: 'insensitive' } },
-        { code: { contains: query.text, mode: 'insensitive' } }
-      ];
-    }
 
-    // Date filtering
-    if (req.query.dateFrom || req.query.dateTo) {
-      where.updatedAt = {};
-      if (req.query.dateFrom) {
-        where.updatedAt.gte = new Date(req.query.dateFrom as string);
-      }
-      if (req.query.dateTo) {
-        where.updatedAt.lte = new Date(req.query.dateTo as string);
-      }
-    }
 
-    // Parse sorting
-    const sortParts = query.sort.split(':');
-    const sortField = sortParts[0] || 'updatedAt';
-    const sortOrder = sortParts[1] === 'asc' ? 'asc' : 'desc';
-
-    // Parse pagination
-    const page = parseInt(query.page) || 1;
-    const size = Math.min(parseInt(query.size) || 10, 100);
-    const skip = (page - 1) * size;
-
-    // Get total count
-    const totalCount = await prisma.serviceRequest.count({ where });
-
-    console.log('Resolved cases query:', { where, totalCount, page, size });
-
-    // Fetch resolved requests
-    const requests = await prisma.serviceRequest.findMany({
-      where,
-      include: {
-        creator: {
-          select: { id: true, name: true, email: true }
-        },
-        assignee: {
-          select: { id: true, name: true, email: true }
-        },
-        department: {
-          select: { id: true, name: true, slug: true }
-        },
-        _count: {
-          select: {
-            comments: true,
-            attachments: true,
-            upvotes: true
-          }
-        }
-      },
-      orderBy: { [sortField]: sortOrder },
-      skip,
-      take: size,
-    });
-
-    // Transform requests
-    const transformedRequests = requests.map(transformServiceRequest);
-
-    res.json({
-      data: transformedRequests,
-      pagination: {
-        page,
-        size,
-        totalCount,
-        totalPages: Math.ceil(totalCount / size)
-      },
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid query parameters',
-          details: error.errors,
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch resolved cases',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// GET /api/v1/requests/resolved/stats - Get resolved cases statistics
-router.get('/resolved/stats', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    // Date filtering
-    const where: any = {
-      status: { in: ['RESOLVED', 'CLOSED'] }
-    };
-
-    if (req.query.dateFrom || req.query.dateTo) {
-      where.updatedAt = {};
-      if (req.query.dateFrom) {
-        where.updatedAt.gte = new Date(req.query.dateFrom as string);
-      }
-      if (req.query.dateTo) {
-        where.updatedAt.lte = new Date(req.query.dateTo as string);
-      }
-    }
-
-    // Get statistics
-    const [totalCases, avgResolutionTime, satisfactionRating, monthlyImprovement] = await Promise.all([
-      // Total resolved cases
-      prisma.serviceRequest.count({ where }),
-      
-      // Average resolution time (in hours)
-      prisma.serviceRequest.aggregate({
-        where: {
-          ...where,
-          resolvedAt: { not: null }
-        },
-        _avg: {
-          // This would need a computed field, for now return a mock value
-        }
-      }).then(() => 72), // Mock 72 hours
-      
-      // Average satisfaction rating
-      prisma.serviceRequest.aggregate({
-        where: {
-          ...where,
-          satisfactionRating: { not: null }
-        },
-        _avg: {
-          satisfactionRating: true
-        }
-      }).then(result => result._avg.satisfactionRating || 4.2),
-      
-      // Monthly improvement (mock calculation)
-      27.8
-    ]);
-
-    const stats = {
-      totalCases,
-      averageResolutionTime: avgResolutionTime,
-      satisfactionRate: satisfactionRating,
-      topCategory: 'roads-transportation',
-      thisMonthCount: Math.floor(totalCases * 0.15),
-      lastMonthCount: Math.floor(totalCases * 0.12),
-      improvementRate: monthlyImprovement
-    };
-
-    res.json({
-      data: stats,
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch resolved cases statistics',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
 
 // POST /api/v1/requests/:id/upvote - Upvote a service request
 router.post('/:id/upvote', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
