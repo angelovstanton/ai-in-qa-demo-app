@@ -42,6 +42,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Feature flag middleware
 app.use(featureFlagMiddleware);
 
+// Correlation ID middleware
+app.use((req, res, next) => {
+  res.locals.correlationId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 

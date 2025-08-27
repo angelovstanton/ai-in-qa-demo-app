@@ -96,8 +96,8 @@ const ResolvedCasesPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPriority, setSelectedPriority] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [dateFrom, setDateFrom] = useState<Date | null>(new Date('2024-01-01'));
-  const [dateTo, setDateTo] = useState<Date | null>(new Date());
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
   const [minSatisfactionRating, setMinSatisfactionRating] = useState('');
 
   // Pagination and sorting
@@ -171,7 +171,7 @@ const ResolvedCasesPage: React.FC = () => {
 
       const response = await api.get(`/requests/resolved?${params}`);
       setCases(response.data.data);
-      setTotalCount(response.data.pagination.total);
+      setTotalCount(response.data.pagination.totalCount);
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to fetch resolved cases');
       
@@ -265,13 +265,13 @@ const ResolvedCasesPage: React.FC = () => {
     setSelectedCategory('');
     setSelectedPriority('');
     setSelectedDepartment('');
-    setDateFrom(startOfMonth(new Date()));
-    setDateTo(endOfMonth(new Date()));
+    setDateFrom(null);
+    setDateTo(null);
     setMinSatisfactionRating('');
   };
 
   const handleViewCase = (caseId: string) => {
-    navigate(`/requests/${caseId}`);
+    navigate(`/request/${caseId}`);
   };
 
   const getPriorityColor = (priority: string) => {

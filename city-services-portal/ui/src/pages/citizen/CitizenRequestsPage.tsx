@@ -156,7 +156,7 @@ const CitizenRequestsPage: React.FC = () => {
   };
 
   const handleRowClick = (params: any) => {
-    navigate(`/requests/${params.row.id}`);
+    navigate(`/request/${params.row.id}`);
   };
 
   const hasActiveFilters = searchTerm || statusFilter || categoryFilter || 
@@ -303,7 +303,7 @@ const CitizenRequestsPage: React.FC = () => {
         <IconButton
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/requests/${params.row.id}`);
+            navigate(`/request/${params.row.id}`);
           }}
           data-testid={`cs-requests-view-${params.row.id}`}
           size="small"

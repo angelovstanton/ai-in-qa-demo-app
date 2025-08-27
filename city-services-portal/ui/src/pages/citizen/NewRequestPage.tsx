@@ -327,18 +327,27 @@ const NewRequestPage: React.FC = () => {
 
   // Step validation function
   const validateStep = useCallback(async (stepIndex: number): Promise<{ isValid: boolean; errors: string[] }> => {
+    console.log(`Validating step ${stepIndex}`);
+    
     const stepFields = getStepFields(stepIndex);
     if (!Array.isArray(stepFields)) {
+      console.log(`Step ${stepIndex} has invalid field configuration:`, stepFields);
       return { isValid: false, errors: ['Invalid step configuration'] };
     }
+    
+    console.log(`Step ${stepIndex} fields:`, stepFields);
+    
     const results = await Promise.all(stepFields.map(field => trigger(field as any)));
     const isValid = Array.isArray(results) ? results.every(result => result) : false;
+    
+    console.log(`Step ${stepIndex} validation results:`, results);
     
     // Collect errors for this step
     const stepErrors: string[] = [];
     stepFields.forEach(field => {
       const fieldError = getFieldError(errors, field);
       if (fieldError) {
+        console.log(`Step ${stepIndex} field error:`, field, fieldError.message);
         stepErrors.push(`${getFieldLabel(field)}: ${fieldError.message}`);
       }
     });
@@ -348,10 +357,14 @@ const NewRequestPage: React.FC = () => {
       stepErrors.push('Emergency requests require alternate phone number');
     }
 
-    return {
+    const finalResult = {
       isValid: isValid && stepErrors.length === 0,
       errors: stepErrors
     };
+    
+    console.log(`Step ${stepIndex} final validation:`, finalResult);
+    
+    return finalResult;
   }, [trigger, errors, watchedValues]);
 
   // Get fields for each step
@@ -420,9 +433,12 @@ const NewRequestPage: React.FC = () => {
     setSubmitError(null);
     
     try {
+      // Use handleSubmit correctly - it returns a promise
       await handleSubmit(async (data) => {
+        console.log('Form data being submitted:', data);
+        
         // Final XSS check before submission
-        const textFields = ['title', 'description', 'locationText', 'comments'];
+        const textFields = ['title', 'description', 'locationText', 'formComments'];
         for (const field of textFields) {
           const value = data[field as keyof ServiceRequestFormData] as string;
           if (value && /<script|javascript:|on\w+=/i.test(value)) {
@@ -433,14 +449,26 @@ const NewRequestPage: React.FC = () => {
         // Generate idempotency key
         const idempotencyKey = `new-request-${Date.now()}-${Math.random()}`;
         
-        // Convert the enhanced data to the basic API format with proper sanitization
+        // Build location text from available fields
+        let locationText = data.locationText || '';
+        if (data.streetAddress || data.city || data.postalCode) {
+          const addressParts = [data.streetAddress, data.city, data.postalCode].filter(Boolean);
+          locationText = addressParts.join(', ');
+          if (data.landmark) {
+            locationText += ` (Near: ${data.landmark})`;
+          }
+        }
+        
+        // Convert the enhanced data to the basic API format
         const apiData = {
           title: data.title,
           description: data.description,
           category: data.category,
-          priority: data.priority,
-          locationText: `${data.streetAddress}, ${data.city}, ${data.postalCode}${data.landmark ? ` (Near: ${data.landmark})` : ''}`,
+          priority: data.priority || 'MEDIUM',
+          locationText: locationText,
         };
+        
+        console.log('API data being sent:', apiData);
         
         await createRequest(apiData, idempotencyKey);
         
@@ -451,6 +479,7 @@ const NewRequestPage: React.FC = () => {
         window.location.href = '/citizen/requests';
       })();
     } catch (error) {
+      console.error('Form submission error:', error);
       setSubmitError(error instanceof Error ? error.message : 'Failed to submit request');
       throw error;
     }

@@ -156,10 +156,14 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     }
 
     // Filter by createdBy for citizens (unless showAll is specified)
-    if ((req.user!.role === 'CITIZEN' && query.showAll !== 'true') || query.createdBy) {
-      const createdBy = query.createdBy || req.user!.id;
-      where.createdBy = createdBy;
+    if (query.createdBy) {
+      // Specific user filter requested
+      where.createdBy = query.createdBy;
+    } else if (req.user!.role === 'CITIZEN' && query.showAll !== 'true') {
+      // Citizens can only see their own requests unless showAll=true is specified
+      where.createdBy = req.user!.id;
     }
+    // Staff and citizens with showAll=true can see all requests
 
     // Parse sorting - apply feature flag for wrong default sort
     const sortParts = query.sort.split(':');
@@ -459,19 +463,28 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
       });
     }
 
-    // Check permissions - citizens can only see their own requests
-    if (req.user!.role === 'CITIZEN' && serviceRequest.createdBy !== req.user!.id) {
-      return res.status(403).json({
-        error: {
-          code: 'FORBIDDEN',
-          message: 'You can only view your own requests',
-          correlationId: res.locals.correlationId
+    // Citizens can view all requests for transparency (matching the list view permissions)
+    // No additional authorization restrictions needed for viewing request details
+
+    // Check if current user has upvoted this request
+    let hasUserUpvoted = false;
+    if (req.user!.role === 'CITIZEN') {
+      const existingUpvote = await prisma.upvote.findUnique({
+        where: {
+          userId_requestId: {
+            userId: req.user!.id,
+            requestId: serviceRequest.id
+          }
         }
       });
+      hasUserUpvoted = !!existingUpvote;
     }
 
+    const transformedRequest = transformServiceRequest(serviceRequest);
+    transformedRequest.hasUserUpvoted = hasUserUpvoted;
+
     res.json({
-      data: transformServiceRequest(serviceRequest),
+      data: transformedRequest,
       correlationId: res.locals.correlationId
     });
 
@@ -1044,11 +1057,10 @@ router.post('/:id/upvote', authenticateToken, async (req: AuthenticatedRequest, 
       await prisma.eventLog.create({
         data: {
           type: 'UPVOTE_REMOVED',
-          description: `Request upvote removed by ${req.user!.name}`,
           requestId: requestId,
-          userId: req.user!.id,
           payload: JSON.stringify({
             removedBy: req.user!.id,
+            removedByName: req.user!.name,
             newUpvoteCount: upvoteCount
           })
         }
@@ -1081,11 +1093,10 @@ router.post('/:id/upvote', authenticateToken, async (req: AuthenticatedRequest, 
     await prisma.eventLog.create({
       data: {
         type: 'UPVOTE',
-        description: `Request upvoted by ${req.user!.name}`,
         requestId: requestId,
-        userId: req.user!.id,
         payload: JSON.stringify({
           upvotedBy: req.user!.id,
+          upvotedByName: req.user!.name,
           newUpvoteCount: upvoteCount
         })
       }

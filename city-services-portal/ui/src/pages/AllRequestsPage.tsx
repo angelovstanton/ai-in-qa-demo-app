@@ -58,7 +58,7 @@ const AllRequestsPage: React.FC = () => {
   }, [refetch]);
 
   const handleViewRequest = useCallback((requestId: string) => {
-    navigate(`/requests/${requestId}`);
+    navigate(`/request/${requestId}`);
   }, [navigate]);
 
   const clearFilters = useCallback(() => {
