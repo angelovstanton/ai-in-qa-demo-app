@@ -81,7 +81,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
         )}
       />
 
-      {/* Email field - always visible */}
+      {/* Email field - always visible but required when EMAIL is selected */}
       <Controller
         name="email"
         control={control}
@@ -94,6 +94,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
               type="email"
               margin="normal"
               error={!!errors.email}
+              required={watchedValues.contactMethod === 'EMAIL'}
               inputProps={{
                 maxLength: 254,
                 'aria-describedby': errors.email ? FormValidationTestIds.FIELD_ERROR('new-request', 'email') : undefined,

@@ -222,7 +222,7 @@ const NewRequestPage: React.FC = () => {
     }
     console.log('No saved form data found, using defaults');
     return null;
-  }, []);
+  }, [])
 
   const {
     control,
@@ -402,6 +402,13 @@ const NewRequestPage: React.FC = () => {
       case 2: // Contact & Services
         const contactFields = ['contactMethod', 'phone']; // Phone is always required
 
+        // Add required contact field based on method
+        const currentContactMethod = watchedValues.contactMethod || 'EMAIL';
+        
+        if (currentContactMethod === 'EMAIL') {
+          contactFields.push('email');
+        }
+
         // Add emergency phone if needed
         if (watchedValues.isEmergency) {
           contactFields.push('alternatePhone');
@@ -444,6 +451,8 @@ const NewRequestPage: React.FC = () => {
       postalCode: 'Postal Code',
       locationText: 'Location Details',
       contactMethod: 'Contact Method',
+      email: 'Email Address',
+      phone: 'Phone Number',
       alternatePhone: 'Alternate Phone',
       affectedServices: 'Affected Services',
       agreesToTerms: 'Terms Agreement',
@@ -533,6 +542,12 @@ const NewRequestPage: React.FC = () => {
       // Phone is always required
       if (!formData.phone || formData.phone.trim().length === 0) {
         setSubmitError('Phone number is required.');
+        return;
+      }
+
+      // Email is required when EMAIL is selected as contact method
+      if (formData.contactMethod === 'EMAIL' && (!formData.email || formData.email.trim().length === 0)) {
+        setSubmitError('Email address is required when email is selected as contact method.');
         return;
       }
       
