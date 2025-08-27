@@ -162,7 +162,11 @@ async function main() {
         communicationMethod: getRandomElement(contactMethods),
         emailNotifications: Math.random() > 0.3,
         smsNotifications: Math.random() > 0.7,
+        marketingEmails: Math.random() > 0.8, // Most opt out
         serviceUpdates: Math.random() > 0.2,
+        twoFactorEnabled: Math.random() > 0.9, // Few enable 2FA
+        securityQuestion: Math.random() > 0.5 ? getRandomElement(['What was your first pet\'s name?', 'What city were you born in?', 'What was your mother\'s maiden name?', 'What was your first car?']) : null,
+        securityAnswer: Math.random() > 0.5 ? getRandomElement(['Fluffy', 'Buddy', 'Max', 'Boston', 'Chicago', 'Miami', 'Smith', 'Johnson', 'Williams', 'Honda', 'Toyota', 'Ford']) : null,
       }
     });
     users.push(user);
@@ -193,7 +197,12 @@ async function main() {
         preferredLanguage: 'EN',
         communicationMethod: 'EMAIL',
         emailNotifications: true,
+        smsNotifications: false,
+        marketingEmails: false,
         serviceUpdates: true,
+        twoFactorEnabled: Math.random() > 0.7, // Some staff enable 2FA
+        securityQuestion: getRandomElement(['What was your first pet\'s name?', 'What city were you born in?', 'What was your mother\'s maiden name?', 'What was your first car?']),
+        securityAnswer: getRandomElement(['Office Cat', 'Work Dog', 'City Hall', 'New York', 'Albany', 'Smith', 'Johnson', 'Williams', 'Honda', 'Toyota', 'Ford']),
       }
     });
     users.push(user);
@@ -224,7 +233,12 @@ async function main() {
         preferredLanguage: 'EN',
         communicationMethod: 'EMAIL',
         emailNotifications: true,
+        smsNotifications: false,
+        marketingEmails: false,
         serviceUpdates: true,
+        twoFactorEnabled: Math.random() > 0.6, // Supervisors more likely to enable 2FA
+        securityQuestion: getRandomElement(['What was your first pet\'s name?', 'What city were you born in?', 'What was your mother\'s maiden name?', 'What was your first car?']),
+        securityAnswer: getRandomElement(['Rex', 'Bella', 'Max', 'Brooklyn', 'Queens', 'Manhattan', 'Brown', 'Davis', 'Miller', 'Civic', 'Accord', 'Camry']),
       }
     });
     users.push(user);
@@ -254,8 +268,13 @@ async function main() {
         country: 'United States',
         preferredLanguage: 'EN',
         communicationMethod: 'SMS',
+        emailNotifications: true,
         smsNotifications: true,
+        marketingEmails: false,
         serviceUpdates: true,
+        twoFactorEnabled: Math.random() > 0.8, // Field agents less likely to enable 2FA
+        securityQuestion: getRandomElement(['What was your first pet\'s name?', 'What city were you born in?', 'What was your mother\'s maiden name?', 'What was your first car?']),
+        securityAnswer: getRandomElement(['Scout', 'Ranger', 'Field', 'Mobile', 'Service', 'Tech', 'Wilson', 'Garcia', 'Martinez', 'Truck', 'Van', 'Jeep']),
       }
     });
     users.push(user);
@@ -286,7 +305,11 @@ async function main() {
         communicationMethod: 'EMAIL',
         emailNotifications: true,
         smsNotifications: true,
+        marketingEmails: false,
         serviceUpdates: true,
+        twoFactorEnabled: true, // Admins should have 2FA enabled
+        securityQuestion: getRandomElement(['What was your first pet\'s name?', 'What city were you born in?', 'What was your mother\'s maiden name?', 'What was your first car?']),
+        securityAnswer: getRandomElement(['Admin', 'System', 'Manager', 'Executive', 'Director', 'Chief', 'Administrator', 'Johnson', 'Williams', 'Executive', 'Official', 'Secure']),
       }
     });
     users.push(user);
@@ -313,7 +336,11 @@ async function main() {
         communicationMethod: 'EMAIL',
         emailNotifications: true,
         smsNotifications: true,
+        marketingEmails: false,
         serviceUpdates: true,
+        twoFactorEnabled: false,
+        securityQuestion: 'What was your first pet\'s name?',
+        securityAnswer: 'Buddy',
       }
     }),
     prisma.user.create({

@@ -317,47 +317,28 @@ export const searchFilterSchema = z.object({
 
 export type SearchFilterData = z.infer<typeof searchFilterSchema>;
 
-// Profile Update Schema
+// Profile Update Schema - only includes fields actually rendered in the form
 export const profileUpdateSchema = z.object({
-  // Personal Information
+  // Personal Information (required)
   firstName: ValidationPatterns.name,
   lastName: ValidationPatterns.name,
   
-  // Contact Information
-  phone: ValidationPatterns.phone,
+  // Contact Information (optional)
+  phone: ValidationPatterns.phone.optional(),
   alternatePhone: ValidationPatterns.phone.optional(),
   
-  // Address Information
-  streetAddress: ValidationPatterns.streetAddress,
-  city: ValidationPatterns.city,
-  state: ValidationPatterns.state,
-  postalCode: ValidationPatterns.postalCode,
-  country: ValidationPatterns.country,
+  // Address Information (optional)
+  streetAddress: ValidationPatterns.streetAddress.optional(),
+  city: ValidationPatterns.city.optional(),
+  state: ValidationPatterns.state.optional(),
+  postalCode: ValidationPatterns.postalCode.optional(),
+  country: ValidationPatterns.country.optional(),
   
-  // Communication Preferences
-  preferredLanguage: RegistrationPatterns.preferredLanguage,
-  communicationMethod: RegistrationPatterns.communicationMethod,
-  
-  // Notification Preferences
+  // Notification Preferences (only the ones rendered in the form)
   emailNotifications: z.boolean().default(true),
   smsNotifications: z.boolean().default(false),
   marketingEmails: z.boolean().default(false),
   serviceUpdates: z.boolean().default(true),
-  
-  // Security Settings
-  twoFactorEnabled: z.boolean().default(false),
-  securityQuestion: RegistrationPatterns.securityQuestion,
-  securityAnswer: RegistrationPatterns.securityAnswer,
-
-}).refine((data) => {
-  // Security answer required if question provided
-  if (data.securityQuestion) {
-    return data.securityAnswer && data.securityAnswer.trim().length > 0;
-  }
-  return true;
-}, {
-  message: "Security answer is required when security question is provided",
-  path: ["securityAnswer"],
 });
 
 export type ProfileUpdateData = z.infer<typeof profileUpdateSchema>;

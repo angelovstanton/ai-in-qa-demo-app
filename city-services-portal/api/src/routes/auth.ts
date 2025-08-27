@@ -211,4 +211,179 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
   }
 });
 
+// Profile update schema for API - matches frontend form fields
+const profileUpdateSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().min(1).max(50).optional(),
+  phone: z.string().optional(),
+  alternatePhone: z.string().optional(),
+  streetAddress: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  emailNotifications: z.boolean().optional(),
+  smsNotifications: z.boolean().optional(),
+  marketingEmails: z.boolean().optional(),
+  serviceUpdates: z.boolean().optional(),
+});
+
+// PATCH /api/v1/auth/profile - Update user profile
+router.patch('/profile', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const validatedData = profileUpdateSchema.parse(req.body);
+    
+    // Update user profile
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        ...validatedData,
+        // Update name if firstName or lastName provided
+        ...(validatedData.firstName || validatedData.lastName) && {
+          name: `${validatedData.firstName || req.user!.name.split(' ')[0]} ${validatedData.lastName || req.user!.name.split(' ')[1] || ''}`.trim()
+        }
+      },
+      include: {
+        department: true
+      }
+    });
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        phone: updatedUser.phone,
+        alternatePhone: updatedUser.alternatePhone,
+        streetAddress: updatedUser.streetAddress,
+        city: updatedUser.city,
+        state: updatedUser.state,
+        postalCode: updatedUser.postalCode,
+        country: updatedUser.country,
+        preferredLanguage: updatedUser.preferredLanguage,
+        communicationMethod: updatedUser.communicationMethod,
+        emailNotifications: updatedUser.emailNotifications,
+        smsNotifications: updatedUser.smsNotifications,
+        marketingEmails: updatedUser.marketingEmails,
+        serviceUpdates: updatedUser.serviceUpdates,
+        twoFactorEnabled: updatedUser.twoFactorEnabled,
+        securityQuestion: updatedUser.securityQuestion,
+        department: updatedUser.department ? {
+          id: updatedUser.department.id,
+          name: updatedUser.department.name,
+          slug: updatedUser.department.slug
+        } : null
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid profile data',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    console.error('Profile update error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update profile',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// Password change schema
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  confirmNewPassword: z.string().min(1, 'Please confirm your new password'),
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: "New passwords don't match",
+  path: ["confirmNewPassword"],
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: "New password must be different from current password",
+  path: ["newPassword"],
+});
+
+// POST /api/v1/auth/change-password - Change user password
+router.post('/change-password', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const validatedData = passwordChangeSchema.parse(req.body);
+    
+    // Get current user with password
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(validatedData.currentPassword, user.passwordHash);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_PASSWORD',
+          message: 'Current password is incorrect',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(validatedData.newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { passwordHash: newPasswordHash }
+    });
+
+    res.json({
+      message: 'Password changed successfully',
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid password data',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    console.error('Password change error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to change password',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 export default router;

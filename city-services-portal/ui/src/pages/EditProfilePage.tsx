@@ -53,15 +53,10 @@ const EditProfilePage: React.FC = () => {
       state: '',
       postalCode: '',
       country: '',
-      preferredLanguage: 'EN',
-      communicationMethod: 'EMAIL',
       emailNotifications: true,
       smsNotifications: false,
       marketingEmails: false,
       serviceUpdates: true,
-      twoFactorEnabled: false,
-      securityQuestion: '',
-      securityAnswer: '',
     }
   });
 
@@ -145,6 +140,22 @@ const EditProfilePage: React.FC = () => {
           </Alert>
         )}
 
+        {/* General Validation Summary */}
+        {Object.keys(profileForm.formState.errors).length > 0 && (
+          <Alert severity="error" sx={{ mb: 3 }} data-testid="cs-profile-validation-summary">
+            <Typography variant="subtitle2" gutterBottom>
+              Please fix the following errors:
+            </Typography>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              {Object.entries(profileForm.formState.errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field.charAt(0).toUpperCase() + field.slice(1)}:</strong> {error?.message}
+                </li>
+              ))}
+            </ul>
+          </Alert>
+        )}
+
         <Grid container spacing={3}>
           {/* Profile Information */}
           <Grid item xs={12} md={8}>
@@ -205,7 +216,6 @@ const EditProfilePage: React.FC = () => {
                             error={!!profileForm.formState.errors.phone}
                             helperText={profileForm.formState.errors.phone?.message}
                             data-testid="cs-profile-phone"
-                            required
                           />
                         )}
                       />
