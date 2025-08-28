@@ -203,8 +203,56 @@ router.post('/:id/attachments', authenticateToken, (req: AuthenticatedRequest, r
   }
 });
 
+// Test endpoint to verify attachment exists
+router.get('/test/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id: attachmentId } = req.params;
+    
+    const attachment = await prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      select: {
+        id: true,
+        filename: true,
+        mime: true,
+        size: true,
+        data: true
+      }
+    });
+
+    if (!attachment) {
+      return res.status(404).json({
+        error: {
+          code: 'ATTACHMENT_NOT_FOUND',
+          message: 'Attachment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    res.json({
+      id: attachment.id,
+      filename: attachment.filename,
+      mime: attachment.mime,
+      size: attachment.size,
+      hasData: !!attachment.data,
+      dataSize: attachment.data?.length || 0,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to test attachment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 // GET /api/v1/attachments/:id/image - Serve image data
-router.get('/attachments/:id/image', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:id/image', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id: attachmentId } = req.params;
 

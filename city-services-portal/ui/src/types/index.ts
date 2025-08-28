@@ -40,9 +40,16 @@ export interface ServiceRequest {
   lng?: number;
   
   // Contact fields
-  contactMethod?: 'EMAIL' | 'PHONE' | 'SMS';
+  contactMethod?: 'EMAIL' | 'PHONE' | 'SMS' | 'MAIL';
+  email?: string;
+  phone?: string;
   alternatePhone?: string;
   bestTimeToContact?: string;
+  
+  // Mailing address fields
+  mailingStreetAddress?: string;
+  mailingCity?: string;
+  mailingPostalCode?: string;
   
   // Issue details
   issueType?: string;
@@ -89,6 +96,7 @@ export interface ServiceRequest {
   
   // Legacy/computed fields
   upvotes?: number; // Number of upvotes for the request
+  hasUserUpvoted?: boolean; // Whether current user has upvoted
   comments?: { // Comments associated with the request
     id: string;
     body: string;

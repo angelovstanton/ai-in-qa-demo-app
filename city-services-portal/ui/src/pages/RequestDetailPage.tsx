@@ -864,7 +864,7 @@ const RequestDetailPage: React.FC = () => {
                             {attachment.mime?.startsWith('image/') ? (
                               <Box
                                 component="img"
-                                src={`http://localhost:3001${attachment.url}`}
+                                src={`http://localhost:3001/api/v1/attachments/${attachment.id}/image`}
                                 alt={attachment.filename || `Attachment ${index + 1}`}
                                 sx={{
                                   width: '100%',
@@ -875,8 +875,12 @@ const RequestDetailPage: React.FC = () => {
                                 }}
                                 onError={(e) => {
                                   // Fallback to default image if attachment fails to load
+                                  console.error('Failed to load attachment image:', attachment.id);
                                   e.currentTarget.src = '/images/service-request-default-image.png';
                                 }}
+                                loading="lazy"
+                                data-testid={`cs-attachment-image-${attachment.id}`}
+                                headers={{ Authorization: `Bearer ${localStorage.getItem('token')}` }} // Include Authorization header
                               />
                             ) : (
                               <Box
@@ -890,17 +894,18 @@ const RequestDetailPage: React.FC = () => {
                                   borderRadius: 1,
                                   mb: 1,
                                 }}
+                                data-testid={`cs-attachment-file-${attachment.id}`}
                               >
                                 <Typography variant="h4" color="text.secondary">
                                   📄
                                 </Typography>
                               </Box>
                             )}
-                            <Typography variant="body2" noWrap>
+                            <Typography variant="body2" noWrap title={attachment.filename}>
                               {attachment.filename || 'Attachment'}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
+                              {attachment.size ? `${(attachment.size / (1024 * 1024)).toFixed(2)} MB` : 'Unknown size'}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -908,11 +913,32 @@ const RequestDetailPage: React.FC = () => {
                     ))}
                   </Grid>
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 4, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No attachments uploaded for this request
-                    </Typography>
-                  </Box>
+                  <Card sx={{ textAlign: 'center', py: 4, bgcolor: 'grey.50' }}>
+                    <CardContent>
+                      <Box
+                        component="img"
+                        src="/images/service-request-default-image.png"
+                        alt="No attachments placeholder"
+                        sx={{
+                          width: '100%',
+                          maxWidth: 300,
+                          height: 200,
+                          objectFit: 'cover',
+                          borderRadius: 1,
+                          mb: 2,
+                          opacity: 0.7,
+                        }}
+                        onError={(e) => {
+                          // Hide image if default image is also not available
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        data-testid="cs-default-attachment-image"
+                      />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                        No attachments uploaded for this request
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 )}
               </Box>
 

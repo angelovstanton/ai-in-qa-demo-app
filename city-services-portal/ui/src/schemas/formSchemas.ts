@@ -126,10 +126,20 @@ export const serviceRequestSchema = z.object({
   // Date of Request - new field with validation
   dateOfRequest: ServiceRequestPatterns.dateOfRequest,
 
-  // Location Information (all optional - these are separate from contact address)
-  streetAddress: z.string().max(100, 'Street address is too long').optional(),
-  city: z.string().max(50, 'City name is too long').optional(),
-  postalCode: z.string().max(10, 'Postal code is too long').optional(),
+  // Location Information - now required fields
+  streetAddress: z.string()
+    .min(1, 'Street address is required')
+    .max(100, 'Street address is too long')
+    .transform((val) => val.trim()),
+  city: z.string()
+    .min(1, 'City is required')
+    .max(50, 'City name is too long')
+    .transform((val) => val.trim()),
+  postalCode: z.string()
+    .min(1, 'Postal code is required')
+    .max(10, 'Postal code is too long')
+    .regex(/^[A-Za-z0-9\s-]+$/, 'Postal code contains invalid characters')
+    .transform((val) => val.trim()),
   locationText: ServiceRequestPatterns.locationText,
   
   landmark: z.string()

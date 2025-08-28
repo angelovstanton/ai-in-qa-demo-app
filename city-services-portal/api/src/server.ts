@@ -46,6 +46,7 @@ app.use(featureFlagMiddleware);
 // Correlation ID middleware
 app.use((req, res, next) => {
   res.locals.correlationId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  console.log('JWT Secret:', process.env.JWT_SECRET); // Print the JWT secret to the console for debugging
   next();
 });
 
@@ -67,8 +68,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // API routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/requests', requestRoutes);
-app.use('/api/v1/requests', attachmentRoutes);
-app.use('/api/v1', attachmentRoutes); // Add this line for the image serving endpoint
+app.use('/api/v1/requests', attachmentRoutes); // For request-specific attachment endpoints
+app.use('/api/v1/attachments', attachmentRoutes); // For standalone attachment endpoints (image serving)
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/rankings', rankingRoutes);
 

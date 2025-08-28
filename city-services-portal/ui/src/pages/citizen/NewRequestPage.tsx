@@ -398,7 +398,7 @@ const NewRequestPage: React.FC = () => {
       case 0: // Basic Information
         return ['title', 'description', 'category', 'priority', 'dateOfRequest'];
       case 1: // Location
-        return ['locationText'];
+        return ['streetAddress', 'city', 'postalCode', 'locationText'];
       case 2: // Contact & Services
         const contactFields = ['contactMethod', 'phone']; // Phone is always required
 
@@ -498,6 +498,9 @@ const NewRequestPage: React.FC = () => {
         if (errors.category) errorMessages.push(`Category: ${errors.category.message}`);
         if (errors.priority) errorMessages.push(`Priority: ${errors.priority.message}`);
         if (errors.dateOfRequest) errorMessages.push(`Date: ${errors.dateOfRequest.message}`);
+        if (errors.streetAddress) errorMessages.push(`Street Address: ${errors.streetAddress.message}`);
+        if (errors.city) errorMessages.push(`City: ${errors.city.message}`);
+        if (errors.postalCode) errorMessages.push(`Postal Code: ${errors.postalCode.message}`);
         if (errors.locationText) errorMessages.push(`Location Details: ${errors.locationText.message}`);
         if (errors.contactMethod) errorMessages.push(`Contact Method: ${errors.contactMethod.message}`);
         if (errors.email) errorMessages.push(`Email: ${errors.email.message}`);
@@ -526,6 +529,21 @@ const NewRequestPage: React.FC = () => {
       
       if (!formData.category) {
         setSubmitError('Please select a category.');
+        return;
+      }
+      
+      if (!formData.streetAddress || formData.streetAddress.trim().length === 0) {
+        setSubmitError('Street address is required.');
+        return;
+      }
+      
+      if (!formData.city || formData.city.trim().length === 0) {
+        setSubmitError('City is required.');
+        return;
+      }
+      
+      if (!formData.postalCode || formData.postalCode.trim().length === 0) {
+        setSubmitError('Postal code is required.');
         return;
       }
       

@@ -49,8 +49,9 @@ const LocationStep: React.FC<LocationStepProps> = ({
             <TextField
               {...field}
               fullWidth
-              label="Street Address (Optional)"
+              label="Street Address"
               margin="normal"
+              required
               error={!!errors.streetAddress}
               inputProps={{
                 maxLength: 100,
@@ -86,8 +87,9 @@ const LocationStep: React.FC<LocationStepProps> = ({
                 <TextField
                   {...field}
                   fullWidth
-                  label="City (Optional)"
+                  label="City"
                   margin="normal"
+                  required
                   error={!!errors.city}
                   inputProps={{
                     maxLength: 50,
@@ -122,8 +124,9 @@ const LocationStep: React.FC<LocationStepProps> = ({
                 <TextField
                   {...field}
                   fullWidth
-                  label="Postal Code (Optional)"
+                  label="Postal Code"
                   margin="normal"
+                  required
                   error={!!errors.postalCode}
                   inputProps={{
                     maxLength: 10,
