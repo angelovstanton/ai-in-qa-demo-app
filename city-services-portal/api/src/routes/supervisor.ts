@@ -406,6 +406,107 @@ router.get('/quality-reviews', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMI
   }
 });
 
+// PUT /api/v1/supervisor/quality-reviews/:id - Update quality review
+router.put('/quality-reviews/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const reviewId = req.params.id;
+    const updateData = qualityReviewSchema.partial().parse(req.body);
+    
+    // Check if review exists and user has permission
+    const existingReview = await prisma.qualityReview.findUnique({
+      where: { id: reviewId },
+      include: {
+        request: {
+          include: {
+            department: true
+          }
+        }
+      }
+    });
+
+    if (!existingReview) {
+      return res.status(404).json({
+        error: {
+          code: 'REVIEW_NOT_FOUND',
+          message: 'Quality review not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check edit permissions
+    // Allow: 1) Admin, 2) Original reviewer, 3) Supervisor in same department
+    const canEdit = 
+      req.user?.role === 'ADMIN' || 
+      existingReview.reviewerId === req.user?.id ||
+      (req.user?.role === 'SUPERVISOR' && req.user?.departmentId === existingReview.request.department?.id);
+    
+    if (!canEdit) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only edit your own reviews or reviews in your department',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update the review
+    const updatedReview = await prisma.qualityReview.update({
+      where: { id: reviewId },
+      data: {
+        ...updateData,
+        updatedAt: new Date()
+      },
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            status: true,
+            category: true
+          }
+        },
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      data: updatedReview,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Quality review update error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid quality review data',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update quality review',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 // POST /api/v1/supervisor/workload-assignments - Create workload assignment
 router.post('/workload-assignments', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
   try {

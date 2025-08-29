@@ -80,9 +80,13 @@ const QualityReviewPage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt:desc');
   const [selectedReview, setSelectedReview] = useState<QualityReview | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editReviewData, setEditReviewData] = useState<any>({});
+  const [editSubmitLoading, setEditSubmitLoading] = useState(false);
   const [newReviewDialogOpen, setNewReviewDialogOpen] = useState(false);
   const [newReviewData, setNewReviewData] = useState({
     requestId: '',
@@ -108,6 +112,7 @@ const QualityReviewPage: React.FC = () => {
       const params = new URLSearchParams({
         page: (page + 1).toString(),
         size: rowsPerPage.toString(),
+        sort: sortBy,
         ...(statusFilter && { reviewStatus: statusFilter }),
       });
 
@@ -268,7 +273,18 @@ const QualityReviewPage: React.FC = () => {
 
   useEffect(() => {
     fetchQualityReviews();
-  }, [page, rowsPerPage, statusFilter]);
+  }, [page, rowsPerPage, statusFilter, sortBy]);
+  
+  // Filter reviews locally by search query
+  const filteredReviews = reviews.filter(review => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      review.request?.code?.toLowerCase().includes(query) ||
+      review.request?.title?.toLowerCase().includes(query) ||
+      review.reviewer?.name?.toLowerCase().includes(query)
+    );
+  });
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -286,7 +302,62 @@ const QualityReviewPage: React.FC = () => {
 
   const handleEditReview = (review: QualityReview) => {
     setSelectedReview(review);
+    setEditReviewData({
+      qualityScore: review.qualityScore,
+      communicationScore: review.communicationScore,
+      technicalAccuracyScore: review.technicalAccuracyScore,
+      timelinessScore: review.timelinessScore,
+      citizenSatisfactionScore: review.citizenSatisfactionScore,
+      improvementSuggestions: review.improvementSuggestions || '',
+      followUpRequired: review.followUpRequired,
+      calibrationSession: review.calibrationSession || '',
+    });
     setEditDialogOpen(true);
+  };
+  
+  const handleUpdateReview = async () => {
+    if (!selectedReview) return;
+    
+    setEditSubmitLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      console.log('Updating review:', selectedReview.id);
+      console.log('Review data:', editReviewData);
+      
+      const response = await fetch(`/api/v1/supervisor/quality-reviews/${selectedReview.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editReviewData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Update failed with status:', response.status);
+        console.error('Error details:', errorData);
+        
+        if (response.status === 403) {
+          const errorMessage = errorData?.error?.message || 'You do not have permission to edit this review.';
+          setError(errorMessage);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return;
+      }
+
+      // Refresh the reviews list
+      await fetchQualityReviews();
+      setEditDialogOpen(false);
+      setError(null);
+      
+    } catch (err) {
+      console.error('Error updating review:', err);
+      setError('Failed to update review. Please try again.');
+    } finally {
+      setEditSubmitLoading(false);
+    }
   };
 
   const getScoreColor = (score: number) => {
@@ -389,12 +460,34 @@ const QualityReviewPage: React.FC = () => {
 
       {/* Filters */}
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={3}>
+          <TextField
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Search by request code or title..."
+            InputProps={{
+              endAdornment: searchQuery && (
+                <IconButton size="small" onClick={() => setSearchQuery('')}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              )
+            }}
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={3}>
           <TextField
             select
             label="Review Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
+            }}
             fullWidth
             variant="outlined"
             size="small"
@@ -406,7 +499,28 @@ const QualityReviewPage: React.FC = () => {
           </TextField>
         </Grid>
         
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={3}>
+          <TextField
+            select
+            label="Sort By"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setPage(0);
+            }}
+            fullWidth
+            variant="outlined"
+            size="small"
+          >
+            <MenuItem value="createdAt:desc">Newest First</MenuItem>
+            <MenuItem value="createdAt:asc">Oldest First</MenuItem>
+            <MenuItem value="qualityScore:desc">Highest Score</MenuItem>
+            <MenuItem value="qualityScore:asc">Lowest Score</MenuItem>
+            <MenuItem value="updatedAt:desc">Recently Updated</MenuItem>
+          </TextField>
+        </Grid>
+        
+        <Grid item xs={12} sm={3}>
           <Button
             variant="outlined"
             onClick={fetchQualityReviews}
@@ -448,7 +562,7 @@ const QualityReviewPage: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {reviews.map((review) => (
+              {filteredReviews.map((review) => (
                 <TableRow key={review.id} hover>
                   <TableCell>
                     <Box>
@@ -783,25 +897,161 @@ const QualityReviewPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Dialog Placeholder */}
+      {/* Edit Dialog */}
       <Dialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Edit Quality Review</DialogTitle>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Edit Quality Review
+            </Typography>
+            <IconButton onClick={() => setEditDialogOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        
         <DialogContent>
-          <Typography>
-            Edit functionality will be implemented here.
-          </Typography>
+          <Box sx={{ pt: 2 }}>
+            {/* Request Info (Read-only) */}
+            {selectedReview && (
+              <Box mb={3} p={2} bgcolor="grey.100" borderRadius={1}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Request: {selectedReview.request?.code} - {selectedReview.request?.title}
+                </Typography>
+              </Box>
+            )}
+            
+            {/* Error Message */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            
+            {/* Scores Section */}
+            <Typography variant="h6" gutterBottom>
+              Quality Scores (1-10)
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Quality Score: {editReviewData.qualityScore}</Typography>
+                <Slider
+                  value={editReviewData.qualityScore || 0}
+                  onChange={(e, value) => setEditReviewData(prev => ({ ...prev, qualityScore: value as number }))}
+                  min={1}
+                  max={10}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Communication: {editReviewData.communicationScore}</Typography>
+                <Slider
+                  value={editReviewData.communicationScore || 0}
+                  onChange={(e, value) => setEditReviewData(prev => ({ ...prev, communicationScore: value as number }))}
+                  min={1}
+                  max={10}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Technical Accuracy: {editReviewData.technicalAccuracyScore}</Typography>
+                <Slider
+                  value={editReviewData.technicalAccuracyScore || 0}
+                  onChange={(e, value) => setEditReviewData(prev => ({ ...prev, technicalAccuracyScore: value as number }))}
+                  min={1}
+                  max={10}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Timeliness: {editReviewData.timelinessScore}</Typography>
+                <Slider
+                  value={editReviewData.timelinessScore || 0}
+                  onChange={(e, value) => setEditReviewData(prev => ({ ...prev, timelinessScore: value as number }))}
+                  min={1}
+                  max={10}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Citizen Satisfaction: {editReviewData.citizenSatisfactionScore}</Typography>
+                <Slider
+                  value={editReviewData.citizenSatisfactionScore || 0}
+                  onChange={(e, value) => setEditReviewData(prev => ({ ...prev, citizenSatisfactionScore: value as number }))}
+                  min={1}
+                  max={10}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+            </Grid>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            {/* Additional Fields */}
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Improvement Suggestions"
+                  multiline
+                  rows={4}
+                  fullWidth
+                  value={editReviewData.improvementSuggestions || ''}
+                  onChange={(e) => setEditReviewData(prev => ({ ...prev, improvementSuggestions: e.target.value }))}
+                  placeholder="Provide suggestions for improvement..."
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Calibration Session Notes"
+                  fullWidth
+                  value={editReviewData.calibrationSession || ''}
+                  onChange={(e) => setEditReviewData(prev => ({ ...prev, calibrationSession: e.target.value }))}
+                  placeholder="Optional calibration notes"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={editReviewData.followUpRequired || false}
+                      onChange={(e) => setEditReviewData(prev => ({ ...prev, followUpRequired: e.target.checked }))}
+                    />
+                  }
+                  label="Follow-up Required"
+                />
+              </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
+        
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" color="primary">
-            Save Changes
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateReview}
+            disabled={editSubmitLoading}
+          >
+            {editSubmitLoading ? <CircularProgress size={24} /> : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>

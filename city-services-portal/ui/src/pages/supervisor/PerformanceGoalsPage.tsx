@@ -80,6 +80,9 @@ const PerformanceGoalsPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('dueDate:asc');
   const [selectedGoal, setSelectedGoal] = useState<PerformanceGoal | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [newGoalDialogOpen, setNewGoalDialogOpen] = useState(false);
@@ -107,9 +110,11 @@ const PerformanceGoalsPage: React.FC = () => {
       const token = localStorage.getItem('accessToken');
       const params = new URLSearchParams({
         page: (page + 1).toString(),
-        pageSize: rowsPerPage.toString(),
+        size: rowsPerPage.toString(),
+        sort: sortBy,
         ...(statusFilter && { status: statusFilter }),
         ...(priorityFilter && { priority: priorityFilter }),
+        ...(employeeFilter && { userId: employeeFilter }),
       });
 
       const response = await fetch(`/api/v1/supervisor/performance-goals?${params}`, {
@@ -120,6 +125,10 @@ const PerformanceGoalsPage: React.FC = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          setError('You do not have permission to view performance goals. Please ensure you are logged in with a supervisor account.');
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -136,7 +145,26 @@ const PerformanceGoalsPage: React.FC = () => {
 
   useEffect(() => {
     fetchPerformanceGoals();
-  }, [page, rowsPerPage, statusFilter, priorityFilter]);
+  }, [page, rowsPerPage, statusFilter, priorityFilter, employeeFilter, sortBy]);
+  
+  // Fetch users on component mount for the filter - but don't let it block the page
+  useEffect(() => {
+    // Fetch users but don't await it, so it doesn't block the goals from loading
+    fetchUsers().catch(() => {
+      console.log('Could not fetch users for filter');
+    });
+  }, []);
+  
+  // Filter goals locally by search query
+  const filteredGoals = goals.filter(goal => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      goal.title.toLowerCase().includes(query) ||
+      goal.description?.toLowerCase().includes(query) ||
+      goal.user?.name?.toLowerCase().includes(query)
+    );
+  });
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -184,9 +212,14 @@ const PerformanceGoalsPage: React.FC = () => {
           self.findIndex(u => u.id === user.id) === index
         );
         setUsers(uniqueUsers);
+      } else if (response.status === 403) {
+        // If forbidden, just log it but don't break the page
+        console.log('Cannot fetch users list - permission denied');
+        setUsers([]);
       }
     } catch (err) {
       console.error('Error fetching users:', err);
+      setUsers([]);
     }
   };
 
@@ -388,6 +421,17 @@ const PerformanceGoalsPage: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Error Display */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} action={
+          <Button color="inherit" size="small" onClick={fetchPerformanceGoals}>
+            Retry
+          </Button>
+        }>
+          {error}
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} sm={6} md={3}>
@@ -473,12 +517,49 @@ const PerformanceGoalsPage: React.FC = () => {
 
       {/* Filters */}
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} md={4} lg={3}>
+          <TextField
+            label="Search Goals"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Search by goal name..."
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <TextField
+            select
+            label="Employee"
+            value={employeeFilter}
+            onChange={(e) => {
+              setEmployeeFilter(e.target.value);
+              setPage(0);
+            }}
+            fullWidth
+            variant="outlined"
+            size="small"
+          >
+            <MenuItem value="">All Employees</MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={2}>
           <TextField
             select
             label="Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
+            }}
             fullWidth
             variant="outlined"
             size="small"
@@ -491,12 +572,15 @@ const PerformanceGoalsPage: React.FC = () => {
           </TextField>
         </Grid>
         
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={2}>
           <TextField
             select
             label="Priority"
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
+            onChange={(e) => {
+              setPriorityFilter(e.target.value);
+              setPage(0);
+            }}
             fullWidth
             variant="outlined"
             size="small"
@@ -508,16 +592,26 @@ const PerformanceGoalsPage: React.FC = () => {
           </TextField>
         </Grid>
         
-        <Grid item xs={12} sm={4}>
-          <Button
-            variant="outlined"
-            onClick={fetchPerformanceGoals}
-            disabled={loading}
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <TextField
+            select
+            label="Sort By"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setPage(0);
+            }}
             fullWidth
-            sx={{ height: '40px' }}
+            variant="outlined"
+            size="small"
           >
-            {loading ? <CircularProgress size={24} /> : 'Refresh'}
-          </Button>
+            <MenuItem value="dueDate:asc">Due Date (Earliest)</MenuItem>
+            <MenuItem value="dueDate:desc">Due Date (Latest)</MenuItem>
+            <MenuItem value="createdAt:desc">Newest First</MenuItem>
+            <MenuItem value="createdAt:asc">Oldest First</MenuItem>
+            <MenuItem value="priority:desc">Priority (High-Low)</MenuItem>
+            <MenuItem value="targetValue:desc">Target (Highest)</MenuItem>
+          </TextField>
         </Grid>
       </Grid>
 
@@ -547,7 +641,7 @@ const PerformanceGoalsPage: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {goals.map((goal) => {
+              {filteredGoals.map((goal) => {
                 const progress = getProgressPercentage(goal.currentValue, goal.targetValue);
                 const daysUntilDue = getDaysUntilDue(goal.dueDate);
                 
