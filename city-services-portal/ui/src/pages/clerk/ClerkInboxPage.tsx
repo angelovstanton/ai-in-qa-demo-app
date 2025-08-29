@@ -40,28 +40,71 @@ const ClerkInboxPage: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [allRequests, setAllRequests] = useState<any[]>([]);
+  const [hasNextPage, setHasNextPage] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [statusAction, setStatusAction] = useState<string>('');
   const [statusReason, setStatusReason] = useState<string>('');
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
 
-  // Use debounced search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setSearchQuery(searchText);
-    }, 300); // Reduced from 500ms to 300ms for faster response
-    return () => clearTimeout(timeoutId);
-  }, [searchText]);
-
-  const { data: requests, loading, error, refetch } = useServiceRequests({
+  const { data: requests, loading, error, totalCount, refetch } = useServiceRequests({
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
     text: searchQuery || undefined,
-    pageSize: 50, // Load more items for inbox view
+    page: page,
+    pageSize: 20,
   });
 
-  const selectedRequest = requests.find(req => req.id === selectedRequestId);
+  // Use debounced search and reset data on filter change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearchQuery(searchText);
+      setPage(1);
+      setAllRequests([]);
+      setHasNextPage(true);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchText]);
+
+  // Reset data when filters change
+  useEffect(() => {
+    setPage(1);
+    setAllRequests([]);
+    setHasNextPage(true);
+    setSelectedRequestId(null);
+    setSelectedRequestDetails(null);
+  }, [statusFilter, priorityFilter]);
+
+  // Handle new data from API
+  useEffect(() => {
+    if (requests && requests.length > 0) {
+      if (page === 1) {
+        // First page or filter change - replace all requests
+        setAllRequests(requests);
+      } else {
+        // Subsequent pages - append new requests
+        setAllRequests(prev => {
+          const existingIds = new Set(prev.map(r => r.id));
+          const newRequests = requests.filter(r => !existingIds.has(r.id));
+          return [...prev, ...newRequests];
+        });
+      }
+      
+      // Check if there are more pages
+      setHasNextPage(requests.length === 20);
+      setLoadingMore(false);
+    } else if (page === 1) {
+      // No results for first page
+      setAllRequests([]);
+      setHasNextPage(false);
+      setLoadingMore(false);
+    }
+  }, [requests, page, totalCount]);
+
+  const selectedRequest = allRequests.find(req => req.id === selectedRequestId);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -104,8 +147,6 @@ const ClerkInboxPage: React.FC = () => {
     try {
       const response = await api.get(`/requests/${requestId}`);
       setSelectedRequestDetails(response.data.data);
-      console.log('📋 Fetched detailed request data:', response.data.data);
-      console.log('📎 Attachments from detailed API:', response.data.data.attachments);
     } catch (error) {
       console.error('Failed to fetch request details:', error);
     } finally {
@@ -162,6 +203,17 @@ const ClerkInboxPage: React.FC = () => {
     setPriorityFilter('');
     setSearchText('');
     setSearchQuery('');
+    setPage(1);
+    setAllRequests([]);
+    setHasNextPage(true);
+  };
+
+  const loadMoreRequests = () => {
+    if (loadingMore || !hasNextPage || loading) return;
+    
+    const nextPage = Math.floor(allRequests.length / 20) + 1;
+    setLoadingMore(true);
+    setPage(nextPage);
   };
 
   const getAvailableActions = () => {
@@ -197,7 +249,7 @@ const ClerkInboxPage: React.FC = () => {
 
   return (
     <>
-      <Box data-testid="cs-clerk-inbox-page" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box data-testid="cs-clerk-inbox-page" sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           Clerk Inbox
@@ -220,9 +272,14 @@ const ClerkInboxPage: React.FC = () => {
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ pb: 1 }}>
-              <Typography variant="h6" gutterBottom>
-                Service Requests ({requests.length})
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">
+                  Service Requests
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {allRequests.length}{totalCount > 0 ? ` of ${totalCount}` : ''}
+                </Typography>
+              </Box>
               
               {/* Filters */}
               <Box sx={{ mb: 2 }}>
@@ -300,30 +357,37 @@ const ClerkInboxPage: React.FC = () => {
             </CardContent>
 
             {/* Request List */}
-            <Box sx={{ 
-              flex: 1, 
-              overflow: 'auto',
-              minHeight: 0, // Important for flex child to shrink
-              '&::-webkit-scrollbar': {
-                width: '12px',
-              },
-              '&::-webkit-scrollbar-track': {
-                backgroundColor: 'rgba(0,0,0,0.1)',
-                borderRadius: '6px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                borderRadius: '6px',
-                border: '2px solid transparent',
-                backgroundClip: 'padding-box',
-              },
-              '&::-webkit-scrollbar-thumb:hover': {
-                backgroundColor: 'rgba(0,0,0,0.5)',
-              },
-              // For Firefox
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
-            }}>
+            <Box 
+              sx={{ 
+                flex: 1, 
+                overflow: 'auto',
+                minHeight: 0,
+                maxHeight: 'calc(100vh - 280px)',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                  },
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(0,0,0,0.2) rgba(0,0,0,0.05)',
+              }}
+              onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                // Load more when scrolled to bottom
+                if (scrollHeight - scrollTop === clientHeight && hasNextPage && !loadingMore) {
+                  loadMoreRequests();
+                }
+              }}
+            >
               {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                   <CircularProgress />
@@ -331,7 +395,7 @@ const ClerkInboxPage: React.FC = () => {
               )}
               
               <List data-testid="cs-inbox-request-list">
-                {requests.map((request) => (
+                {allRequests.map((request) => (
                   <Box key={request.id}>
                     <ListItemButton
                       selected={selectedRequestId === request.id}
@@ -374,11 +438,29 @@ const ClerkInboxPage: React.FC = () => {
                     <Divider />
                   </Box>
                 ))}
-                {requests.length === 0 && !loading && (
+                {allRequests.length === 0 && !loading && (
                   <ListItem>
                     <ListItemText 
                       primary="No requests found" 
                       secondary={searchQuery ? `No results for "${searchQuery}"` : 'Try adjusting your filters'}
+                    />
+                  </ListItem>
+                )}
+                
+                {/* Loading more indicator */}
+                {(loadingMore || (loading && page > 1)) && (
+                  <ListItem>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', py: 2 }}>
+                      <CircularProgress size={24} />
+                    </Box>
+                  </ListItem>
+                )}
+                
+                {/* End of results indicator */}
+                {!hasNextPage && allRequests.length > 0 && (
+                  <ListItem>
+                    <ListItemText 
+                      primary={<Typography variant="body2" color="text.secondary" align="center">End of results</Typography>}
                     />
                   </ListItem>
                 )}
@@ -394,26 +476,24 @@ const ClerkInboxPage: React.FC = () => {
               flex: 1, 
               overflow: 'auto', 
               p: 3,
-              minHeight: 0, // Important for flex child to shrink
+              minHeight: 0,
+              maxHeight: 'calc(100vh - 120px)',
               '&::-webkit-scrollbar': {
-                width: '12px',
+                width: '8px',
               },
               '&::-webkit-scrollbar-track': {
-                backgroundColor: 'rgba(0,0,0,0.1)',
-                borderRadius: '6px',
+                backgroundColor: 'rgba(0,0,0,0.05)',
+                borderRadius: '4px',
               },
               '&::-webkit-scrollbar-thumb': {
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                borderRadius: '6px',
-                border: '2px solid transparent',
-                backgroundClip: 'padding-box',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                borderRadius: '4px',
+                '&:hover': {
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                },
               },
-              '&::-webkit-scrollbar-thumb:hover': {
-                backgroundColor: 'rgba(0,0,0,0.5)',
-              },
-              // For Firefox
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
+              scrollbarColor: 'rgba(0,0,0,0.2) rgba(0,0,0,0.05)',
             }}>
               {loadingRequestDetails ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -653,12 +733,10 @@ const ClerkInboxPage: React.FC = () => {
                             Attachments
                           </Typography>
                           <Box sx={{ mb: 3 }}>
-                            {console.log('🔍 Display request attachments:', displayRequest.attachments)}
                             {displayRequest.attachments && displayRequest.attachments.length > 0 ? (
                               <Grid container spacing={2}>
                                 {displayRequest.attachments.map((attachment, index) => (
                                   <Grid item xs={12} sm={6} key={attachment.id || index}>
-                                    {console.log(`📎 Attachment ${index}:`, attachment)}
                                     {attachment.mime?.startsWith('image/') ? (
                                       <AuthenticatedImage
                                         src={`http://localhost:3001/api/v1/attachments/${attachment.id}/image`}
