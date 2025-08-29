@@ -48,6 +48,7 @@ import api from '../lib/api';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import LocationDisplayMap from '../components/LocationDisplayMap';
+import AuthenticatedImage from '../components/request-detail/AuthenticatedImage';
 
 // Comment validation schema
 const commentSchema = z.object({
@@ -908,8 +909,7 @@ const RequestDetailPage: React.FC = () => {
                         <Card>
                           <CardContent sx={{ p: 2 }}>
                             {attachment.mime?.startsWith('image/') ? (
-                              <Box
-                                component="img"
+                              <AuthenticatedImage
                                 src={`http://localhost:3001/api/v1/attachments/${attachment.id}/image`}
                                 alt={attachment.filename || `Attachment ${index + 1}`}
                                 sx={{
@@ -919,14 +919,7 @@ const RequestDetailPage: React.FC = () => {
                                   borderRadius: 1,
                                   mb: 1,
                                 }}
-                                onError={(e) => {
-                                  // Fallback to default image if attachment fails to load
-                                  console.error('Failed to load attachment image:', attachment.id);
-                                  e.currentTarget.src = '/images/service-request-default-image.png';
-                                }}
-                                loading="lazy"
-                                data-testid={`cs-attachment-image-${attachment.id}`}
-                                headers={{ Authorization: `Bearer ${localStorage.getItem('token')}` }} // Include Authorization header
+                                testId={`cs-attachment-image-${attachment.id}`}
                               />
                             ) : (
                               <Box
