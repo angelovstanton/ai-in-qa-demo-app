@@ -25,13 +25,17 @@ import {
   DialogActions,
   CircularProgress,
 } from '@mui/material';
-import { Refresh as RefreshIcon, FilterAlt as FilterIcon } from '@mui/icons-material';
+import { Refresh as RefreshIcon, FilterAlt as FilterIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useServiceRequests } from '../../hooks/useServiceRequests';
 import api from '../../lib/api';
+import LocationDisplayMap from '../../components/LocationDisplayMap';
+import AuthenticatedImage from '../../components/request-detail/AuthenticatedImage';
 
 const ClerkInboxPage: React.FC = () => {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedRequestDetails, setSelectedRequestDetails] = useState<any>(null);
+  const [loadingRequestDetails, setLoadingRequestDetails] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
@@ -95,8 +99,27 @@ const ClerkInboxPage: React.FC = () => {
     }
   };
 
+  const fetchRequestDetails = async (requestId: string) => {
+    setLoadingRequestDetails(true);
+    try {
+      const response = await api.get(`/requests/${requestId}`);
+      setSelectedRequestDetails(response.data.data);
+      console.log('📋 Fetched detailed request data:', response.data.data);
+      console.log('📎 Attachments from detailed API:', response.data.data.attachments);
+    } catch (error) {
+      console.error('Failed to fetch request details:', error);
+    } finally {
+      setLoadingRequestDetails(false);
+    }
+  };
+
   const handleRequestSelect = (requestId: string) => {
     setSelectedRequestId(requestId);
+    if (requestId) {
+      fetchRequestDetails(requestId);
+    } else {
+      setSelectedRequestDetails(null);
+    }
   };
 
   const handleStatusChangeDialog = (action: string) => {
@@ -392,49 +415,57 @@ const ClerkInboxPage: React.FC = () => {
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(0,0,0,0.3) rgba(0,0,0,0.1)',
             }}>
-              {selectedRequest ? (
+              {loadingRequestDetails ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <CircularProgress />
+                </Box>
+              ) : (selectedRequestDetails || selectedRequest) ? (
                 <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                    <Box>
-                      <Typography variant="h5" gutterBottom>
-                        {selectedRequest.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Request ID: {selectedRequest.code}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                        <Chip
-                          label={selectedRequest.priority}
-                          color={getPriorityColor(selectedRequest.priority) as any}
-                          size="small"
-                        />
-                        <Chip
-                          label={selectedRequest.status.replace(/_/g, ' ')}
-                          color={getStatusColor(selectedRequest.status) as any}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={selectedRequest.category}
-                          variant="outlined"
-                          size="small"
-                        />
-                      </Box>
-                    </Box>
+                  {(() => {
+                    const displayRequest = selectedRequestDetails || selectedRequest;
+                    return (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                          <Box>
+                            <Typography variant="h5" gutterBottom>
+                              {displayRequest.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              Request ID: {displayRequest.code}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                              <Chip
+                                label={displayRequest.priority}
+                                color={getPriorityColor(displayRequest.priority) as any}
+                                size="small"
+                              />
+                              <Chip
+                                label={displayRequest.status.replace(/_/g, ' ')}
+                                color={getStatusColor(displayRequest.status) as any}
+                                size="small"
+                                variant="outlined"
+                              />
+                              <Chip
+                                label={displayRequest.category}
+                                variant="outlined"
+                                size="small"
+                              />
+                            </Box>
+                          </Box>
                     
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {getAvailableActions().map((actionItem) => (
-                        <Button
-                          key={actionItem.action}
-                          variant="contained"
-                          size="small"
-                          color={actionItem.color as any}
-                          onClick={() => handleStatusChangeDialog(actionItem.action)}
-                          data-testid={`cs-inbox-${actionItem.action}-button`}
-                        >
-                          {actionItem.label}
-                        </Button>
-                      ))}
+                          {getAvailableActions().map((actionItem) => (
+                            <Button
+                              key={actionItem.action}
+                              variant="contained"
+                              size="small"
+                              color={actionItem.color as any}
+                              onClick={() => handleStatusChangeDialog(actionItem.action)}
+                              data-testid={`cs-inbox-${actionItem.action}-button`}
+                            >
+                              {actionItem.label}
+                            </Button>
+                          ))}
                     </Box>
                   </Box>
 
@@ -445,190 +476,290 @@ const ClerkInboxPage: React.FC = () => {
                       <Typography variant="h6" gutterBottom>
                         Description
                       </Typography>
-                      <Typography variant="body1" paragraph>
-                        {selectedRequest.description}
-                      </Typography>
+                          <Typography variant="body1" paragraph>
+                            {displayRequest.description}
+                          </Typography>
 
-                      {/* Location Information */}
-                      <Typography variant="h6" gutterBottom>
-                        Location Information
-                      </Typography>
-                      <Grid container spacing={2} sx={{ mb: 3 }}>
-                        {selectedRequest.streetAddress && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body2" color="text.secondary">Street Address</Typography>
-                            <Typography variant="body1">{selectedRequest.streetAddress}</Typography>
-                          </Grid>
-                        )}
-                        {selectedRequest.city && (
-                          <Grid item xs={12} md={3}>
-                            <Typography variant="body2" color="text.secondary">City</Typography>
-                            <Typography variant="body1">{selectedRequest.city}</Typography>
-                          </Grid>
-                        )}
-                        {selectedRequest.postalCode && (
-                          <Grid item xs={12} md={3}>
-                            <Typography variant="body2" color="text.secondary">Postal Code</Typography>
-                            <Typography variant="body1">{selectedRequest.postalCode}</Typography>
-                          </Grid>
-                        )}
-                        <Grid item xs={12}>
-                          <Typography variant="body2" color="text.secondary">Location Details</Typography>
-                          <Typography variant="body1">{selectedRequest.locationText}</Typography>
-                        </Grid>
-                        {selectedRequest.landmark && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body2" color="text.secondary">Landmark</Typography>
-                            <Typography variant="body1">{selectedRequest.landmark}</Typography>
-                          </Grid>
-                        )}
-                        {selectedRequest.accessInstructions && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body2" color="text.secondary">Access Instructions</Typography>
-                            <Typography variant="body1">{selectedRequest.accessInstructions}</Typography>
-                          </Grid>
-                        )}
-                      </Grid>
-
-                      {/* Contact Information */}
-                      {(selectedRequest.contactMethod || selectedRequest.alternatePhone || selectedRequest.bestTimeToContact) && (
-                        <>
+                          {/* Location Information */}
                           <Typography variant="h6" gutterBottom>
-                            Contact Information
+                            Location Information
                           </Typography>
                           <Grid container spacing={2} sx={{ mb: 3 }}>
-                            {selectedRequest.contactMethod && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
-                                <Typography variant="body1">{selectedRequest.contactMethod}</Typography>
+                            {displayRequest.streetAddress && (
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="body2" color="text.secondary">Street Address</Typography>
+                                <Typography variant="body1">{displayRequest.streetAddress}</Typography>
                               </Grid>
                             )}
-                            {selectedRequest.alternatePhone && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
-                                <Typography variant="body1">{selectedRequest.alternatePhone}</Typography>
+                            {displayRequest.city && (
+                              <Grid item xs={12} md={3}>
+                                <Typography variant="body2" color="text.secondary">City</Typography>
+                                <Typography variant="body1">{displayRequest.city}</Typography>
                               </Grid>
                             )}
-                            {selectedRequest.bestTimeToContact && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
-                                <Typography variant="body1">{selectedRequest.bestTimeToContact}</Typography>
+                            {displayRequest.postalCode && (
+                              <Grid item xs={12} md={3}>
+                                <Typography variant="body2" color="text.secondary">Postal Code</Typography>
+                                <Typography variant="body1">{displayRequest.postalCode}</Typography>
                               </Grid>
                             )}
-                          </Grid>
-                        </>
-                      )}
-
-                      {/* Issue Details */}
-                      {(selectedRequest.issueType || selectedRequest.severity || selectedRequest.isRecurring || selectedRequest.isEmergency || selectedRequest.hasPermits) && (
-                        <>
-                          <Typography variant="h6" gutterBottom>
-                            Issue Details
-                          </Typography>
-                          <Grid container spacing={2} sx={{ mb: 3 }}>
-                            {selectedRequest.issueType && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Issue Type</Typography>
-                                <Typography variant="body1">{selectedRequest.issueType}</Typography>
-                              </Grid>
-                            )}
-                            {selectedRequest.severity && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Severity (1-10)</Typography>
-                                <Typography variant="body1">{selectedRequest.severity}</Typography>
-                              </Grid>
-                            )}
-                            <Grid item xs={12} md={4}>
-                              <Typography variant="body2" color="text.secondary">Issue Characteristics</Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {selectedRequest.isRecurring && <Chip label="Recurring Issue" size="small" color="info" />}
-                                {selectedRequest.isEmergency && <Chip label="Emergency" size="small" color="error" />}
-                                {selectedRequest.hasPermits && <Chip label="Has Permits" size="small" color="success" />}
-                              </Box>
+                            <Grid item xs={12}>
+                              <Typography variant="body2" color="text.secondary">Location Details</Typography>
+                              <Typography variant="body1">{displayRequest.locationText}</Typography>
                             </Grid>
+                            {displayRequest.landmark && (
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="body2" color="text.secondary">Landmark</Typography>
+                                <Typography variant="body1">{displayRequest.landmark}</Typography>
+                              </Grid>
+                            )}
+                            {displayRequest.accessInstructions && (
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="body2" color="text.secondary">Access Instructions</Typography>
+                                <Typography variant="body1">{displayRequest.accessInstructions}</Typography>
+                              </Grid>
+                            )}
                           </Grid>
-                        </>
-                      )}
 
-                      {/* Service Impact */}
-                      {(selectedRequest.affectedServices || selectedRequest.estimatedValue) && (
-                        <>
-                          <Typography variant="h6" gutterBottom>
-                            Service Impact
-                          </Typography>
-                          <Grid container spacing={2} sx={{ mb: 3 }}>
-                            {selectedRequest.affectedServices && selectedRequest.affectedServices.length > 0 && (
-                              <Grid item xs={12} md={8}>
-                                <Typography variant="body2" color="text.secondary">Affected Services</Typography>
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                                  {selectedRequest.affectedServices.map((service, index) => (
-                                    <Chip key={index} label={service} size="small" variant="outlined" />
-                                  ))}
+                          {/* Map Display for Location */}
+                          {((displayRequest.latitude && displayRequest.longitude) || (displayRequest.streetAddress || displayRequest.city)) && (
+                            <Box sx={{ mb: 3 }}>
+                              <Typography variant="h6" component="div" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                                <LocationOnIcon sx={{ mr: 1 }} />
+                                Location Map
+                              </Typography>
+                              {displayRequest.latitude && displayRequest.longitude && 
+                               !isNaN(displayRequest.latitude) && !isNaN(displayRequest.longitude) &&
+                               displayRequest.latitude !== 0 && displayRequest.longitude !== 0 ? (
+                                <LocationDisplayMap
+                                  latitude={displayRequest.latitude}
+                                  longitude={displayRequest.longitude}
+                                  address={[displayRequest.streetAddress, displayRequest.city, displayRequest.postalCode].filter(Boolean).join(', ')}
+                                  title={`Service Request: ${displayRequest.title}`}
+                                  description={displayRequest.locationText}
+                                  height="250px"
+                                  width="100%"
+                                  zoom={15}
+                                  showPopup={true}
+                                />
+                              ) : (
+                                <Box sx={{ 
+                                  height: '200px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center',
+                                  bgcolor: 'grey.50',
+                                  border: '1px dashed',
+                                  borderColor: 'grey.300',
+                                  borderRadius: 1
+                                }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    📍 No map coordinates available
+                                  </Typography>
                                 </Box>
-                              </Grid>
-                            )}
-                            {selectedRequest.estimatedValue && (
-                              <Grid item xs={12} md={4}>
-                                <Typography variant="body2" color="text.secondary">Estimated Value</Typography>
-                                <Typography variant="body1">${selectedRequest.estimatedValue.toLocaleString()}</Typography>
-                              </Grid>
-                            )}
-                          </Grid>
-                        </>
-                      )}
+                              )}
+                            </Box>
+                          )}
 
-                      {/* Default Image */}
-                      <Typography variant="h6" gutterBottom>
-                        Attachments
-                      </Typography>
-                      <Box sx={{ mb: 3 }}>
-                        <img 
-                          src="/images/service-request-default-image.png" 
-                          alt="Service Request" 
-                          style={{ 
-                            maxWidth: '100%', 
-                            height: 'auto', 
-                            maxHeight: '300px',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </Box>
+                          {/* Contact Information */}
+                          {(displayRequest.contactMethod || displayRequest.alternatePhone || displayRequest.bestTimeToContact) && (
+                            <>
+                              <Typography variant="h6" gutterBottom>
+                                Contact Information
+                              </Typography>
+                              <Grid container spacing={2} sx={{ mb: 3 }}>
+                                {displayRequest.contactMethod && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Preferred Contact Method</Typography>
+                                    <Typography variant="body1">{displayRequest.contactMethod}</Typography>
+                                  </Grid>
+                                )}
+                                {displayRequest.alternatePhone && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Alternate Phone</Typography>
+                                    <Typography variant="body1">{displayRequest.alternatePhone}</Typography>
+                                  </Grid>
+                                )}
+                                {displayRequest.bestTimeToContact && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Best Time to Contact</Typography>
+                                    <Typography variant="body1">{displayRequest.bestTimeToContact}</Typography>
+                                  </Grid>
+                                )}
+                              </Grid>
+                            </>
+                          )}
+
+                          {/* Issue Details */}
+                          {(displayRequest.issueType || displayRequest.severity || displayRequest.isRecurring || displayRequest.isEmergency || displayRequest.hasPermits) && (
+                            <>
+                              <Typography variant="h6" gutterBottom>
+                                Issue Details
+                              </Typography>
+                              <Grid container spacing={2} sx={{ mb: 3 }}>
+                                {displayRequest.issueType && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Issue Type</Typography>
+                                    <Typography variant="body1">{displayRequest.issueType}</Typography>
+                                  </Grid>
+                                )}
+                                {displayRequest.severity && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Severity (1-10)</Typography>
+                                    <Typography variant="body1">{displayRequest.severity}</Typography>
+                                  </Grid>
+                                )}
+                                <Grid item xs={12} md={4}>
+                                  <Typography variant="body2" color="text.secondary">Issue Characteristics</Typography>
+                                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    {displayRequest.isRecurring && <Chip label="Recurring Issue" size="small" color="info" />}
+                                    {displayRequest.isEmergency && <Chip label="Emergency" size="small" color="error" />}
+                                    {displayRequest.hasPermits && <Chip label="Has Permits" size="small" color="success" />}
+                                  </Box>
+                                </Grid>
+                              </Grid>
+                            </>
+                          )}
+
+                          {/* Service Impact */}
+                          {(displayRequest.affectedServices || displayRequest.estimatedValue) && (
+                            <>
+                              <Typography variant="h6" gutterBottom>
+                                Service Impact
+                              </Typography>
+                              <Grid container spacing={2} sx={{ mb: 3 }}>
+                                {displayRequest.affectedServices && displayRequest.affectedServices.length > 0 && (
+                                  <Grid item xs={12} md={8}>
+                                    <Typography variant="body2" color="text.secondary">Affected Services</Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                                      {displayRequest.affectedServices.map((service, index) => (
+                                        <Chip key={index} label={service} size="small" variant="outlined" />
+                                      ))}
+                                    </Box>
+                                  </Grid>
+                                )}
+                                {displayRequest.estimatedValue && (
+                                  <Grid item xs={12} md={4}>
+                                    <Typography variant="body2" color="text.secondary">Estimated Value</Typography>
+                                    <Typography variant="body1">${displayRequest.estimatedValue.toLocaleString()}</Typography>
+                                  </Grid>
+                                )}
+                              </Grid>
+                            </>
+                          )}
+
+                          {/* Attachments */}
+                          <Typography variant="h6" gutterBottom>
+                            Attachments
+                          </Typography>
+                          <Box sx={{ mb: 3 }}>
+                            {console.log('🔍 Display request attachments:', displayRequest.attachments)}
+                            {displayRequest.attachments && displayRequest.attachments.length > 0 ? (
+                              <Grid container spacing={2}>
+                                {displayRequest.attachments.map((attachment, index) => (
+                                  <Grid item xs={12} sm={6} key={attachment.id || index}>
+                                    {console.log(`📎 Attachment ${index}:`, attachment)}
+                                    {attachment.mime?.startsWith('image/') ? (
+                                      <AuthenticatedImage
+                                        src={`http://localhost:3001/api/v1/attachments/${attachment.id}/image`}
+                                        alt={attachment.filename || `Attachment ${index + 1}`}
+                                        sx={{
+                                          width: '100%',
+                                          height: 200,
+                                          objectFit: 'cover',
+                                          borderRadius: 1,
+                                          border: '1px solid #ddd',
+                                        }}
+                                        testId={`cs-clerk-attachment-${attachment.id}`}
+                                      />
+                                    ) : (
+                                      <Box sx={{ 
+                                        width: '100%', 
+                                        height: 200, 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center',
+                                        border: '1px dashed #ccc',
+                                        borderRadius: 1
+                                      }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          📎 {attachment.filename || 'Non-image attachment'}
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    {attachment.filename && (
+                                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                        {attachment.filename}
+                                      </Typography>
+                                    )}
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            ) : (
+                              <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                py: 4,
+                                border: '1px dashed #ccc',
+                                borderRadius: 1,
+                                bgcolor: 'grey.50'
+                              }}>
+                                <img 
+                                  src="/images/service-request-default-image.png" 
+                                  alt="No attachments placeholder" 
+                                  style={{ 
+                                    width: '100%',
+                                    maxWidth: 300, 
+                                    height: 200,
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    opacity: 0.7
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                                  No attachments uploaded for this request
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="h6" gutterBottom>
-                        Request Details
-                      </Typography>
-                      <Box sx={{ '& > *': { mb: 1 } }}>
-                        <Typography variant="body2">
-                          <strong>Date of Request:</strong> {format(new Date(selectedRequest.dateOfRequest), 'PPP')}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Created:</strong> {format(new Date(selectedRequest.createdAt), 'PPpp')}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Updated:</strong> {format(new Date(selectedRequest.updatedAt), 'PPpp')}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Requested by:</strong> {selectedRequest.creator.name} ({selectedRequest.creator.email})
-                        </Typography>
-                        {selectedRequest.assignee && (
-                          <Typography variant="body2">
-                            <strong>Assigned to:</strong> {selectedRequest.assignee.name}
+                        <Grid item xs={12} md={4}>
+                          <Typography variant="h6" gutterBottom>
+                            Request Details
                           </Typography>
-                        )}
-                        {selectedRequest.department && (
-                          <Typography variant="body2">
-                            <strong>Department:</strong> {selectedRequest.department.name}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Grid>
-                  </Grid>
+                          <Box sx={{ '& > *': { mb: 1 } }}>
+                            <Typography variant="body2">
+                              <strong>Date of Request:</strong> {format(new Date(displayRequest.dateOfRequest), 'PPP')}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Created:</strong> {format(new Date(displayRequest.createdAt), 'PPpp')}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Updated:</strong> {format(new Date(displayRequest.updatedAt), 'PPpp')}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Requested by:</strong> {displayRequest.creator.name} ({displayRequest.creator.email})
+                            </Typography>
+                            {displayRequest.assignee && (
+                              <Typography variant="body2">
+                                <strong>Assigned to:</strong> {displayRequest.assignee.name}
+                              </Typography>
+                            )}
+                            {displayRequest.department && (
+                              <Typography variant="body2">
+                                <strong>Department:</strong> {displayRequest.department.name}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </>
+                  );})()}
                 </Box>
               ) : (
                 <Box sx={{ 
