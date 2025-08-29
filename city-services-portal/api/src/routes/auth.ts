@@ -386,4 +386,92 @@ router.post('/change-password', authenticateToken, async (req: AuthenticatedRequ
   }
 });
 
+// POST /api/v1/auth/token - Get token for API testing (same as login but optimized for automation)
+router.post('/token', async (req: Request, res: Response) => {
+  try {
+    const validatedData = loginSchema.parse(req.body);
+    
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: validatedData.email }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check if account is active
+    if (!user.isActive) {
+      return res.status(423).json({
+        error: {
+          code: 'ACCOUNT_LOCKED',
+          message: 'Account is locked or deactivated',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(validatedData.password, user.passwordHash);
+
+    if (!isValidPassword) {
+      return res.status(401).json({
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Generate token
+    const token = generateToken(user);
+    
+    // Remove sensitive data
+    const { passwordHash, securityAnswer, ...userResponse } = user;
+
+    // Return minimal response for API testing
+    res.json({
+      accessToken: token,
+      tokenType: 'Bearer',
+      expiresIn: '24h',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Token generation error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to generate token',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 export default router;

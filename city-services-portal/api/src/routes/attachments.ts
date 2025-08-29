@@ -375,4 +375,105 @@ router.get('/:id/attachments', authenticateToken, async (req: AuthenticatedReque
   }
 });
 
+// DELETE /api/v1/attachments/:id - Delete an attachment
+router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id: attachmentId } = req.params;
+
+    const attachment = await prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        request: {
+          select: { 
+            id: true,
+            createdBy: true,
+            status: true,
+            title: true 
+          }
+        },
+        uploadedBy: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    if (!attachment) {
+      return res.status(404).json({
+        error: {
+          code: 'ATTACHMENT_NOT_FOUND',
+          message: 'Attachment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Permission checks
+    const isOwner = attachment.uploadedBy.id === req.user!.id;
+    const isRequestOwner = attachment.request.createdBy === req.user!.id;
+    const isStaff = ['CLERK', 'SUPERVISOR', 'FIELD_AGENT', 'ADMIN'].includes(req.user!.role);
+
+    if (!isOwner && !isRequestOwner && !isStaff) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You can only delete attachments you uploaded or from your own requests',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Prevent deletion from closed requests (unless admin)
+    if (attachment.request.status === 'CLOSED' && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({
+        error: {
+          code: 'REQUEST_CLOSED',
+          message: 'Cannot delete attachments from closed requests',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Delete the attachment
+    await prisma.attachment.delete({
+      where: { id: attachmentId }
+    });
+
+    // Log the deletion
+    await prisma.eventLog.create({
+      data: {
+        requestId: attachment.request.id,
+        type: 'ATTACHMENT_DELETED',
+        payload: JSON.stringify({
+          attachmentId: attachment.id,
+          filename: attachment.filename,
+          deletedBy: req.user!.id,
+          deletedByName: req.user!.name,
+          reason: 'User requested deletion'
+        })
+      }
+    });
+
+    res.json({
+      message: 'Attachment deleted successfully',
+      data: {
+        id: attachment.id,
+        filename: attachment.filename,
+        requestId: attachment.request.id,
+        requestTitle: attachment.request.title
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Attachment deletion error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete attachment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 export default router;

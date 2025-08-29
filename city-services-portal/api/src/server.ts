@@ -17,6 +17,8 @@ import adminRoutes from './routes/admin';
 import rankingRoutes from './routes/rankings';
 import userRoutes from './routes/users';
 import testDataRoutes from './routes/testData';
+import departmentRoutes from './routes/departments';
+import commentRoutes from './routes/comments';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -76,6 +78,8 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/admin/users', userRoutes); // User management endpoints
 app.use('/api/v1/admin/test-data', testDataRoutes); // Test data management endpoints
 app.use('/api/v1/rankings', rankingRoutes);
+app.use('/api/v1/departments', departmentRoutes); // Department management endpoints
+app.use('/api/v1/comments', commentRoutes); // Comment management endpoints
 
 // Root endpoint
 app.get('/', (req, res) => {

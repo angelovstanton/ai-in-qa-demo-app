@@ -999,4 +999,275 @@ router.post('/:id/upvote', authenticateToken, async (req: AuthenticatedRequest, 
   }
 });
 
+// POST /api/v1/requests/:id/assign - Assign request to user
+router.post('/:id/assign', authenticateToken, rbacGuard(['CLERK', 'SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const requestId = req.params.id;
+    const { assignedTo, departmentId } = req.body;
+
+    if (!assignedTo || !departmentId) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'assignedTo and departmentId are required',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check if request exists
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        error: {
+          code: 'REQUEST_NOT_FOUND',
+          message: 'Service request not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Verify assignee exists and is active
+    const assignee = await prisma.user.findUnique({
+      where: { id: assignedTo }
+    });
+
+    if (!assignee || !assignee.isActive) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_ASSIGNEE',
+          message: 'Assignee not found or inactive',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update request
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        assignedTo,
+        departmentId,
+        status: request.status === 'SUBMITTED' ? 'TRIAGED' : request.status,
+        version: { increment: 1 }
+      },
+      include: {
+        assignee: { select: { id: true, name: true, email: true } },
+        department: { select: { id: true, name: true, slug: true } }
+      }
+    });
+
+    // Log assignment
+    await prisma.eventLog.create({
+      data: {
+        requestId,
+        type: 'ASSIGNMENT',
+        payload: JSON.stringify({
+          assignedTo,
+          assignedBy: req.user!.id,
+          assignedByName: req.user!.name,
+          assigneeName: assignee.name,
+          departmentId
+        })
+      }
+    });
+
+    res.json({
+      data: updatedRequest,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Assignment error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to assign request',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// POST /api/v1/requests/bulk - Create multiple requests
+router.post('/bulk', authenticateToken, rbacGuard(['ADMIN', 'CLERK']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { requests: requestsData } = req.body;
+
+    if (!Array.isArray(requestsData) || requestsData.length === 0) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'requests array is required and cannot be empty',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    if (requestsData.length > 100) {
+      return res.status(400).json({
+        error: {
+          code: 'BULK_LIMIT_EXCEEDED',
+          message: 'Maximum 100 requests allowed per bulk operation',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < requestsData.length; i++) {
+      try {
+        const requestData = createRequestSchema.parse(requestsData[i]);
+        
+        // Generate unique code
+        const requestCode = generateRequestCode();
+        
+        // Create request
+        const request = await prisma.serviceRequest.create({
+          data: {
+            ...requestData,
+            code: requestCode,
+            createdBy: req.user!.id,
+            status: 'SUBMITTED',
+            affectedServices: requestData.affectedServices ? JSON.stringify(requestData.affectedServices) : null,
+            additionalContacts: requestData.additionalContacts ? JSON.stringify(requestData.additionalContacts) : null
+          },
+          include: {
+            creator: { select: { id: true, name: true, email: true } }
+          }
+        });
+
+        results.push(request);
+
+      } catch (error) {
+        errors.push({
+          index: i,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: requestsData[i]
+        });
+      }
+    }
+
+    res.status(201).json({
+      data: {
+        created: results,
+        errors: errors,
+        summary: {
+          total: requestsData.length,
+          created: results.length,
+          failed: errors.length
+        }
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Bulk request creation error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create bulk requests',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// DELETE /api/v1/requests/bulk - Delete multiple requests
+router.delete('/bulk', authenticateToken, rbacGuard(['ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { requestIds } = req.body;
+
+    if (!Array.isArray(requestIds) || requestIds.length === 0) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'requestIds array is required and cannot be empty',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    if (requestIds.length > 100) {
+      return res.status(400).json({
+        error: {
+          code: 'BULK_LIMIT_EXCEEDED',
+          message: 'Maximum 100 requests allowed per bulk delete operation',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Get requests to verify they exist
+    const requests = await prisma.serviceRequest.findMany({
+      where: { id: { in: requestIds } },
+      select: { id: true, code: true, title: true, status: true }
+    });
+
+    if (requests.length !== requestIds.length) {
+      return res.status(404).json({
+        error: {
+          code: 'SOME_REQUESTS_NOT_FOUND',
+          message: `Found ${requests.length} out of ${requestIds.length} requests`,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Delete related data first (in transaction)
+    const deletedCount = await prisma.$transaction(async (tx) => {
+      // Delete upvotes
+      await tx.upvote.deleteMany({
+        where: { requestId: { in: requestIds } }
+      });
+
+      // Delete comments
+      await tx.comment.deleteMany({
+        where: { requestId: { in: requestIds } }
+      });
+
+      // Delete attachments
+      await tx.attachment.deleteMany({
+        where: { requestId: { in: requestIds } }
+      });
+
+      // Delete event logs
+      await tx.eventLog.deleteMany({
+        where: { requestId: { in: requestIds } }
+      });
+
+      // Delete requests
+      const result = await tx.serviceRequest.deleteMany({
+        where: { id: { in: requestIds } }
+      });
+
+      return result.count;
+    });
+
+    res.json({
+      message: `Successfully deleted ${deletedCount} requests`,
+      data: {
+        deletedCount,
+        requestIds: requestIds
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Bulk request deletion error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete bulk requests',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 export default router;
