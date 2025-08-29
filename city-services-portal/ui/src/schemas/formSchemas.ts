@@ -126,7 +126,7 @@ export const serviceRequestSchema = z.object({
   // Date of Request - new field with validation
   dateOfRequest: ServiceRequestPatterns.dateOfRequest,
 
-  // Location Information - now required fields
+  // Location Information - now required fields with coordinates
   streetAddress: z.string()
     .min(1, 'Street address is required')
     .max(100, 'Street address is too long')
@@ -141,6 +141,16 @@ export const serviceRequestSchema = z.object({
     .regex(/^[A-Za-z0-9\s-]+$/, 'Postal code contains invalid characters')
     .transform((val) => val.trim()),
   locationText: ServiceRequestPatterns.locationText,
+  
+  // Geographic coordinates for map integration
+  latitude: z.number()
+    .min(-90, 'Latitude must be between -90 and 90')
+    .max(90, 'Latitude must be between -90 and 90')
+    .optional(),
+  longitude: z.number()
+    .min(-180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180')
+    .optional(),
   
   landmark: z.string()
     .max(100, 'Landmark description is too long')

@@ -37,10 +37,6 @@ model User {
   securityQuestion String?
   securityAnswer String?
   
-  // System fields for testing
-  isActive     Boolean @default(true)
-  isTestUser   Boolean @default(false) // Mark test users for easy cleanup
-  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -135,7 +131,6 @@ model ServiceRequest {
   slaDueAt     DateTime?
   closedAt     DateTime?
   reopenUntil  DateTime?
-  isTestData   Boolean   @default(false) // Mark test data for easy cleanup
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -157,7 +152,6 @@ model Comment {
   authorId   String
   body       String
   visibility String   // PUBLIC, INTERNAL
-  isTestData Boolean  @default(false) // Mark test data for easy cleanup
   createdAt  DateTime @default(now())
 
   request ServiceRequest @relation(fields: [requestId], references: [id])
@@ -175,7 +169,6 @@ model Attachment {
   size         Int
   data         Bytes    // Store image data directly in database
   url          String?  // Optional external URL (for backward compatibility)
-  isTestData   Boolean  @default(false) // Mark test data for easy cleanup
   createdAt    DateTime @default(now())
 
   request    ServiceRequest @relation(fields: [requestId], references: [id])

@@ -37,6 +37,7 @@ import {
   ThumbUpOutlined as ThumbUpOutlinedIcon,
   Send as SendIcon,
   Person as PersonIcon,
+  LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, differenceInMinutes } from 'date-fns';
@@ -46,6 +47,7 @@ import { z } from 'zod';
 import api from '../lib/api';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import LocationDisplayMap from '../components/LocationDisplayMap';
 
 // Comment validation schema
 const commentSchema = z.object({
@@ -594,6 +596,50 @@ const RequestDetailPage: React.FC = () => {
                   </Grid>
                 )}
               </Grid>
+
+              {/* Map Display for Location */}
+              {((request.latitude && request.longitude) || (request.streetAddress || request.city)) && (
+                <>
+                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                    <LocationOnIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Location Map
+                  </Typography>
+                  <Box sx={{ mb: 3 }}>
+                    {request.latitude && request.longitude && 
+                     !isNaN(request.latitude) && !isNaN(request.longitude) &&
+                     request.latitude !== 0 && request.longitude !== 0 ? (
+                      <LocationDisplayMap
+                        latitude={request.latitude}
+                        longitude={request.longitude}
+                        address={[request.streetAddress, request.city, request.postalCode].filter(Boolean).join(', ')}
+                        title={`Service Request: ${request.title}`}
+                        description={request.locationText}
+                        height="300px"
+                        width="100%"
+                        zoom={15}
+                        showPopup={true}
+                      />
+                    ) : (
+                      <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
+                        <LocationOnIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Interactive map not available for this location
+                        </Typography>
+                        {(request.streetAddress || request.city) && (
+                          <>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                              Address: {[request.streetAddress, request.city, request.postalCode].filter(Boolean).join(', ')}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                              Location coordinates were not captured during request creation
+                            </Typography>
+                          </>
+                        )}
+                      </Paper>
+                    )}
+                  </Box>
+                </>
+              )}
 
               {/* Contact Information */}
               <Typography variant="h6" gutterBottom>

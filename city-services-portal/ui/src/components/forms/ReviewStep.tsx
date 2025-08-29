@@ -8,6 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { ServiceRequestFormData } from '../../schemas/formSchemas';
+import LocationDisplayMap from '../LocationDisplayMap';
 
 interface ReviewStepProps {
   watchedValues: ServiceRequestFormData;
@@ -48,16 +49,56 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1" color="primary" gutterBottom>Location</Typography>
-              <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress || 'Not provided'}</Typography>
-              <Typography variant="body2"><strong>City:</strong> {watchedValues.city || 'Not provided'}</Typography>
-              <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode || 'Not provided'}</Typography>
-              <Typography variant="body2"><strong>Location Details:</strong> {watchedValues.locationText || 'Not provided'}</Typography>
-              {watchedValues.landmark && <Typography variant="body2"><strong>Landmark:</strong> {watchedValues.landmark}</Typography>}
-              {watchedValues.accessInstructions && <Typography variant="body2"><strong>Access Instructions:</strong> {watchedValues.accessInstructions}</Typography>}
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress || 'Not provided'}</Typography>
+                  <Typography variant="body2"><strong>City:</strong> {watchedValues.city || 'Not provided'}</Typography>
+                  <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode || 'Not provided'}</Typography>
+                  <Typography variant="body2"><strong>Location Details:</strong> {watchedValues.locationText || 'Not provided'}</Typography>
+                  {watchedValues.landmark && <Typography variant="body2"><strong>Landmark:</strong> {watchedValues.landmark}</Typography>}
+                  {watchedValues.accessInstructions && <Typography variant="body2"><strong>Access Instructions:</strong> {watchedValues.accessInstructions}</Typography>}
+                  {watchedValues.latitude && watchedValues.longitude && (
+                    <Typography variant="body2"><strong>Coordinates:</strong> {watchedValues.latitude.toFixed(6)}, {watchedValues.longitude.toFixed(6)}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  {watchedValues.latitude && watchedValues.longitude && (
+                    <Box sx={{ height: '250px', width: '100%' }}>
+                      <LocationDisplayMap
+                        latitude={watchedValues.latitude}
+                        longitude={watchedValues.longitude}
+                        address={[watchedValues.streetAddress, watchedValues.city, watchedValues.postalCode].filter(Boolean).join(', ')}
+                        title="Service Request Location"
+                        description={watchedValues.locationText}
+                        height="250px"
+                        width="100%"
+                        zoom={16}
+                        showPopup={true}
+                      />
+                    </Box>
+                  )}
+                  {(!watchedValues.latitude || !watchedValues.longitude) && (
+                    <Box sx={{ 
+                      height: '250px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      bgcolor: 'grey.100',
+                      borderRadius: 1,
+                      border: '1px dashed',
+                      borderColor: 'grey.300'
+                    }}>
+                      <Typography variant="body2" color="text.secondary">
+                        üìç No map coordinates provided
+                      </Typography>
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>
@@ -110,7 +151,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               <CardContent>
                 <Typography variant="subtitle1" color="primary" gutterBottom>Affected Services</Typography>
                 {watchedValues.affectedServices.map((service, index) => (
-                  <Typography key={index} variant="body2">ï {service}</Typography>
+                  <Typography key={index} variant="body2">ÔøΩ {service}</Typography>
                 ))}
               </CardContent>
             </Card>

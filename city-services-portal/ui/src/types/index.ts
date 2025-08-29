@@ -36,8 +36,10 @@ export interface ServiceRequest {
   locationText: string;
   landmark?: string;
   accessInstructions?: string;
-  lat?: number;
-  lng?: number;
+  latitude?: number; // Geographic coordinate for map display
+  longitude?: number; // Geographic coordinate for map display
+  lat?: number; // Legacy field, kept for backward compatibility
+  lng?: number; // Legacy field, kept for backward compatibility
   
   // Contact fields
   contactMethod?: 'EMAIL' | 'PHONE' | 'SMS' | 'MAIL';

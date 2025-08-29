@@ -12,6 +12,9 @@ const prisma = new PrismaClient();
 function transformServiceRequest(request: any) {
   return {
     ...request,
+    // Transform lat/lng from database to latitude/longitude for frontend compatibility
+    latitude: request.lat,
+    longitude: request.lng,
     affectedServices: request.affectedServices ? JSON.parse(request.affectedServices) : null,
     additionalContacts: request.additionalContacts ? JSON.parse(request.additionalContacts) : null,
     upvotes: request._count?.upvotes || 0,
@@ -38,6 +41,8 @@ const createRequestSchema = z.object({
   locationText: z.string().min(1),
   landmark: z.string().optional(),
   accessInstructions: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   
   // Contact fields
   contactMethod: z.enum(['EMAIL', 'PHONE', 'SMS']).optional(),
@@ -272,7 +277,14 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 // POST /api/v1/requests - Create new service request
 router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req: AuthenticatedRequest, res: Response) => {
   try {
+    console.log('📋 Received request body:', JSON.stringify(req.body, null, 2));
+    console.log('🎯 lat/lng values:', req.body.lat, req.body.lng);
+    console.log('🔍 issueType value:', req.body.issueType);
+    
     const validatedData = createRequestSchema.parse(req.body);
+    console.log('✅ Validated data lat/lng:', validatedData.lat, validatedData.lng);
+    console.log('✅ Validated data issueType:', validatedData.issueType);
+    
     const idempotencyKey = req.headers['idempotency-key'] as string;
 
     // Check idempotency key if provided
@@ -329,6 +341,8 @@ router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req:
         locationText: validatedData.locationText,
         landmark: validatedData.landmark,
         accessInstructions: validatedData.accessInstructions,
+        lat: validatedData.lat,
+        lng: validatedData.lng,
         
         // Contact fields
         contactMethod: validatedData.contactMethod,

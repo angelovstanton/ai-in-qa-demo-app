@@ -212,14 +212,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </ListItemIcon>
               <ListItemText 
                 primary={user.name}
-                secondary={
-                  <Chip
-                    label={user.role}
-                    color={getRoleColor(user.role) as any}
-                    size="small"
-                    sx={{ mt: 0.5 }}
-                  />
-                }
+                secondary={user.role}
+                secondaryTypographyProps={{
+                  component: 'div',
+                  sx: { mt: 0.5 }
+                }}
+              />
+              <Chip
+                label={user.role}
+                color={getRoleColor(user.role) as any}
+                size="small"
+                sx={{ ml: 1 }}
               />
             </ListItem>
             <Divider />

@@ -101,7 +101,15 @@ export const useCreateServiceRequest = () => {
       const response = await api.post('/requests', data, { headers });
       return response.data.data;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || 'Failed to create service request';
+      console.error('Create request error:', err);
+      
+      let errorMessage;
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        errorMessage = 'Invalid or expired token';
+      } else {
+        errorMessage = err.response?.data?.error?.message || 'Failed to create service request';
+      }
+      
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

@@ -341,9 +341,17 @@ const NewRequestPage: React.FC = () => {
   }, [setValue, getValues, trigger]);
 
   // Sanitize input on change
-  const handleInputChange = useCallback((fieldName: string, value: string) => {
-    // Simple sanitization
-    const sanitized = value
+  const handleInputChange = useCallback((fieldName: string, value: string | number) => {
+    // Handle numeric fields (like latitude, longitude) differently
+    if (typeof value === 'number' || fieldName === 'latitude' || fieldName === 'longitude') {
+      setValue(fieldName as any, value);
+      debouncedValidation(fieldName);
+      return;
+    }
+    
+    // Simple sanitization for string fields
+    const stringValue = String(value);
+    const sanitized = stringValue
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/<[^>]*>?/gm, '')
       .replace(/javascript:/gi, '')
@@ -474,6 +482,14 @@ const NewRequestPage: React.FC = () => {
   const handleFormSubmit = async () => {
     if (!checkRateLimit()) {
       setSubmitError('Too many submission attempts. Please wait before trying again.');
+      return;
+    }
+    
+    // Check if user is still authenticated before submitting
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setSubmitError('You are not logged in. Redirecting to login...');
+      setTimeout(() => window.location.href = '/login', 1500);
       return;
     }
 
@@ -622,6 +638,8 @@ const NewRequestPage: React.FC = () => {
         locationText: locationText,
         landmark: formData.landmark,
         accessInstructions: formData.accessInstructions,
+        lat: formData.latitude,
+        lng: formData.longitude,
         
         // Contact fields
         contactMethod: formData.contactMethod,
@@ -738,8 +756,18 @@ const NewRequestPage: React.FC = () => {
         window.location.href = '/citizen/requests';
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Form submission error:', error);
+      
+      // Check if it's an authentication error
+      if (error.message?.includes('Invalid or expired token') || 
+          error.response?.status === 401 || 
+          error.response?.status === 403) {
+        setSubmitError('Your session has expired. You will be redirected to login.');
+        // The API interceptor will handle the redirect
+        return;
+      }
+      
       const errorMessage = createError || (error instanceof Error ? error.message : 'Failed to submit request');
       setSubmitError(errorMessage);
     }
@@ -847,6 +875,7 @@ const NewRequestPage: React.FC = () => {
           isAsyncValidating={isAsyncValidating}
           handleInputChange={handleInputChange}
           ValidationFeedback={ValidationFeedback}
+          trigger={trigger}
         />,
         'Location'
       ),
