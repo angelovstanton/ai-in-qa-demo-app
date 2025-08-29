@@ -36,6 +36,11 @@ import {
   Person as PersonIcon,
   ExpandLess,
   ExpandMore,
+  Analytics as AnalyticsIcon,
+  Assessment as AssessmentIcon,
+  Star as StarIcon,
+  Flag as FlagIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -91,7 +96,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const getNavigationItems = () => {
     if (!user) return [];
 
-    const baseItems = [
+    // For supervisors, don't show the general base items, they have their own dashboard
+    const baseItems = user.role === 'SUPERVISOR' ? [] : [
       { 
         label: t('nav.dashboard'), 
         href: '/', 
@@ -144,10 +150,34 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'SUPERVISOR':
         roleSpecificItems.push(
           { 
-            label: t('nav.assign-tasks') || 'Assign Tasks', 
+            label: 'Staff Performance', 
+            href: '/supervisor/staff-performance', 
+            icon: <TrendingUpIcon />,
+            testId: 'cs-nav-staff-performance'
+          },
+          { 
+            label: 'Department Metrics', 
+            href: '/supervisor/metrics', 
+            icon: <AnalyticsIcon />,
+            testId: 'cs-nav-department-metrics'
+          },
+          { 
+            label: 'Quality Reviews', 
+            href: '/supervisor/quality-reviews', 
+            icon: <StarIcon />,
+            testId: 'cs-nav-quality-reviews'
+          },
+          { 
+            label: 'Performance Goals', 
+            href: '/supervisor/performance-goals', 
+            icon: <FlagIcon />,
+            testId: 'cs-nav-performance-goals'
+          },
+          { 
+            label: 'Assign Tasks', 
             href: '/supervisor/assign', 
             icon: <AssignIcon />,
-            testId: 'cs-nav-assign'
+            testId: 'cs-nav-assign-tasks'
           }
         );
         break;
@@ -341,7 +371,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <Typography 
             variant="h6" 
             component={Link}
-            to="/dashboard"
+            to={user?.role === 'SUPERVISOR' ? '/supervisor/dashboard' : '/dashboard'}
             sx={{ 
               flexGrow: 1,
               fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size

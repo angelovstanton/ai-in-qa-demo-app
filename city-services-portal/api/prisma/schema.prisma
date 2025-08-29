@@ -49,6 +49,16 @@ model User {
   assignedTasks    Assignment[]     @relation("AssignedTo")
   upvotes          Upvote[]
 
+  // Supervisor role relations
+  qualityReviews           QualityReview[]
+  staffPerformance         StaffPerformance[]
+  workloadAssignments      WorkloadAssignment[] @relation("WorkloadAssignee")
+  supervisedAssignments    WorkloadAssignment[] @relation("WorkloadSupervisor")
+  previousAssignments      WorkloadAssignment[] @relation("WorkloadPrevious")
+  performanceGoalsAsUser   PerformanceGoal[]    @relation("GoalUser")
+  performanceGoalsAsSupervisor PerformanceGoal[] @relation("GoalSupervisor")
+  createdCollaborations    TeamCollaboration[]  @relation("CollaborationCreator")
+
   @@map("users")
 }
 
@@ -59,6 +69,11 @@ model Department {
 
   users           User[]
   serviceRequests ServiceRequest[]
+  
+  // Supervisor role relations
+  departmentMetrics   DepartmentMetrics[]
+  staffPerformance    StaffPerformance[]
+  teamCollaborations  TeamCollaboration[]
 
   @@map("departments")
 }
@@ -142,6 +157,10 @@ model ServiceRequest {
   assignments Assignment[]
   eventLogs   EventLog[]
   upvotes     Upvote[]
+  
+  // Supervisor role relations
+  qualityReviews      QualityReview[]
+  workloadAssignments WorkloadAssignment[]
 
   @@map("service_requests")
 }
@@ -221,4 +240,136 @@ model FeatureFlag {
   value String // JSON stored as string
 
   @@map("feature_flags")
+}
+
+// Supervisor Role Extensions
+
+model DepartmentMetrics {
+  id           String   @id @default(uuid())
+  departmentId String
+  metricType   String   // "avgResolutionTime", "slaCompliance", "satisfaction", etc.
+  value        Float
+  period       String   // "daily", "weekly", "monthly", "quarterly"
+  periodStart  DateTime
+  periodEnd    DateTime
+  calculatedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@unique([departmentId, metricType, period, periodStart])
+  @@map("department_metrics")
+}
+
+model QualityReview {
+  id                        String   @id @default(uuid())
+  requestId                 String
+  reviewerId                String
+  qualityScore              Int      // Overall score 1-10
+  communicationScore        Int      // 1-10 scale
+  technicalAccuracyScore    Int      // 1-10 scale
+  timelinessScore          Int      // 1-10 scale
+  citizenSatisfactionScore Int      // 1-10 scale
+  improvementSuggestions   String?
+  followUpRequired         Boolean  @default(false)
+  calibrationSession       String?  // Reference to training session
+  reviewStatus             String   @default("COMPLETED") // PENDING, COMPLETED, ARCHIVED
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  request  ServiceRequest @relation(fields: [requestId], references: [id])
+  reviewer User           @relation(fields: [reviewerId], references: [id])
+
+  @@unique([requestId, reviewerId])
+  @@map("quality_reviews")
+}
+
+model StaffPerformance {
+  id                        String   @id @default(uuid())
+  userId                    String
+  departmentId              String
+  performancePeriod         String   // "2024-Q1", "2024-01", etc.
+  averageHandlingTime       Int      // in minutes
+  completedRequests         Int      // number of requests completed
+  qualityScore              Float?   // average quality review score
+  citizenSatisfactionRating Float?   // average satisfaction from surveys
+  overtimeHours             Float    @default(0.0)
+  productivityScore         Float?   // calculated productivity metric
+  goalsAchieved             Int      @default(0)
+  goalsMissed              Int      @default(0)
+  trainingHoursCompleted   Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@unique([userId, performancePeriod])
+  @@map("staff_performance")
+}
+
+model WorkloadAssignment {
+  id               String    @id @default(uuid())
+  requestId        String
+  assignedFrom     String?   // Previous assignee ID
+  assignedTo       String    // Current assignee ID
+  assignedBy       String    // Supervisor who made assignment
+  assignmentReason String?   // Why this assignment was made
+  workloadScore    Float?    // Algorithm-calculated workload impact (0-100)
+  estimatedEffort  Int?      // Estimated hours to complete
+  skillsRequired   String?   // JSON array of required skills
+  priorityWeight   Float?    // Assignment priority weight
+  isActive         Boolean   @default(true)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  request      ServiceRequest @relation(fields: [requestId], references: [id])
+  assignedUser User           @relation("WorkloadAssignee", fields: [assignedTo], references: [id])
+  supervisor   User           @relation("WorkloadSupervisor", fields: [assignedBy], references: [id])
+  previousUser User?          @relation("WorkloadPrevious", fields: [assignedFrom], references: [id])
+
+  @@map("workload_assignments")
+}
+
+model PerformanceGoal {
+  id          String    @id @default(uuid())
+  userId      String
+  supervisorId String
+  title       String
+  description String
+  targetValue Float?    // Numeric target (e.g., resolution time < 24 hours)
+  currentValue Float?   // Current progress
+  unit        String?   // Unit of measurement (hours, requests, percentage)
+  dueDate     DateTime
+  status      String    @default("ACTIVE") // ACTIVE, ACHIEVED, MISSED, CANCELLED
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  user       User @relation("GoalUser", fields: [userId], references: [id])
+  supervisor User @relation("GoalSupervisor", fields: [supervisorId], references: [id])
+
+  @@map("performance_goals")
+}
+
+model TeamCollaboration {
+  id              String   @id @default(uuid())
+  departmentId    String
+  collaborationType String // "STANDUP", "PEER_REVIEW", "KNOWLEDGE_SHARE", "TRAINING"
+  title          String
+  description    String?
+  participants   String   // JSON array of user IDs
+  scheduledAt    DateTime?
+  completedAt    DateTime?
+  outcome        String?  // Summary of results/outcomes
+  actionItems    String?  // JSON array of follow-up actions
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id])
+  creator    User       @relation("CollaborationCreator", fields: [createdBy], references: [id])
+
+  @@map("team_collaborations")
 }

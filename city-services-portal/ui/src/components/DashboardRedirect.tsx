@@ -16,7 +16,7 @@ const DashboardRedirect: React.FC = () => {
     case 'CLERK':
       return <Navigate to="/clerk/inbox" replace />;
     case 'SUPERVISOR':
-      return <Navigate to="/supervisor/assign" replace />;
+      return <Navigate to="/supervisor/dashboard" replace />;
     case 'FIELD_AGENT':
       return <Navigate to="/agent/my-tasks" replace />;
     case 'ADMIN':

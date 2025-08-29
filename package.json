@@ -1,0 +1,15 @@
+{
+  "name": "ai-in-qa-demo-app",
+  "version": "1.0.0",
+  "description": "> **A comprehensive municipal service management system designed to showcase AI-powered Quality Assurance testing capabilities**",
+  "main": "test-supervisor-fix.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

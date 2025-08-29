@@ -18,6 +18,11 @@ import ResolvedCasesPage from './pages/ResolvedCasesPage';
 import RanklistPage from './pages/RanklistPage';
 import ClerkInboxPage from './pages/clerk/ClerkInboxPage';
 import SupervisorAssignPage from './pages/supervisor/SupervisorAssignPage';
+import SupervisorDashboardPage from './pages/supervisor/SupervisorDashboardPage';
+import StaffPerformancePage from './pages/supervisor/StaffPerformancePage';
+import DepartmentMetricsPage from './pages/supervisor/DepartmentMetricsPage';
+import QualityReviewPage from './pages/supervisor/QualityReviewPage';
+import PerformanceGoalsPage from './pages/supervisor/PerformanceGoalsPage';
 import AgentTasksPage from './pages/agent/AgentTasksPage';
 import AdminFlagsPage from './pages/admin/AdminFlagsPage';
 import EditProfilePage from './pages/EditProfilePage';
@@ -198,11 +203,61 @@ const AppRoutes: React.FC = () => {
         
         {/* Supervisor routes */}
         <Route 
+          path="/supervisor/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <SupervisorDashboardPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/supervisor/assign" 
           element={
             <ProtectedRoute allowedRoles={['SUPERVISOR']}>
               <AppLayout>
                 <SupervisorAssignPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/supervisor/staff-performance" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <StaffPerformancePage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/supervisor/metrics" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <DepartmentMetricsPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/supervisor/quality-reviews" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <QualityReviewPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/supervisor/performance-goals" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <PerformanceGoalsPage />
               </AppLayout>
             </ProtectedRoute>
           } 

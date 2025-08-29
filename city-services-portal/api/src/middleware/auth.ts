@@ -11,6 +11,7 @@ export interface AuthenticatedRequest extends Request {
     role: string;
     email: string;
     name: string;
+    departmentId?: string | null;
   };
 }
 
@@ -54,7 +55,8 @@ export const authenticateToken = async (
       id: user.id,
       role: user.role,
       email: user.email,
-      name: user.name
+      name: user.name,
+      departmentId: user.departmentId
     };
 
     next();

@@ -8,6 +8,7 @@ import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/error';
 import { logger } from './utils/logger';
 import { featureFlagMiddleware } from './middleware/featureFlags';
+import { metricsScheduler } from './services/metricsScheduler';
 
 // Route imports
 import authRoutes from './routes/auth';
@@ -15,6 +16,10 @@ import requestRoutes from './routes/requests';
 import attachmentRoutes from './routes/attachments';
 import adminRoutes from './routes/admin';
 import rankingRoutes from './routes/rankings';
+import departmentRoutes from './routes/departments';
+import supervisorRoutes from './routes/supervisor';
+import metricsRoutes from './routes/metrics';
+import dashboardRoutes from './routes/dashboard';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -72,6 +77,10 @@ app.use('/api/v1/requests', attachmentRoutes); // For request-specific attachmen
 app.use('/api/v1/attachments', attachmentRoutes); // For standalone attachment endpoints (image serving)
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/rankings', rankingRoutes);
+app.use('/api/v1/departments', departmentRoutes);
+app.use('/api/v1/supervisor', supervisorRoutes);
+app.use('/api/v1/metrics', metricsRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -90,6 +99,9 @@ app.listen(port, '0.0.0.0', () => {
   logger.info(`?? City Services Portal API running on port ${port}`);
   logger.info(`?? API Documentation: http://localhost:${port}/api-docs`);
   logger.info(`??  Health Check: http://localhost:${port}/health`);
+  
+  // Initialize metrics scheduler
+  metricsScheduler.initialize();
 });
 
 export default app;

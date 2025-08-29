@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { seedDepartments } from './seeds/departments';
-import { seedUsers } from './seeds/users';
-import { seedRequests } from './seeds/requests';
-import { seedSupervisorData } from './seeds/supervisorData';
+import { seedDepartments } from './departments';
+import { seedUsers } from './users';
+import { seedRequests } from './requests';
+import { seedSupervisorData } from './supervisorData';
 
 const prisma = new PrismaClient();
 
