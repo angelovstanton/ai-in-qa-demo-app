@@ -83,6 +83,21 @@ const PerformanceGoalsPage: React.FC = () => {
   const [selectedGoal, setSelectedGoal] = useState<PerformanceGoal | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [newGoalDialogOpen, setNewGoalDialogOpen] = useState(false);
+  const [editGoalDialogOpen, setEditGoalDialogOpen] = useState(false);
+  const [editGoalData, setEditGoalData] = useState<Partial<PerformanceGoal>>({});
+  const [newGoalData, setNewGoalData] = useState({
+    userId: '',
+    title: '',
+    description: '',
+    targetValue: 0,
+    currentValue: 0,
+    unit: 'count',
+    dueDate: '',
+    status: 'ACTIVE' as 'ACTIVE' | 'ACHIEVED' | 'MISSED' | 'PAUSED',
+    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH'
+  });
+  const [users, setUsers] = useState<any[]>([]);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const fetchPerformanceGoals = async () => {
     setLoading(true);
@@ -135,6 +150,165 @@ const PerformanceGoalsPage: React.FC = () => {
   const handleViewDetails = (goal: PerformanceGoal) => {
     setSelectedGoal(goal);
     setDetailDialogOpen(true);
+  };
+
+  const handleEditGoal = (goal: PerformanceGoal) => {
+    setSelectedGoal(goal);
+    setEditGoalData({
+      title: goal.title,
+      description: goal.description,
+      targetValue: goal.targetValue,
+      currentValue: goal.currentValue,
+      unit: goal.unit,
+      dueDate: goal.dueDate.split('T')[0], // Format for date input
+      status: goal.status,
+      priority: goal.priority
+    });
+    setEditGoalDialogOpen(true);
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      // Use staff performance endpoint to get users
+      const response = await fetch('/api/v1/supervisor/staff-performance?size=50', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const uniqueUsers = data.data.map((staff: any) => staff.user).filter((user: any, index: number, self: any[]) => 
+          self.findIndex(u => u.id === user.id) === index
+        );
+        setUsers(uniqueUsers);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
+
+  const handleCreateGoal = async () => {
+    // Validate required fields
+    if (!newGoalData.userId || !newGoalData.title || !newGoalData.dueDate) {
+      setError('Please fill all required fields');
+      return;
+    }
+    
+    // Validate description length (API requires minimum 10 characters)
+    if (newGoalData.description && newGoalData.description.length > 0 && newGoalData.description.length < 10) {
+      setError('Description must be at least 10 characters long');
+      return;
+    }
+
+    setSubmitLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Convert date to ISO datetime string and ensure description meets requirements
+      const goalDataToSend = {
+        ...newGoalData,
+        dueDate: newGoalData.dueDate ? new Date(newGoalData.dueDate).toISOString() : '',
+        // Ensure description is either empty (will be removed) or meets minimum length
+        description: newGoalData.description && newGoalData.description.length >= 10 ? newGoalData.description : '',
+      };
+      
+      // Remove empty description if not provided
+      if (!goalDataToSend.description) {
+        delete goalDataToSend.description;
+      }
+      
+      const response = await fetch('/api/v1/supervisor/performance-goals', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(goalDataToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchPerformanceGoals();
+      setNewGoalDialogOpen(false);
+      setNewGoalData({
+        userId: '',
+        title: '',
+        description: '',
+        targetValue: 0,
+        currentValue: 0,
+        unit: 'count',
+        dueDate: '',
+        status: 'ACTIVE',
+        priority: 'MEDIUM'
+      });
+    } catch (err) {
+      console.error('Error creating goal:', err);
+      setError('Failed to create goal. Please try again.');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleUpdateGoal = async () => {
+    if (!selectedGoal || !editGoalData.title) return;
+    
+    // Validate description length if provided
+    if (editGoalData.description && editGoalData.description.length > 0 && editGoalData.description.length < 10) {
+      setError('Description must be at least 10 characters long');
+      return;
+    }
+
+    setSubmitLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Convert date to ISO datetime string if present and ensure description meets requirements
+      const goalDataToSend = {
+        ...editGoalData,
+        dueDate: editGoalData.dueDate ? new Date(editGoalData.dueDate).toISOString() : undefined,
+        // Ensure description is either undefined (won't be updated) or meets minimum length
+        description: editGoalData.description && editGoalData.description.length >= 10 ? editGoalData.description : undefined,
+      };
+      
+      // Remove undefined fields
+      Object.keys(goalDataToSend).forEach(key => {
+        if (goalDataToSend[key] === undefined) {
+          delete goalDataToSend[key];
+        }
+      });
+      
+      const response = await fetch(`/api/v1/supervisor/performance-goals/${selectedGoal.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(goalDataToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchPerformanceGoals();
+      setEditGoalDialogOpen(false);
+      setEditGoalData({});
+    } catch (err) {
+      console.error('Error updating goal:', err);
+      setError('Failed to update goal. Please try again.');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleNewGoalOpen = () => {
+    setNewGoalDialogOpen(true);
+    fetchUsers();
   };
 
   const getStatusColor = (status: string) => {
@@ -479,7 +653,10 @@ const PerformanceGoalsPage: React.FC = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit Goal">
-                          <IconButton size="small">
+                          <IconButton 
+                            size="small"
+                            onClick={() => handleEditGoal(goal)}
+                          >
                             <EditIcon />
                           </IconButton>
                         </Tooltip>
@@ -508,7 +685,7 @@ const PerformanceGoalsPage: React.FC = () => {
         color="primary"
         aria-label="add goal"
         sx={{ position: 'fixed', bottom: 16, right: 16 }}
-        onClick={() => setNewGoalDialogOpen(true)}
+        onClick={handleNewGoalOpen}
       >
         <AddIcon />
       </Fab>
@@ -657,31 +834,319 @@ const PerformanceGoalsPage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>
             Close
           </Button>
-          <Button variant="contained" color="primary">
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => {
+              setDetailDialogOpen(false);
+              selectedGoal && handleEditGoal(selectedGoal);
+            }}
+          >
             Edit Goal
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* New Goal Dialog Placeholder */}
+      {/* Edit Goal Dialog */}
+      <Dialog
+        open={editGoalDialogOpen}
+        onClose={() => setEditGoalDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Edit Performance Goal
+            </Typography>
+            <IconButton onClick={() => setEditGoalDialogOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Goal Title"
+                  fullWidth
+                  value={editGoalData.title || ''}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  label="Description (optional, min 10 characters)"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={editGoalData.description || ''}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe the performance goal (leave empty or enter at least 10 characters)..."
+                  error={(editGoalData.description?.length || 0) > 0 && (editGoalData.description?.length || 0) < 10}
+                  helperText={(editGoalData.description?.length || 0) > 0 && (editGoalData.description?.length || 0) < 10 ? 
+                    `${10 - (editGoalData.description?.length || 0)} more characters needed` : ''}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Target Value"
+                  type="number"
+                  fullWidth
+                  value={editGoalData.targetValue || 0}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, targetValue: parseFloat(e.target.value) }))}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Current Value"
+                  type="number"
+                  fullWidth
+                  value={editGoalData.currentValue || 0}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, currentValue: parseFloat(e.target.value) }))}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Unit"
+                  fullWidth
+                  value={editGoalData.unit || 'count'}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, unit: e.target.value }))}
+                >
+                  <MenuItem value="count">Count</MenuItem>
+                  <MenuItem value="percentage">Percentage</MenuItem>
+                  <MenuItem value="hours">Hours</MenuItem>
+                  <MenuItem value="rating">Rating</MenuItem>
+                </TextField>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Due Date"
+                  type="date"
+                  fullWidth
+                  value={editGoalData.dueDate || ''}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Status"
+                  fullWidth
+                  value={editGoalData.status || 'ACTIVE'}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <MenuItem value="ACTIVE">Active</MenuItem>
+                  <MenuItem value="ACHIEVED">Achieved</MenuItem>
+                  <MenuItem value="MISSED">Missed</MenuItem>
+                  <MenuItem value="PAUSED">Paused</MenuItem>
+                </TextField>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Priority"
+                  fullWidth
+                  value={editGoalData.priority || 'MEDIUM'}
+                  onChange={(e) => setEditGoalData(prev => ({ ...prev, priority: e.target.value as any }))}
+                >
+                  <MenuItem value="LOW">Low</MenuItem>
+                  <MenuItem value="MEDIUM">Medium</MenuItem>
+                  <MenuItem value="HIGH">High</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setEditGoalDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateGoal}
+            disabled={!editGoalData.title || submitLoading || 
+              ((editGoalData.description?.length || 0) > 0 && (editGoalData.description?.length || 0) < 10)}
+          >
+            {submitLoading ? <CircularProgress size={24} /> : 'Update Goal'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* New Goal Dialog */}
       <Dialog
         open={newGoalDialogOpen}
         onClose={() => setNewGoalDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Create New Performance Goal</DialogTitle>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Create New Performance Goal
+            </Typography>
+            <IconButton onClick={() => setNewGoalDialogOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        
         <DialogContent>
-          <Typography>
-            New goal creation form will be implemented here.
-          </Typography>
+          <Box sx={{ pt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  label="Select Employee"
+                  fullWidth
+                  value={newGoalData.userId}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, userId: e.target.value }))}
+                  required
+                >
+                  <MenuItem value="">Select an employee...</MenuItem>
+                  {users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name} ({user.email}) - {user.role}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  label="Goal Title"
+                  fullWidth
+                  value={newGoalData.title}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                  placeholder="e.g., Improve customer satisfaction rating"
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  label="Description (optional, min 10 characters)"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={newGoalData.description}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe the performance goal in detail (leave empty or enter at least 10 characters)..."
+                  error={newGoalData.description.length > 0 && newGoalData.description.length < 10}
+                  helperText={newGoalData.description.length > 0 && newGoalData.description.length < 10 ? 
+                    `${10 - newGoalData.description.length} more characters needed` : ''}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Target Value"
+                  type="number"
+                  fullWidth
+                  value={newGoalData.targetValue}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, targetValue: parseFloat(e.target.value) || 0 }))}
+                  required
+                  placeholder="100"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Current Value"
+                  type="number"
+                  fullWidth
+                  value={newGoalData.currentValue}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, currentValue: parseFloat(e.target.value) || 0 }))}
+                  placeholder="0"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Unit"
+                  fullWidth
+                  value={newGoalData.unit}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, unit: e.target.value }))}
+                >
+                  <MenuItem value="count">Count</MenuItem>
+                  <MenuItem value="percentage">Percentage</MenuItem>
+                  <MenuItem value="hours">Hours</MenuItem>
+                  <MenuItem value="rating">Rating (1-5)</MenuItem>
+                </TextField>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Due Date"
+                  type="date"
+                  fullWidth
+                  value={newGoalData.dueDate}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Priority"
+                  fullWidth
+                  value={newGoalData.priority}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, priority: e.target.value as any }))}
+                >
+                  <MenuItem value="LOW">Low</MenuItem>
+                  <MenuItem value="MEDIUM">Medium</MenuItem>
+                  <MenuItem value="HIGH">High</MenuItem>
+                </TextField>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  label="Status"
+                  fullWidth
+                  value={newGoalData.status}
+                  onChange={(e) => setNewGoalData(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <MenuItem value="ACTIVE">Active</MenuItem>
+                  <MenuItem value="PAUSED">Paused</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
+        
         <DialogActions>
           <Button onClick={() => setNewGoalDialogOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" color="primary">
-            Create Goal
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateGoal}
+            disabled={!newGoalData.userId || !newGoalData.title || !newGoalData.dueDate || 
+              (newGoalData.description.length > 0 && newGoalData.description.length < 10) || submitLoading}
+          >
+            {submitLoading ? <CircularProgress size={24} /> : 'Create Goal'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -83,6 +83,8 @@ city-services-portal/
 - **Citizen**: `john@example.com` - Submit/track requests
 - **Admin**: `admin@city.gov` - Feature flags, system config
 - **Clerk**: `mary.clerk@city.gov` - Process requests in split-view
+- **Supervisor**: `supervisor1@city.gov` - Staff performance, quality reviews, department metrics
+- **Field Agent**: `agent1@city.gov` - Field service tasks and updates
 
 ### Feature Flags for Bug Simulation
 Access at `/admin/flags`:

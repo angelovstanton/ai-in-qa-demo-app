@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Box,
   Typography,
@@ -27,6 +28,8 @@ import {
   DialogActions,
   Rating,
   Divider,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -35,6 +38,7 @@ import {
   Star as StarIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { Autocomplete, Slider } from '@mui/material';
 
 interface QualityReview {
   id: string;
@@ -68,6 +72,7 @@ interface QualityReview {
 }
 
 const QualityReviewPage: React.FC = () => {
+  const { user } = useAuth();
   const [reviews, setReviews] = useState<QualityReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +83,21 @@ const QualityReviewPage: React.FC = () => {
   const [selectedReview, setSelectedReview] = useState<QualityReview | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [newReviewDialogOpen, setNewReviewDialogOpen] = useState(false);
+  const [newReviewData, setNewReviewData] = useState({
+    requestId: '',
+    qualityScore: 8,
+    communicationScore: 8,
+    technicalAccuracyScore: 8,
+    timelinessScore: 8,
+    citizenSatisfactionScore: 8,
+    improvementSuggestions: '',
+    followUpRequired: false,
+    calibrationSession: '',
+  });
+  const [requests, setRequests] = useState<any[]>([]);
+  const [reviewedRequestIds, setReviewedRequestIds] = useState<Set<string>>(new Set());
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const fetchQualityReviews = async () => {
     setLoading(true);
@@ -87,8 +107,8 @@ const QualityReviewPage: React.FC = () => {
       const token = localStorage.getItem('accessToken');
       const params = new URLSearchParams({
         page: (page + 1).toString(),
-        pageSize: rowsPerPage.toString(),
-        ...(statusFilter && { status: statusFilter }),
+        size: rowsPerPage.toString(),
+        ...(statusFilter && { reviewStatus: statusFilter }),
       });
 
       const response = await fetch(`/api/v1/supervisor/quality-reviews?${params}`, {
@@ -110,6 +130,139 @@ const QualityReviewPage: React.FC = () => {
       setError('Failed to load quality reviews. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Get current user info to determine department
+      const meResponse = await fetch('/api/v1/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      let userDepartment = null;
+      let userRole = null;
+      if (meResponse.ok) {
+        const meData = await meResponse.json();
+        userDepartment = meData.user?.department;
+        userRole = meData.user?.role;
+        console.log('User department:', userDepartment?.name, 'Slug:', userDepartment?.slug, 'Role:', userRole);
+      }
+      
+      // Fetch resolved requests - for supervisors, filter by their department
+      let requestUrl = '/api/v1/requests?status=RESOLVED&size=50';
+      
+      // Only filter by department for SUPERVISOR role (not ADMIN)
+      if (userRole === 'SUPERVISOR' && userDepartment?.slug) {
+        requestUrl += `&department=${userDepartment.slug}`;
+        console.log('Filtering requests by department slug:', userDepartment.slug);
+      }
+      
+      const requestsResponse = await fetch(requestUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (requestsResponse.ok) {
+        const data = await requestsResponse.json();
+        setRequests(data.data || []);
+        console.log(`Fetched ${data.data?.length || 0} resolved requests`);
+        
+        // Log department info for debugging
+        if (data.data?.length > 0) {
+          console.log('First request department:', data.data[0].department);
+        }
+      }
+      
+      // Fetch existing reviews to mark already reviewed requests
+      const reviewsResponse = await fetch('/api/v1/supervisor/quality-reviews?size=100', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (reviewsResponse.ok) {
+        const reviewsData = await reviewsResponse.json();
+        const reviewedIds = new Set(reviewsData.data.map((review: any) => review.requestId));
+        setReviewedRequestIds(reviewedIds);
+      }
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+    }
+  };
+
+  const handleNewReview = () => {
+    setNewReviewDialogOpen(true);
+    fetchRequests();
+  };
+
+  const handleSubmitNewReview = async () => {
+    if (!newReviewData.requestId) return;
+
+    setSubmitLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/v1/supervisor/quality-reviews', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newReviewData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        
+        if (response.status === 409) {
+          // Review already exists
+          setError('You have already reviewed this request. Please select a different request.');
+          // Don't close the dialog so user can select a different request
+          setSubmitLoading(false);
+          return;
+        } else if (response.status === 403) {
+          // Forbidden - likely department mismatch or role issue
+          const errorMessage = errorData?.error?.message || 'Access denied. You may not have permission to review this request.';
+          console.error('403 Error details:', errorData);
+          setError(errorMessage);
+          setSubmitLoading(false);
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Refresh the reviews list
+      await fetchQualityReviews();
+      setNewReviewDialogOpen(false);
+      
+      // Reset form
+      setNewReviewData({
+        requestId: '',
+        qualityScore: 8,
+        communicationScore: 8,
+        technicalAccuracyScore: 8,
+        timelinessScore: 8,
+        citizenSatisfactionScore: 8,
+        improvementSuggestions: '',
+        followUpRequired: false,
+        calibrationSession: '',
+      });
+      
+      setError(null); // Clear any previous errors
+      
+    } catch (err) {
+      console.error('Error creating review:', err);
+      setError('Failed to create review. Please try again.');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -170,6 +323,7 @@ const QualityReviewPage: React.FC = () => {
           variant="contained"
           startIcon={<AddIcon />}
           color="primary"
+          onClick={handleNewReview}
         >
           New Review
         </Button>
@@ -648,6 +802,205 @@ const QualityReviewPage: React.FC = () => {
           </Button>
           <Button variant="contained" color="primary">
             Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* New Review Dialog */}
+      <Dialog
+        open={newReviewDialogOpen}
+        onClose={() => setNewReviewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Create New Quality Review
+            </Typography>
+            <Button onClick={() => setNewReviewDialogOpen(false)}>
+              <CloseIcon />
+            </Button>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {/* Request Selection */}
+            <Box mb={3}>
+              <Autocomplete
+                options={requests}
+                getOptionLabel={(option) => {
+                  const isReviewed = reviewedRequestIds.has(option.id);
+                  return `${option.code} - ${option.title}${isReviewed ? ' (Already Reviewed)' : ''}`;
+                }}
+                value={requests.find(r => r.id === newReviewData.requestId) || null}
+                onChange={(event, newValue) => {
+                  // Show warning if selecting already reviewed request
+                  if (newValue && reviewedRequestIds.has(newValue.id)) {
+                    setError('Warning: You have already reviewed this request. Submitting will fail.');
+                  } else {
+                    setError(null);
+                  }
+                  setNewReviewData(prev => ({ ...prev, requestId: newValue?.id || '' }));
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Select Request for Review" required />
+                )}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props;
+                  const isReviewed = reviewedRequestIds.has(option.id);
+                  return (
+                    <li key={key} {...otherProps} style={{ opacity: isReviewed ? 0.5 : 1 }}>
+                      <Box>
+                        <Typography variant="body2" component="div">
+                          {option.code} {isReviewed && <Chip label="Already Reviewed" size="small" color="warning" sx={{ ml: 1 }} />}
+                        </Typography>
+                        <Typography variant="caption" component="div" color="text.secondary">
+                          {option.title} - Status: {option.status}
+                        </Typography>
+                      </Box>
+                    </li>
+                  );
+                }}
+              />
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+            
+            {/* Error Message */}
+            {error && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Scores Section */}
+            <Typography variant="h6" gutterBottom>
+              Quality Scores (1-10)
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Quality Score: {newReviewData.qualityScore}</Typography>
+                <Slider
+                  value={newReviewData.qualityScore}
+                  onChange={(e, value) => setNewReviewData(prev => ({ ...prev, qualityScore: value as number }))}
+                  min={1}
+                  max={10}
+                  step={0.1}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Communication Score: {newReviewData.communicationScore}</Typography>
+                <Slider
+                  value={newReviewData.communicationScore}
+                  onChange={(e, value) => setNewReviewData(prev => ({ ...prev, communicationScore: value as number }))}
+                  min={1}
+                  max={10}
+                  step={0.1}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Technical Accuracy: {newReviewData.technicalAccuracyScore}</Typography>
+                <Slider
+                  value={newReviewData.technicalAccuracyScore}
+                  onChange={(e, value) => setNewReviewData(prev => ({ ...prev, technicalAccuracyScore: value as number }))}
+                  min={1}
+                  max={10}
+                  step={0.1}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography gutterBottom>Timeliness Score: {newReviewData.timelinessScore}</Typography>
+                <Slider
+                  value={newReviewData.timelinessScore}
+                  onChange={(e, value) => setNewReviewData(prev => ({ ...prev, timelinessScore: value as number }))}
+                  min={1}
+                  max={10}
+                  step={0.1}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography gutterBottom>Citizen Satisfaction: {newReviewData.citizenSatisfactionScore}</Typography>
+                <Slider
+                  value={newReviewData.citizenSatisfactionScore}
+                  onChange={(e, value) => setNewReviewData(prev => ({ ...prev, citizenSatisfactionScore: value as number }))}
+                  min={1}
+                  max={10}
+                  step={0.1}
+                  marks
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Additional Fields */}
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Improvement Suggestions"
+                  multiline
+                  rows={4}
+                  fullWidth
+                  value={newReviewData.improvementSuggestions}
+                  onChange={(e) => setNewReviewData(prev => ({ ...prev, improvementSuggestions: e.target.value }))}
+                  placeholder="Provide specific feedback and suggestions for improvement..."
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Calibration Session"
+                  fullWidth
+                  value={newReviewData.calibrationSession}
+                  onChange={(e) => setNewReviewData(prev => ({ ...prev, calibrationSession: e.target.value }))}
+                  placeholder="Optional calibration session reference"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box display="flex" alignItems="center" height="100%">
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={newReviewData.followUpRequired}
+                        onChange={(e) => setNewReviewData(prev => ({ ...prev, followUpRequired: e.target.checked }))}
+                      />
+                    }
+                    label="Follow-up Required"
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setNewReviewDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmitNewReview}
+            disabled={!newReviewData.requestId || submitLoading}
+          >
+            {submitLoading ? <CircularProgress size={24} /> : 'Create Review'}
           </Button>
         </DialogActions>
       </Dialog>

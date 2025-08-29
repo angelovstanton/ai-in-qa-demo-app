@@ -30,6 +30,21 @@ import {
   CheckCircle as CheckCircleIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  ComposedChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+} from 'recharts';
 
 interface DepartmentMetric {
   id: string;
@@ -123,6 +138,22 @@ const DepartmentMetricsPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [periodFilter, setPeriodFilter] = useState('daily');
   const [metricTypeFilter, setMetricTypeFilter] = useState('');
+
+  // Sample chart data - in a real app, this would come from processed metrics
+  const trendData = [
+    { period: 'Week 1', avgResolutionTime: 42, slaCompliance: 87, citizenSatisfaction: 4.1, requestVolume: 45 },
+    { period: 'Week 2', avgResolutionTime: 38, slaCompliance: 91, citizenSatisfaction: 4.3, requestVolume: 52 },
+    { period: 'Week 3', avgResolutionTime: 45, slaCompliance: 85, citizenSatisfaction: 4.0, requestVolume: 38 },
+    { period: 'Week 4', avgResolutionTime: 35, slaCompliance: 94, citizenSatisfaction: 4.4, requestVolume: 47 },
+    { period: 'Week 5', avgResolutionTime: 40, slaCompliance: 89, citizenSatisfaction: 4.2, requestVolume: 55 },
+  ];
+
+  const comparisonData = [
+    { metric: 'Avg Resolution Time', current: 40, target: 48, industry: 52 },
+    { metric: 'SLA Compliance', current: 89, target: 95, industry: 82 },
+    { metric: 'Satisfaction', current: 42, target: 40, industry: 38 },
+    { metric: 'First Call Resolution', current: 78, target: 80, industry: 65 },
+  ];
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -282,6 +313,64 @@ const DepartmentMetricsPage: React.FC = () => {
             </Grid>
           );
         })}
+      </Grid>
+
+      {/* Charts Section */}
+      <Grid container spacing={3} mb={4}>
+        {/* Performance Trends Over Time */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Performance Trends Over Time
+              </Typography>
+              <ResponsiveContainer width="100%" height={350}>
+                <ComposedChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="period" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Area 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="requestVolume" 
+                    fill="#8884d8" 
+                    fillOpacity={0.3}
+                    stroke="#8884d8"
+                    name="Request Volume"
+                  />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="avgResolutionTime" 
+                    stroke="#ff7300" 
+                    strokeWidth={3}
+                    name="Avg Resolution Time"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="slaCompliance" 
+                    stroke="#82ca9d" 
+                    strokeWidth={3}
+                    name="SLA Compliance %"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="citizenSatisfaction" 
+                    stroke="#ffc658" 
+                    strokeWidth={3}
+                    name="Satisfaction (1-5)"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
       </Grid>
 
       {/* Filters */}

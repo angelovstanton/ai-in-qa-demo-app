@@ -45,8 +45,10 @@ const performanceGoalSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(10).max(1000),
   targetValue: z.number().optional(),
-  unit: z.string().optional(),
+  currentValue: z.number().optional().default(0),
+  unit: z.string().optional().default('count'),
   dueDate: z.string().datetime(),
+  status: z.enum(['ACTIVE', 'ACHIEVED', 'MISSED', 'PAUSED']).optional().default('ACTIVE'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional().default('MEDIUM'),
 });
 
@@ -54,6 +56,7 @@ const staffPerformanceQuerySchema = z.object({
   userId: z.string().uuid().optional(),
   departmentId: z.string().uuid().optional(),
   performancePeriod: z.string().optional(),
+  role: z.enum(['CLERK', 'FIELD_AGENT', 'SUPERVISOR']).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   page: z.string().optional().default('1'),
@@ -576,6 +579,12 @@ router.get('/staff-performance', authenticateToken, rbacGuard(['SUPERVISOR', 'AD
       where.performancePeriod = query.performancePeriod;
     }
     
+    if (query.role) {
+      where.user = {
+        role: query.role
+      };
+    }
+    
     if (query.startDate || query.endDate) {
       where.createdAt = {};
       if (query.startDate) {
@@ -662,6 +671,91 @@ router.get('/staff-performance', authenticateToken, rbacGuard(['SUPERVISOR', 'AD
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch staff performance',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// PUT /api/v1/supervisor/staff-performance/:id/skills - Update staff skills assessment
+router.put('/staff-performance/:id/skills', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const performanceId = req.params.id;
+    const skillsData = req.body;
+
+    // Check if the performance record exists
+    const existingPerformance = await prisma.staffPerformance.findUnique({
+      where: { id: performanceId },
+      include: {
+        user: true,
+        department: true
+      }
+    });
+
+    if (!existingPerformance) {
+      return res.status(404).json({
+        error: {
+          code: 'PERFORMANCE_NOT_FOUND',
+          message: 'Staff performance record not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permission - supervisors can only update performance in their department
+    if (req.user?.role === 'SUPERVISOR' && req.user?.departmentId !== existingPerformance.departmentId) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only update performance records in your department',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update the skills assessment data
+    const updatedPerformance = await prisma.staffPerformance.update({
+      where: { id: performanceId },
+      data: {
+        // Store skills as additional metrics
+        // In a real app, you might have a separate skills table
+        qualityScore: (skillsData.communication + skillsData.problemSolving + skillsData.technical + 
+                      skillsData.teamwork + skillsData.timeManagement + skillsData.customerService) / 6,
+        updatedAt: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      data: updatedPerformance,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Skills assessment update error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update skills assessment',
         correlationId: res.locals.correlationId
       }
     });
@@ -870,6 +964,96 @@ router.get('/performance-goals', authenticateToken, rbacGuard(['SUPERVISOR', 'AD
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch performance goals',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// PUT /api/v1/supervisor/performance-goals/:id - Update performance goal
+router.put('/performance-goals/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const goalId = req.params.id;
+    const updateData = req.body;
+
+    // Check if goal exists
+    const existingGoal = await prisma.performanceGoal.findUnique({
+      where: { id: goalId },
+      include: {
+        user: true
+      }
+    });
+
+    if (!existingGoal) {
+      return res.status(404).json({
+        error: {
+          code: 'GOAL_NOT_FOUND',
+          message: 'Performance goal not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permission - supervisors can only update goals in their department
+    if (req.user?.role === 'SUPERVISOR') {
+      if (existingGoal.user.departmentId !== req.user.departmentId) {
+        return res.status(403).json({
+          error: {
+            code: 'INSUFFICIENT_PERMISSIONS',
+            message: 'You can only update goals for users in your department',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+    }
+
+    // Update the goal
+    const updatedGoal = await prisma.performanceGoal.update({
+      where: { id: goalId },
+      data: {
+        title: updateData.title || existingGoal.title,
+        description: updateData.description || existingGoal.description,
+        targetValue: updateData.targetValue !== undefined ? updateData.targetValue : existingGoal.targetValue,
+        currentValue: updateData.currentValue !== undefined ? updateData.currentValue : existingGoal.currentValue,
+        unit: updateData.unit || existingGoal.unit,
+        dueDate: updateData.dueDate ? new Date(updateData.dueDate) : existingGoal.dueDate,
+        status: updateData.status || existingGoal.status,
+        priority: updateData.priority || existingGoal.priority,
+        updatedAt: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      data: updatedGoal,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Performance goal update error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update performance goal',
         correlationId: res.locals.correlationId
       }
     });

@@ -34,6 +34,23 @@ import {
   ArrowDownward as ArrowDownwardIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  RadialBarChart,
+  RadialBar,
+} from 'recharts';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -90,6 +107,39 @@ const SupervisorDashboardPage: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Chart data
+  const performanceTrendData = [
+    { month: 'Jan', quality: 8.2, satisfaction: 4.1, productivity: 85 },
+    { month: 'Feb', quality: 8.5, satisfaction: 4.2, productivity: 87 },
+    { month: 'Mar', quality: 8.1, satisfaction: 4.0, productivity: 83 },
+    { month: 'Apr', quality: 8.7, satisfaction: 4.3, productivity: 89 },
+    { month: 'May', quality: 8.9, satisfaction: 4.4, productivity: 91 },
+    { month: 'Jun', quality: 8.6, satisfaction: 4.2, productivity: 88 },
+  ];
+
+  const requestVolumeData = [
+    { period: 'Week 1', submitted: 45, resolved: 42, pending: 3 },
+    { period: 'Week 2', submitted: 52, resolved: 48, pending: 7 },
+    { period: 'Week 3', submitted: 38, resolved: 41, pending: 4 },
+    { period: 'Week 4', submitted: 47, resolved: 44, pending: 6 },
+  ];
+
+  const categoryDistribution = [
+    { name: 'Public Works', value: 35, color: '#8884d8' },
+    { name: 'Parks & Recreation', value: 25, color: '#82ca9d' },
+    { name: 'Utilities', value: 20, color: '#ffc658' },
+    { name: 'Transportation', value: 15, color: '#ff7c7c' },
+    { name: 'Other', value: 5, color: '#8dd1e1' },
+  ];
+
+  const goalProgressData = [
+    { name: 'Resolution Time', value: 78, target: 85, color: '#8884d8' },
+    { name: 'Quality Score', value: 92, target: 90, color: '#82ca9d' },
+    { name: 'Satisfaction', value: 85, target: 88, color: '#ffc658' },
+  ];
+
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'];
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -296,6 +346,70 @@ const SupervisorDashboardPage: React.FC = () => {
       {/* Tab Panels */}
       <TabPanel value={tabValue} index={0}>
         <Grid container spacing={3}>
+          {/* Performance Trend Chart */}
+          <Grid item xs={12} lg={8}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Team Performance Trends
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={performanceTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="quality" 
+                      stroke="#8884d8" 
+                      strokeWidth={3}
+                      name="Quality Score"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="satisfaction" 
+                      stroke="#82ca9d" 
+                      strokeWidth={3}
+                      name="Satisfaction"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="productivity" 
+                      stroke="#ffc658" 
+                      strokeWidth={3}
+                      name="Productivity %"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Request Volume Chart */}
+          <Grid item xs={12} lg={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Weekly Request Volume
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={requestVolumeData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Bar dataKey="submitted" fill="#8884d8" name="Submitted" />
+                    <Bar dataKey="resolved" fill="#82ca9d" name="Resolved" />
+                    <Bar dataKey="pending" fill="#ffc658" name="Pending" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
           {/* Recent Performance Scores */}
           <Grid item xs={12} md={6}>
             <Card>
@@ -325,7 +439,7 @@ const SupervisorDashboardPage: React.FC = () => {
                 </List>
               </CardContent>
               <CardActions>
-                <Button size="small" color="primary">
+                <Button size="small" color="primary" href="/supervisor/staff-performance?mode=performance&sort=qualityScore&order=desc">
                   View All Performance Data
                 </Button>
               </CardActions>
@@ -368,7 +482,7 @@ const SupervisorDashboardPage: React.FC = () => {
                 </List>
               </CardContent>
               <CardActions>
-                <Button size="small" color="primary">
+                <Button size="small" color="primary" href="/supervisor/staff-performance?mode=leaderboard&sort=productivityScore&order=desc">
                   View Team Leaderboard
                 </Button>
               </CardActions>
@@ -379,6 +493,81 @@ const SupervisorDashboardPage: React.FC = () => {
 
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
+          {/* Goal Progress Chart */}
+          <Grid item xs={12} lg={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Goal Progress Overview
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadialBarChart 
+                    cx="40%" 
+                    cy="50%" 
+                    innerRadius="20%" 
+                    outerRadius="70%" 
+                    data={goalProgressData}
+                    margin={{ top: 20, right: 80, bottom: 20, left: 20 }}
+                  >
+                    <RadialBar 
+                      minAngle={15} 
+                      label={{ position: 'insideStart', fill: '#fff' }} 
+                      background 
+                      clockWise 
+                      dataKey="value" 
+                      fill={(entry, index) => goalProgressData[index]?.color || '#8884d8'}
+                    />
+                    <Legend 
+                      iconSize={12} 
+                      width={120} 
+                      height={140} 
+                      layout="vertical" 
+                      verticalAlign="middle" 
+                      align="right"
+                      wrapperStyle={{ 
+                        paddingLeft: '20px',
+                        fontSize: '12px',
+                        lineHeight: '20px'
+                      }}
+                    />
+                    <RechartsTooltip />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Category Distribution */}
+          <Grid item xs={12} lg={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Request Category Distribution
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={categoryDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {categoryDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>

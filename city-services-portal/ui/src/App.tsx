@@ -20,6 +20,7 @@ import ClerkInboxPage from './pages/clerk/ClerkInboxPage';
 import SupervisorAssignPage from './pages/supervisor/SupervisorAssignPage';
 import SupervisorDashboardPage from './pages/supervisor/SupervisorDashboardPage';
 import StaffPerformancePage from './pages/supervisor/StaffPerformancePage';
+import StaffPerformanceReportPage from './pages/supervisor/StaffPerformanceReportPage';
 import DepartmentMetricsPage from './pages/supervisor/DepartmentMetricsPage';
 import QualityReviewPage from './pages/supervisor/QualityReviewPage';
 import PerformanceGoalsPage from './pages/supervisor/PerformanceGoalsPage';
@@ -228,6 +229,16 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute allowedRoles={['SUPERVISOR']}>
               <AppLayout>
                 <StaffPerformancePage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/supervisor/staff-performance/report/:userId" 
+          element={
+            <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+              <AppLayout>
+                <StaffPerformanceReportPage />
               </AppLayout>
             </ProtectedRoute>
           } 

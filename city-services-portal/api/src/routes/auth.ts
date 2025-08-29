@@ -97,9 +97,12 @@ router.post('/login', async (req: Request, res: Response) => {
   try {
     const validatedData = loginSchema.parse(req.body);
 
-    // Find user
+    // Find user with department info
     const user = await prisma.user.findUnique({
-      where: { email: validatedData.email }
+      where: { email: validatedData.email },
+      include: {
+        department: true
+      }
     });
 
     if (!user) {
@@ -138,7 +141,12 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        department: user.department ? {
+          id: user.department.id,
+          name: user.department.name,
+          slug: user.department.slug
+        } : undefined
       },
       correlationId: res.locals.correlationId
     });

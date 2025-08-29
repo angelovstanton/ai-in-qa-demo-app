@@ -36,6 +36,7 @@ import {
   Person as PersonIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface StaffPerformance {
   id: string;
@@ -69,6 +70,8 @@ interface StaffPerformance {
 }
 
 const StaffPerformancePage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [performanceData, setPerformanceData] = useState<StaffPerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +82,9 @@ const StaffPerformancePage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [selectedStaff, setSelectedStaff] = useState<StaffPerformance | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('qualityScore');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'performance' | 'leaderboard'>('performance');
 
   const fetchStaffPerformance = async () => {
     setLoading(true);
@@ -89,6 +95,7 @@ const StaffPerformancePage: React.FC = () => {
       const params = new URLSearchParams({
         page: (page + 1).toString(),
         size: rowsPerPage.toString(),
+        sort: `${sortBy}:${sortOrder}`,
         ...(periodFilter && { performancePeriod: periodFilter }),
         ...(roleFilter && { role: roleFilter }),
       });
@@ -115,9 +122,31 @@ const StaffPerformancePage: React.FC = () => {
     }
   };
 
+  // Handle URL parameters on component mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const mode = searchParams.get('mode');
+    const sort = searchParams.get('sort');
+    const order = searchParams.get('order');
+    
+    if (mode === 'leaderboard') {
+      setViewMode('leaderboard');
+      setSortBy('productivityScore');
+      setSortOrder('desc');
+      setRowsPerPage(20); // Show more for leaderboard
+    } else if (mode === 'performance') {
+      setViewMode('performance');
+      setSortBy('qualityScore');
+      setSortOrder('desc');
+    }
+    
+    if (sort) setSortBy(sort);
+    if (order === 'asc' || order === 'desc') setSortOrder(order);
+  }, [location.search]);
+
   useEffect(() => {
     fetchStaffPerformance();
-  }, [page, rowsPerPage, periodFilter, roleFilter]);
+  }, [page, rowsPerPage, periodFilter, roleFilter, sortBy, sortOrder]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -175,8 +204,13 @@ const StaffPerformancePage: React.FC = () => {
   return (
     <Box data-testid="cs-staff-performance-page">
       <Typography variant="h4" component="h1" gutterBottom>
-        Staff Performance Management
+        {viewMode === 'leaderboard' ? 'Team Performance Leaderboard' : 'Staff Performance Management'}
       </Typography>
+      {viewMode === 'leaderboard' && (
+        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+          Top performers ranked by productivity score and overall performance metrics
+        </Typography>
+      )}
 
       {/* Filters */}
       <Grid container spacing={2} mb={3}>
@@ -215,7 +249,41 @@ const StaffPerformancePage: React.FC = () => {
           </TextField>
         </Grid>
         
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={3}>
+          <TextField
+            select
+            label="Sort By"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            fullWidth
+            variant="outlined"
+            size="small"
+          >
+            <MenuItem value="qualityScore">Quality Score</MenuItem>
+            <MenuItem value="productivityScore">Productivity Score</MenuItem>
+            <MenuItem value="citizenSatisfactionRating">Citizen Satisfaction</MenuItem>
+            <MenuItem value="completedRequests">Completed Requests</MenuItem>
+            <MenuItem value="averageHandlingTime">Avg Handling Time</MenuItem>
+            <MenuItem value="performancePeriod">Performance Period</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} sm={2}>
+          <TextField
+            select
+            label="Order"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+            fullWidth
+            variant="outlined"
+            size="small"
+          >
+            <MenuItem value="desc">High to Low</MenuItem>
+            <MenuItem value="asc">Low to High</MenuItem>
+          </TextField>
+        </Grid>
+
+        <Grid item xs={12} sm={3}>
           <Button
             variant="outlined"
             onClick={fetchStaffPerformance}
@@ -256,7 +324,12 @@ const StaffPerformancePage: React.FC = () => {
             </TableHead>
             <TableBody>
               {performanceData.map((performance) => (
-                <TableRow key={performance.id} hover>
+                <TableRow 
+                  key={performance.id} 
+                  hover 
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => handleViewDetails(performance)}
+                >
                   <TableCell>
                     <Box display="flex" alignItems="center">
                       <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
@@ -498,7 +571,16 @@ const StaffPerformancePage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>
             Close
           </Button>
-          <Button variant="contained" color="primary">
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => {
+              setDetailDialogOpen(false);
+              navigate(`/supervisor/staff-performance/report/${selectedStaff?.userId}`, { 
+                state: { staffMember: selectedStaff } 
+              });
+            }}
+          >
             View Full Report
           </Button>
         </DialogActions>

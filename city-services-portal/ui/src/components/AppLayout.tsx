@@ -150,6 +150,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'SUPERVISOR':
         roleSpecificItems.push(
           { 
+            label: 'Dashboard', 
+            href: '/supervisor/dashboard', 
+            icon: <DashboardIcon />,
+            testId: 'cs-nav-supervisor-dashboard'
+          },
+          { 
             label: 'Staff Performance', 
             href: '/supervisor/staff-performance', 
             icon: <TrendingUpIcon />,
