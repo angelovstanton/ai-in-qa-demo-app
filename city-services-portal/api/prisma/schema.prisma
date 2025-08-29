@@ -15,6 +15,17 @@ model User {
   passwordHash String
   departmentId String?
   
+  // Email verification
+  emailConfirmed Boolean @default(false)
+  emailConfirmationToken String?
+  
+  // Password reset
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  
+  // Account status
+  isActive Boolean @default(true)
+  
   // Profile fields
   firstName    String?
   lastName     String?

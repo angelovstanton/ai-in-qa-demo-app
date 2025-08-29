@@ -406,6 +406,75 @@ router.get('/quality-reviews', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMI
   }
 });
 
+// GET /api/v1/supervisor/quality-reviews/:id - Get specific quality review
+router.get('/quality-reviews/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const reviewId = req.params.id;
+    
+    // Get review with related data
+    const review = await prisma.qualityReview.findUnique({
+      where: { id: reviewId },
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            status: true,
+            category: true,
+            priority: true,
+            department: true
+          }
+        },
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        error: {
+          code: 'REVIEW_NOT_FOUND',
+          message: 'Quality review not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions - supervisors can only view reviews in their department
+    if (req.user?.role === 'SUPERVISOR' && req.user?.departmentId !== review.request.department?.id) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only view reviews in your department',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    res.json({
+      data: review,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Quality review fetch error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch quality review',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 // PUT /api/v1/supervisor/quality-reviews/:id - Update quality review
 router.put('/quality-reviews/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -501,6 +570,195 @@ router.put('/quality-reviews/:id', authenticateToken, rbacGuard(['SUPERVISOR', '
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to update quality review',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// DELETE /api/v1/supervisor/quality-reviews/:id - Delete quality review
+router.delete('/quality-reviews/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const reviewId = req.params.id;
+    
+    // Check if review exists and user has permission
+    const existingReview = await prisma.qualityReview.findUnique({
+      where: { id: reviewId },
+      include: {
+        request: {
+          include: {
+            department: true
+          }
+        }
+      }
+    });
+
+    if (!existingReview) {
+      return res.status(404).json({
+        error: {
+          code: 'REVIEW_NOT_FOUND',
+          message: 'Quality review not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check delete permissions - only admin or original reviewer
+    const canDelete = 
+      req.user?.role === 'ADMIN' || 
+      existingReview.reviewerId === req.user?.id;
+    
+    if (!canDelete) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only delete your own reviews',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Delete the review
+    await prisma.qualityReview.delete({
+      where: { id: reviewId }
+    });
+
+    res.json({
+      data: { deleted: true },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Quality review delete error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete quality review',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// GET /api/v1/supervisor/workload-assignments - List workload assignments
+router.get('/workload-assignments', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const query = z.object({
+      requestId: z.string().uuid().optional(),
+      assignedTo: z.string().uuid().optional(),
+      assignedBy: z.string().uuid().optional(),
+      isActive: z.string().optional(),
+      page: z.string().optional().default('1'),
+      size: z.string().optional().default('20'),
+      sort: z.string().optional().default('createdAt:desc'),
+    }).parse(req.query);
+    
+    // Build where clause
+    let where: any = {};
+    
+    // For supervisors, restrict to their department's assignments
+    if (req.user?.role === 'SUPERVISOR' && req.user?.departmentId) {
+      where.request = {
+        departmentId: req.user.departmentId
+      };
+    }
+    
+    if (query.requestId) where.requestId = query.requestId;
+    if (query.assignedTo) where.assignedTo = query.assignedTo;
+    if (query.assignedBy) where.assignedBy = query.assignedBy;
+    if (query.isActive !== undefined) where.isActive = query.isActive === 'true';
+
+    // Parse sorting
+    const sortParts = query.sort.split(':');
+    const sortField = sortParts[0] || 'createdAt';
+    const sortOrder = sortParts[1] === 'desc' ? 'desc' : 'asc';
+    
+    const allowedSortFields = ['createdAt', 'updatedAt', 'priorityWeight', 'estimatedEffort'];
+    const orderBy = allowedSortFields.includes(sortField) 
+      ? { [sortField]: sortOrder as 'asc' | 'desc' }
+      : { createdAt: 'desc' as const };
+
+    // Pagination
+    const page = Math.max(1, parseInt(query.page));
+    const pageSize = Math.min(100, Math.max(1, parseInt(query.size)));
+    const skip = (page - 1) * pageSize;
+
+    // Get total count
+    const totalCount = await prisma.workloadAssignment.count({ where });
+
+    // Get assignments with related data
+    const assignments = await prisma.workloadAssignment.findMany({
+      where,
+      orderBy,
+      skip,
+      take: pageSize,
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            status: true,
+            priority: true
+          }
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        previousUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.setHeader('X-Total-Count', totalCount.toString());
+    
+    res.json({
+      data: assignments,
+      pagination: {
+        page,
+        pageSize,
+        totalCount,
+        totalPages: Math.ceil(totalCount / pageSize)
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Workload assignments fetch error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch workload assignments',
         correlationId: res.locals.correlationId
       }
     });
@@ -651,6 +909,273 @@ router.post('/workload-assignments', authenticateToken, rbacGuard(['SUPERVISOR',
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to create workload assignment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// GET /api/v1/supervisor/workload-assignments/:id - Get specific workload assignment
+router.get('/workload-assignments/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const assignmentId = req.params.id;
+    
+    // Get assignment with related data
+    const assignment = await prisma.workloadAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            status: true,
+            priority: true,
+            department: true
+          }
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        previousUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        error: {
+          code: 'ASSIGNMENT_NOT_FOUND',
+          message: 'Workload assignment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions - supervisors can only view assignments in their department
+    if (req.user?.role === 'SUPERVISOR' && req.user?.departmentId !== assignment.request.department?.id) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only view assignments in your department',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    res.json({
+      data: assignment,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Workload assignment fetch error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch workload assignment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// PUT /api/v1/supervisor/workload-assignments/:id - Update workload assignment
+router.put('/workload-assignments/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const assignmentId = req.params.id;
+    const updateData = workloadAssignmentSchema.partial().parse(req.body);
+    
+    // Check if assignment exists
+    const existingAssignment = await prisma.workloadAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        request: {
+          include: {
+            department: true
+          }
+        }
+      }
+    });
+
+    if (!existingAssignment) {
+      return res.status(404).json({
+        error: {
+          code: 'ASSIGNMENT_NOT_FOUND',
+          message: 'Workload assignment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions
+    if (req.user?.role === 'SUPERVISOR' && req.user?.departmentId !== existingAssignment.request.department?.id) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only update assignments in your department',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update the assignment
+    const updatedAssignment = await prisma.workloadAssignment.update({
+      where: { id: assignmentId },
+      data: {
+        ...updateData,
+        skillsRequired: updateData.skillsRequired ? JSON.stringify(updateData.skillsRequired) : undefined,
+        updatedAt: new Date()
+      },
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            status: true,
+            priority: true
+          }
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        previousUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // If assignedTo changed, update the service request as well
+    if (updateData.assignedTo && updateData.assignedTo !== existingAssignment.assignedTo) {
+      await prisma.serviceRequest.update({
+        where: { id: existingAssignment.requestId },
+        data: { assignedTo: updateData.assignedTo }
+      });
+    }
+
+    res.json({
+      data: updatedAssignment,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Workload assignment update error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid workload assignment data',
+          details: error.errors,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update workload assignment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// DELETE /api/v1/supervisor/workload-assignments/:id - Delete workload assignment
+router.delete('/workload-assignments/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const assignmentId = req.params.id;
+    
+    // Check if assignment exists
+    const existingAssignment = await prisma.workloadAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        request: {
+          include: {
+            department: true
+          }
+        }
+      }
+    });
+
+    if (!existingAssignment) {
+      return res.status(404).json({
+        error: {
+          code: 'ASSIGNMENT_NOT_FOUND',
+          message: 'Workload assignment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions - only admin or supervisor who created it
+    const canDelete = 
+      req.user?.role === 'ADMIN' || 
+      (req.user?.role === 'SUPERVISOR' && existingAssignment.assignedBy === req.user?.id);
+    
+    if (!canDelete) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only delete assignments you created',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Delete the assignment
+    await prisma.workloadAssignment.delete({
+      where: { id: assignmentId }
+    });
+
+    res.json({
+      data: { deleted: true },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Workload assignment delete error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete workload assignment',
         correlationId: res.locals.correlationId
       }
     });
@@ -1071,6 +1596,77 @@ router.get('/performance-goals', authenticateToken, rbacGuard(['SUPERVISOR', 'AD
   }
 });
 
+// GET /api/v1/supervisor/performance-goals/:id - Get specific performance goal
+router.get('/performance-goals/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const goalId = req.params.id;
+    
+    // Get goal with user info
+    const goal = await prisma.performanceGoal.findUnique({
+      where: { id: goalId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            firstName: true,
+            lastName: true,
+            departmentId: true
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!goal) {
+      return res.status(404).json({
+        error: {
+          code: 'GOAL_NOT_FOUND',
+          message: 'Performance goal not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions - supervisors can only view goals they created or in their department
+    if (req.user?.role === 'SUPERVISOR') {
+      if (goal.supervisorId !== req.user.id && goal.user.departmentId !== req.user.departmentId) {
+        return res.status(403).json({
+          error: {
+            code: 'INSUFFICIENT_PERMISSIONS',
+            message: 'You can only view goals you created or for users in your department',
+            correlationId: res.locals.correlationId
+          }
+        });
+      }
+    }
+
+    res.json({
+      data: goal,
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Performance goal fetch error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch performance goal',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 // PUT /api/v1/supervisor/performance-goals/:id - Update performance goal
 router.put('/performance-goals/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -1155,6 +1751,67 @@ router.put('/performance-goals/:id', authenticateToken, rbacGuard(['SUPERVISOR',
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to update performance goal',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// DELETE /api/v1/supervisor/performance-goals/:id - Delete performance goal
+router.delete('/performance-goals/:id', authenticateToken, rbacGuard(['SUPERVISOR', 'ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const goalId = req.params.id;
+    
+    // Check if goal exists
+    const existingGoal = await prisma.performanceGoal.findUnique({
+      where: { id: goalId },
+      include: {
+        user: true
+      }
+    });
+
+    if (!existingGoal) {
+      return res.status(404).json({
+        error: {
+          code: 'GOAL_NOT_FOUND',
+          message: 'Performance goal not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions - only admin or supervisor who created it
+    const canDelete = 
+      req.user?.role === 'ADMIN' || 
+      (req.user?.role === 'SUPERVISOR' && existingGoal.supervisorId === req.user?.id);
+    
+    if (!canDelete) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You can only delete goals you created',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Delete the goal
+    await prisma.performanceGoal.delete({
+      where: { id: goalId }
+    });
+
+    res.json({
+      data: { deleted: true },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Performance goal delete error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete performance goal',
         correlationId: res.locals.correlationId
       }
     });

@@ -251,6 +251,82 @@ router.get('/test/:id', authenticateToken, async (req: AuthenticatedRequest, res
   }
 });
 
+// GET /api/v1/attachments/:id - Get attachment metadata
+router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const attachmentId = req.params.id;
+
+    // Get attachment
+    const attachment = await prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        request: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            createdBy: true,
+            assignedTo: true
+          }
+        }
+      }
+    });
+
+    if (!attachment) {
+      return res.status(404).json({
+        error: {
+          code: 'ATTACHMENT_NOT_FOUND',
+          message: 'Attachment not found',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check permissions
+    const canView = 
+      req.user?.role === 'ADMIN' ||
+      attachment.request.createdBy === req.user?.id ||
+      attachment.request.assignedTo === req.user?.id ||
+      ['CLERK', 'SUPERVISOR', 'FIELD_AGENT'].includes(req.user?.role || '');
+
+    if (!canView) {
+      return res.status(403).json({
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: 'You do not have permission to view this attachment',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Return metadata without binary data
+    res.json({
+      data: {
+        id: attachment.id,
+        filename: attachment.filename,
+        originalName: attachment.originalName,
+        mime: attachment.mime,
+        size: attachment.size,
+        requestId: attachment.requestId,
+        createdAt: attachment.createdAt,
+        request: attachment.request
+      },
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    console.error('Attachment fetch error:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch attachment',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
 // GET /api/v1/attachments/:id/image - Serve image data
 router.get('/:id/image', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {

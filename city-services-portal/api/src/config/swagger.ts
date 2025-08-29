@@ -311,6 +311,149 @@ const options = {
               type: 'boolean'
             }
           }
+        },
+        Attachment: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            filename: {
+              type: 'string'
+            },
+            originalName: {
+              type: 'string'
+            },
+            mime: {
+              type: 'string'
+            },
+            size: {
+              type: 'integer'
+            },
+            requestId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
+        },
+        WorkloadAssignment: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            requestId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            assignedTo: {
+              type: 'string',
+              format: 'uuid'
+            },
+            assignedFrom: {
+              type: 'string',
+              format: 'uuid'
+            },
+            assignedBy: {
+              type: 'string',
+              format: 'uuid'
+            },
+            assignmentReason: {
+              type: 'string'
+            },
+            estimatedEffort: {
+              type: 'number'
+            },
+            skillsRequired: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            priorityWeight: {
+              type: 'number'
+            },
+            isActive: {
+              type: 'boolean'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
+        },
+        StaffPerformance: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            departmentId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            performancePeriod: {
+              type: 'string'
+            },
+            completedRequests: {
+              type: 'integer'
+            },
+            averageHandlingTime: {
+              type: 'number'
+            },
+            qualityScore: {
+              type: 'number'
+            },
+            productivityScore: {
+              type: 'number'
+            },
+            citizenSatisfactionRating: {
+              type: 'number'
+            },
+            user: {
+              $ref: '#/components/schemas/User'
+            },
+            department: {
+              $ref: '#/components/schemas/Department'
+            }
+          }
+        },
+        FeatureFlag: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            key: {
+              type: 'string'
+            },
+            enabled: {
+              type: 'boolean'
+            },
+            description: {
+              type: 'string'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
         }
       },
       responses: {
@@ -646,6 +789,57 @@ const options = {
             '404': { $ref: '#/components/responses/NotFound' },
             '401': { $ref: '#/components/responses/Unauthorized' }
           }
+        },
+        patch: {
+          tags: ['Service Requests'],
+          summary: 'Update service request',
+          description: 'Update service request fields (role-based permissions apply)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+            { name: 'If-Match', in: 'header', required: false, schema: { type: 'string' }, description: 'Version for optimistic locking' }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string', minLength: 5, maxLength: 120 },
+                    description: { type: 'string', minLength: 30 },
+                    priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+                    locationText: { type: 'string' },
+                    streetAddress: { type: 'string' },
+                    city: { type: 'string' },
+                    postalCode: { type: 'string' },
+                    preferredDate: { type: 'string', format: 'date-time' },
+                    preferredTime: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Service request updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/ServiceRequest' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
         }
       },
       '/api/v1/requests/{id}/status': {
@@ -688,6 +882,266 @@ const options = {
               }
             },
             '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/requests/{id}/comments': {
+        post: {
+          tags: ['Service Requests'],
+          summary: 'Add comment to request',
+          description: 'Add a public or internal comment to a service request',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    content: { type: 'string', minLength: 1 },
+                    visibility: { type: 'string', enum: ['PUBLIC', 'INTERNAL'], default: 'PUBLIC' }
+                  },
+                  required: ['content']
+                }
+              }
+            }
+          },
+          responses: {
+            '201': {
+              description: 'Comment added successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/Comment' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/requests/{id}/upvote': {
+        post: {
+          tags: ['Service Requests'],
+          summary: 'Upvote request',
+          description: 'Add upvote to a service request',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Request upvoted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { 
+                        type: 'object',
+                        properties: {
+                          upvoteCount: { type: 'integer' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        },
+        delete: {
+          tags: ['Service Requests'],
+          summary: 'Remove upvote',
+          description: 'Remove upvote from a service request',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Upvote removed successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { 
+                        type: 'object',
+                        properties: {
+                          upvoteCount: { type: 'integer' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/requests/{id}/assign': {
+        post: {
+          tags: ['Service Requests'],
+          summary: 'Assign request',
+          description: 'Assign or reassign a service request to a user',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    assigneeId: { type: 'string', format: 'uuid' }
+                  },
+                  required: ['assigneeId']
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Request assigned successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/ServiceRequest' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/requests/bulk': {
+        post: {
+          tags: ['Service Requests'],
+          summary: 'Bulk create requests',
+          description: 'Create multiple service requests in one operation',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    requests: {
+                      type: 'array',
+                      maxItems: 100,
+                      items: {
+                        type: 'object',
+                        properties: {
+                          title: { type: 'string', minLength: 5, maxLength: 120 },
+                          description: { type: 'string', minLength: 30 },
+                          category: { type: 'string' },
+                          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+                          locationText: { type: 'string' }
+                        },
+                        required: ['title', 'description', 'category', 'locationText']
+                      }
+                    }
+                  },
+                  required: ['requests']
+                }
+              }
+            }
+          },
+          responses: {
+            '201': {
+              description: 'Bulk requests created',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          created: { type: 'array', items: { $ref: '#/components/schemas/ServiceRequest' } },
+                          errors: { type: 'array', items: { type: 'object' } }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        },
+        delete: {
+          tags: ['Service Requests'],
+          summary: 'Bulk delete requests',
+          description: 'Delete multiple service requests (Admin only)',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    ids: { type: 'array', items: { type: 'string', format: 'uuid' } }
+                  },
+                  required: ['ids']
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Requests deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          deleted: { type: 'integer' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
             '401': { $ref: '#/components/responses/Unauthorized' },
             '403': { $ref: '#/components/responses/Forbidden' }
           }

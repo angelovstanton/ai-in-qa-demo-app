@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -15,6 +15,11 @@ import {
   FormControlLabel,
   Switch,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Autocomplete,
 } from '@mui/material';
 import {
   Person,
@@ -29,6 +34,7 @@ import { profileUpdateSchema, passwordChangeSchema, ProfileUpdateData, PasswordC
 import { useAuth } from '../contexts/AuthContext';
 import { calculatePasswordStrength } from '../utils/validation';
 import api from '../lib/api';
+import { countries } from '../data/countries';
 
 const EditProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -38,27 +44,68 @@ const EditProfilePage: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Profile form
   const profileForm = useForm<ProfileUpdateData>({
     resolver: zodResolver(profileUpdateSchema),
     mode: 'onChange',
     defaultValues: {
-      firstName: user?.name?.split(' ')[0] || '',
-      lastName: user?.name?.split(' ')[1] || '',
+      firstName: '',
+      lastName: '',
       phone: '',
       alternatePhone: '',
       streetAddress: '',
       city: '',
       state: '',
       postalCode: '',
-      country: '',
+      country: 'United States',
       emailNotifications: true,
       smsNotifications: false,
       marketingEmails: false,
       serviceUpdates: true,
     }
   });
+
+  // Load user profile data on mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user || profileLoaded) return;
+      
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data.user;
+        
+        // Parse the name if it exists
+        const nameParts = userData.name?.split(' ') || [];
+        const firstName = userData.firstName || nameParts[0] || '';
+        const lastName = userData.lastName || nameParts.slice(1).join(' ') || nameParts[1] || '';
+        
+        // Update form with fetched data
+        profileForm.reset({
+          firstName,
+          lastName,
+          phone: userData.phone || '',
+          alternatePhone: userData.alternatePhone || '',
+          streetAddress: userData.streetAddress || '',
+          city: userData.city || '',
+          state: userData.state || '',
+          postalCode: userData.postalCode || '',
+          country: userData.country || 'United States',
+          emailNotifications: userData.emailNotifications ?? true,
+          smsNotifications: userData.smsNotifications ?? false,
+          marketingEmails: userData.marketingEmails ?? false,
+          serviceUpdates: userData.serviceUpdates ?? true,
+        });
+        
+        setProfileLoaded(true);
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      }
+    };
+    
+    loadProfile();
+  }, [user, profileLoaded, profileForm]);
 
   // Password change form
   const passwordForm = useForm<PasswordChangeData>({
@@ -314,15 +361,23 @@ const EditProfilePage: React.FC = () => {
                       <Controller
                         name="country"
                         control={profileForm.control}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
+                        render={({ field: { onChange, value } }) => (
+                          <Autocomplete
+                            value={value || 'United States'}
+                            onChange={(_, newValue) => onChange(newValue || '')}
+                            options={countries}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label="Country"
+                                error={!!profileForm.formState.errors.country}
+                                helperText={profileForm.formState.errors.country?.message}
+                                data-testid="cs-profile-country"
+                                required
+                              />
+                            )}
                             fullWidth
-                            label="Country"
-                            error={!!profileForm.formState.errors.country}
-                            helperText={profileForm.formState.errors.country?.message}
-                            data-testid="cs-profile-country"
-                            required
+                            disableClearable
                           />
                         )}
                       />

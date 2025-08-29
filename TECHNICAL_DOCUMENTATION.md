@@ -995,6 +995,182 @@ app.patch('/api/v1/requests/:id',
 );
 ```
 
+## Supervisor Mode & Staff Management
+
+### Supervisor Dashboard Overview
+The supervisor mode provides comprehensive staff performance management, quality assurance, and workload optimization capabilities for departmental supervisors.
+
+#### Core Supervisor Functionalities
+
+##### 1. Department Performance Metrics
+```typescript
+// Real-time department analytics
+- Average Resolution Time: Time from request creation to resolution
+- SLA Compliance Rate: Percentage of requests resolved within SLA
+- First Call Resolution: Requests resolved without escalation
+- Customer Satisfaction Score: Average rating from citizens
+- Request Volume Trends: Daily/weekly/monthly request patterns
+- Escalation Rate: Percentage of requests requiring supervisor intervention
+```
+
+##### 2. Quality Review System
+```typescript
+interface QualityReview {
+  requestId: string;
+  qualityScore: number; // 1-10 overall quality rating
+  communicationScore: number; // 1-10 communication effectiveness
+  technicalAccuracyScore: number; // 1-10 technical solution accuracy
+  timelinessScore: number; // 1-10 response time rating
+  citizenSatisfactionScore: number; // 1-10 citizen feedback score
+  improvementSuggestions?: string; // Coaching feedback
+  followUpRequired: boolean; // Flag for additional training needs
+  calibrationSession?: string; // Link to team calibration
+  reviewStatus: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+}
+```
+
+##### 3. Workload Assignment & Balancing
+```typescript
+interface WorkloadAssignment {
+  requestId: string;
+  assignedTo: string; // Target staff member
+  assignedFrom?: string; // Previous assignee if reassignment
+  assignedBy: string; // Supervisor making assignment
+  assignmentReason?: string; // Justification for assignment
+  estimatedEffort?: number; // Hours estimated for completion
+  skillsRequired?: string[]; // Required competencies
+  priorityWeight?: number; // 0-100 priority scoring
+  isActive: boolean; // Current assignment status
+}
+```
+
+##### 4. Performance Goal Management
+```typescript
+interface PerformanceGoal {
+  userId: string; // Staff member
+  supervisorId: string; // Goal creator
+  title: string; // Goal title
+  description: string; // Detailed goal description
+  targetValue?: number; // Quantitative target
+  currentValue: number; // Current progress
+  unit: string; // Measurement unit
+  dueDate: Date; // Goal deadline
+  status: 'ACTIVE' | 'ACHIEVED' | 'MISSED' | 'PAUSED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+```
+
+##### 5. Staff Performance Tracking
+```typescript
+interface StaffPerformance {
+  userId: string;
+  departmentId: string;
+  performancePeriod: string; // e.g., "2024-Q1"
+  
+  // Productivity Metrics
+  completedRequests: number;
+  averageHandlingTime: number; // Minutes
+  firstCallResolution: number; // Percentage
+  
+  // Quality Metrics
+  qualityScore: number; // Average from reviews
+  citizenSatisfactionRating: number; // Average rating
+  escalationRate: number; // Percentage escalated
+  
+  // Behavioral Metrics
+  attendanceScore: number;
+  collaborationScore: number;
+  initiativeScore: number;
+  
+  // Calculated Scores
+  productivityScore: number; // Weighted calculation
+  overallPerformanceRating: number; // 1-10 scale
+}
+```
+
+### Supervisor API Endpoints
+
+#### Dashboard & Analytics
+- `GET /api/v1/supervisor/dashboard-summary` - Comprehensive dashboard data
+- `GET /api/v1/supervisor/department-metrics` - Department performance metrics
+- `GET /api/v1/dashboard/overview` - Overview statistics for supervisors
+- `GET /api/v1/dashboard/charts/request-trends` - Request trend visualizations
+- `GET /api/v1/dashboard/charts/resolution-times` - Resolution time analytics
+- `GET /api/v1/dashboard/charts/staff-performance` - Staff performance comparisons
+
+#### Quality Management
+- `GET /api/v1/supervisor/quality-reviews` - List quality reviews
+- `POST /api/v1/supervisor/quality-reviews` - Create quality review
+- `PUT /api/v1/supervisor/quality-reviews/:id` - Update quality review
+- `DELETE /api/v1/supervisor/quality-reviews/:id` - Delete quality review
+
+#### Workload Management
+- `POST /api/v1/supervisor/workload-assignments` - Create workload assignment
+- `GET /api/v1/supervisor/workload-assignments` - List workload assignments
+- `PUT /api/v1/supervisor/workload-assignments/:id` - Update assignment
+- `GET /api/v1/metrics/workloads` - Get workload analytics
+
+#### Performance Management
+- `GET /api/v1/supervisor/staff-performance` - Get staff performance data
+- `PUT /api/v1/supervisor/staff-performance/:id/skills` - Update skills assessment
+- `GET /api/v1/supervisor/performance-goals` - List performance goals
+- `POST /api/v1/supervisor/performance-goals` - Create performance goal
+- `PUT /api/v1/supervisor/performance-goals/:id` - Update performance goal
+- `DELETE /api/v1/supervisor/performance-goals/:id` - Delete performance goal
+
+### Supervisor UI Components
+
+#### Dashboard Page (`SupervisorDashboardPage.tsx`)
+```typescript
+// Key Features:
+- Real-time department metrics cards
+- Staff performance leaderboard
+- Pending quality reviews list
+- Upcoming goal deadlines
+- Request distribution charts
+- SLA compliance indicators
+- Workload balance visualization
+```
+
+#### Assignment Page (`SupervisorAssignPage.tsx`)
+```typescript
+// Key Features:
+- Drag-and-drop request assignment
+- Staff availability calendar
+- Skills matching matrix
+- Workload distribution view
+- Auto-assignment suggestions
+- Bulk assignment operations
+```
+
+### Role-Based Permissions for Supervisors
+
+```typescript
+const SUPERVISOR_PERMISSIONS = {
+  // Request Management
+  viewDepartmentRequests: true,
+  assignRequests: true,
+  changeRequestStatus: true,
+  createInternalComments: true,
+  
+  // Staff Management
+  viewStaffPerformance: true,
+  createQualityReviews: true,
+  setPerformanceGoals: true,
+  updateSkillsAssessment: true,
+  
+  // Analytics Access
+  viewDepartmentMetrics: true,
+  generateReports: true,
+  exportData: true,
+  
+  // Restrictions
+  viewOtherDepartments: false,
+  modifySystemSettings: false,
+  accessFeatureFlags: false
+};
+```
+
 ## Testing Infrastructure & QA Framework
 
 ### Testing Strategy Overview

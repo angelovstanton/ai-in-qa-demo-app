@@ -18,6 +18,7 @@ import {
   Divider,
   InputAdornment,
   IconButton,
+  Autocomplete,
 } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAdd } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
@@ -25,32 +26,113 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { countries } from '../data/countries';
+import RegistrationSuccess from '../components/RegistrationSuccess';
 
 // Enhanced validation schema for registration
 const registrationSchema = z.object({
   // Basic Information
-  firstName: z.string().min(2, 'First name must be at least 2 characters').max(50, 'First name too long'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50, 'Last name too long'),
-  email: z.string().email('Invalid email address'),
+  firstName: z.string()
+    .trim()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'First name must contain only letters (special characters allowed: space, hyphen, apostrophe between words)')
+    .refine(val => val.length >= 2, 'First name must be at least 2 characters'),
   
-  // Password Requirements
+  lastName: z.string()
+    .trim()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'Last name must contain only letters (special characters allowed: space, hyphen, apostrophe between words)')
+    .refine(val => val.length >= 2, 'Last name must be at least 2 characters'),
+  
+  email: z.string()
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address')
+    .max(100, 'Email cannot exceed 100 characters')
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/, 
+      'Email must be in format: username@domain.com')
+    .refine(val => !val.includes('..'), 'Email cannot contain consecutive dots')
+    .refine(val => {
+      const [localPart] = val.split('@');
+      return localPart.length >= 1 && localPart.length <= 64;
+    }, 'Email username must be between 1 and 64 characters'),
+  
+  // Password Requirements with enhanced validation
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-      'Password must contain uppercase, lowercase, number and special character'),
+    .max(72, 'Password cannot exceed 72 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[@$!%*?&#^()]/, 'Password must contain at least one special character (@$!%*?&#^())')
+    .refine(val => !/\s/.test(val), 'Password cannot contain spaces')
+    .refine(val => !/(012|123|234|345|456|567|678|789|890|098|987|876|765|654|543|432|321|210)/.test(val), 
+      'Password cannot contain sequential numbers')
+    .refine(val => !/(.)\1{2,}/.test(val), 'Password cannot contain more than 2 repeated characters'),
+  
   confirmPassword: z.string(),
   
-  // Contact Information
+  // Contact Information with international support
   phone: z.string()
-    .min(10, 'Phone number must be at least 10 digits')
-    .regex(/^\d{10,15}$/, 'Phone number must contain only digits'),
+    .trim()
+    .regex(/^[+]?[1-9][0-9]{9,14}$/, 'Phone number must start with country code (+1) or area code, 10-15 digits total')
+    .refine(val => {
+      const cleaned = val.replace(/[^0-9]/g, '');
+      return cleaned.length >= 10 && cleaned.length <= 15;
+    }, 'Phone number must be 10-15 digits')
+    .refine(val => {
+      // Check for valid phone patterns (not all same digit, not sequential)
+      const cleaned = val.replace(/[^0-9]/g, '');
+      return !/^(\d)\1+$/.test(cleaned) && !/^(012345|123456|234567|345678|456789|567890|678901|789012|890123|901234)/.test(cleaned);
+    }, 'Please enter a valid phone number'),
   
-  // Address Information
-  streetAddress: z.string().min(5, 'Street address is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().min(2, 'State/Province is required'),
-  postalCode: z.string().min(5, 'Valid postal code required'),
-  country: z.string().min(2, 'Country is required'),
+  // Address Information with enhanced validation
+  streetAddress: z.string()
+    .trim()
+    .min(5, 'Street address must be at least 5 characters')
+    .max(100, 'Street address cannot exceed 100 characters')
+    .regex(/^[0-9]+[a-zA-Z0-9\s,.-]*$/, 'Street address must start with a number (e.g., 123 Main St)')
+    .refine(val => {
+      // Must contain at least one number and one letter
+      return /\d/.test(val) && /[a-zA-Z]/.test(val);
+    }, 'Street address must contain both numbers and letters'),
+  
+  city: z.string()
+    .trim()
+    .min(2, 'City must be at least 2 characters')
+    .max(50, 'City cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'City name must contain only letters'),
+  
+  state: z.string()
+    .trim()
+    .min(2, 'State/Province must be at least 2 characters')
+    .max(50, 'State/Province cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'State/Province must contain only letters'),
+  
+  postalCode: z.string()
+    .trim()
+    .refine(val => {
+      // US ZIP code (5 digits or 5+4)
+      const usZip = /^\d{5}(-\d{4})?$/;
+      // Canadian postal code
+      const caPostal = /^[A-Z]\d[A-Z] ?\d[A-Z]\d$/i;
+      // UK postal code
+      const ukPostal = /^[A-Z]{1,2}\d{1,2}[A-Z]? ?\d[A-Z]{2}$/i;
+      // Generic international (alphanumeric with optional spaces/hyphens)
+      const generic = /^[A-Z0-9]{3,10}$/i;
+      
+      return usZip.test(val) || caPostal.test(val) || ukPostal.test(val) || generic.test(val);
+    }, 'Invalid postal/ZIP code format (examples: 12345, K1A 0B1, SW1A 1AA)'),
+  
+  country: z.string()
+    .min(2, 'Country is required')
+    .max(50, 'Country name too long'),
   
   // Communication Preferences
   preferredLanguage: z.enum(['EN', 'BG', 'ES', 'FR']),
@@ -80,18 +162,6 @@ const registrationSchema = z.object({
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
 
-const countries = [
-  'United States',
-  'Canada',
-  'United Kingdom',
-  'Bulgaria',
-  'Germany',
-  'France',
-  'Spain',
-  'Italy',
-  'Other',
-];
-
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -99,6 +169,10 @@ const RegistrationPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
   const {
     control,
@@ -145,14 +219,36 @@ const RegistrationPage: React.FC = () => {
         password: data.password,
       };
 
-      await api.post('/auth/register', apiData);
+      const response = await api.post('/auth/register', apiData);
       
-      setSuccess('Registration successful! Please login with your credentials.');
+      // Log confirmation link to browser console
+      if (response.data.requiresEmailConfirmation) {
+        console.log('%c========================================', 'color: #4CAF50; font-weight: bold');
+        console.log('%c📧 EMAIL CONFIRMATION REQUIRED', 'color: #2196F3; font-size: 16px; font-weight: bold');
+        console.log('%c========================================', 'color: #4CAF50; font-weight: bold');
+        console.log('%cUser:', 'font-weight: bold', data.email);
+        
+        // Show actual confirmation link in development
+        if (response.data.confirmationLink) {
+          console.log('%cConfirmation Link:', 'color: #2196F3; font-weight: bold', response.data.confirmationLink);
+          console.log('%cToken:', 'font-weight: bold', response.data.confirmationToken);
+        } else {
+          console.log('%cNote:', 'color: #FF9800; font-weight: bold', 'Check the API console for the actual confirmation link');
+        }
+        
+        console.log('%c========================================', 'color: #4CAF50; font-weight: bold');
+        
+        setSuccess('Registration successful! Please check your email (see browser console and API console) to confirm your account.');
+      } else {
+        setSuccess('Registration successful! Please login with your credentials.');
+      }
       
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      // Don't redirect immediately if email confirmation is required
+      if (!response.data.requiresEmailConfirmation) {
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      }
 
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Registration failed. Please try again.');
@@ -414,21 +510,25 @@ const RegistrationPage: React.FC = () => {
             <Controller
               name="country"
               control={control}
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Country</InputLabel>
-                  <Select
-                    {...field}
-                    label="Country"
-                    data-testid="cs-registration-country"
-                  >
-                    {countries.map((country) => (
-                      <MenuItem key={country} value={country}>
-                        {country}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+              render={({ field: { onChange, value } }) => (
+                <Autocomplete
+                  value={value || 'United States'}
+                  onChange={(_, newValue) => onChange(newValue || '')}
+                  options={countries}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Country"
+                      margin="normal"
+                      error={!!errors.country}
+                      helperText={errors.country?.message}
+                      data-testid="cs-registration-country"
+                      required
+                    />
+                  )}
+                  fullWidth
+                  disableClearable
+                />
               )}
             />
 
@@ -487,9 +587,9 @@ const RegistrationPage: React.FC = () => {
                         data-testid="cs-registration-language"
                       >
                         <MenuItem value="EN">English</MenuItem>
-                        <MenuItem value="BG">?????????</MenuItem>
-                        <MenuItem value="ES">Espa�ol</MenuItem>
-                        <MenuItem value="FR">Fran�ais</MenuItem>
+                        <MenuItem value="BG">Български</MenuItem>
+                        <MenuItem value="ES">Español</MenuItem>
+                        <MenuItem value="FR">Français</MenuItem>
                       </Select>
                     </FormControl>
                   )}
@@ -575,7 +675,7 @@ const RegistrationPage: React.FC = () => {
                   label={
                     <Typography variant="body2">
                       I agree to the{' '}
-                      <Link href="#" color="primary">
+                      <Link href="/terms" target="_blank" color="primary">
                         Terms and Conditions
                       </Link>
                     </Typography>
@@ -606,7 +706,7 @@ const RegistrationPage: React.FC = () => {
                   label={
                     <Typography variant="body2">
                       I agree to the{' '}
-                      <Link href="#" color="primary">
+                      <Link href="/privacy" target="_blank" color="primary">
                         Privacy Policy
                       </Link>
                     </Typography>

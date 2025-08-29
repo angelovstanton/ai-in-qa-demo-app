@@ -226,6 +226,11 @@ const LoginPage: React.FC = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <Link component={RouterLink} to="/forgot-password" color="primary" data-testid="cs-login-forgot-password-link">
+                  Forgot Password?
+                </Link>
+              </Typography>
               <Typography variant="body2">
                 Don't have an account?{' '}
                 <Link component={RouterLink} to="/register" color="primary" data-testid="cs-login-register-link">

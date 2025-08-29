@@ -9,9 +9,24 @@ const prisma = new PrismaClient();
 
 // Validation schemas
 const registerSchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email(),
-  password: z.string().min(6)
+  name: z.string()
+    .min(3, 'Name must be at least 3 characters')
+    .max(100, 'Name cannot exceed 100 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я\s'-]+$/, 'Name can only contain letters, spaces, hyphens and apostrophes')
+    .refine(val => val.trim().length >= 3, 'Name must be at least 3 characters (excluding spaces)')
+    .refine(val => !val.includes('  '), 'Name cannot contain consecutive spaces'),
+  email: z.string()
+    .email('Invalid email address')
+    .toLowerCase()
+    .max(100, 'Email cannot exceed 100 characters')
+    .refine(val => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val), 'Email format is invalid'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(72, 'Password cannot exceed 72 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[@$!%*?&#^()]/, 'Password must contain at least one special character')
 });
 
 const loginSchema = z.object({
@@ -42,30 +57,42 @@ router.post('/register', async (req: Request, res: Response) => {
     // Hash password
     const passwordHash = await bcrypt.hash(validatedData.password, 10);
 
-    // Create user (default role: CITIZEN)
+    // Generate email confirmation token
+    const confirmationToken = Buffer.from(`confirm:${validatedData.email}:${Date.now()}`).toString('base64');
+    const confirmationLink = `http://localhost:5173/confirm-email?token=${confirmationToken}`;
+    
+    // Create user (default role: CITIZEN, unconfirmed)
     const user = await prisma.user.create({
       data: {
         name: validatedData.name,
         email: validatedData.email,
         passwordHash,
-        role: 'CITIZEN'
+        role: 'CITIZEN',
+        emailConfirmed: false,
+        emailConfirmationToken: confirmationToken
       }
     });
 
-    // Generate token
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role
-    });
+    // Log confirmation link to console (in production, this would be sent via email)
+    console.log('\n========================================');
+    console.log('📧 EMAIL CONFIRMATION REQUIRED');
+    console.log('========================================');
+    console.log(`User: ${user.email}`);
+    console.log(`Confirmation Link: ${confirmationLink}`);
+    console.log('Please click the link above to confirm your email address.');
+    console.log('========================================\n');
 
     res.status(201).json({
-      accessToken: token,
+      message: 'Registration successful! Please check your email (console) to confirm your account.',
+      requiresEmailConfirmation: true,
+      // In development, include the confirmation link for testing (remove in production!)
+      ...(process.env.NODE_ENV !== 'production' && { confirmationToken, confirmationLink }),
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        emailConfirmed: false
       },
       correlationId: res.locals.correlationId
     });
@@ -219,17 +246,43 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
   }
 });
 
-// Profile update schema for API - matches frontend form fields
+// Profile update schema for API - with comprehensive validation
 const profileUpdateSchema = z.object({
-  firstName: z.string().min(1).max(50).optional(),
-  lastName: z.string().min(1).max(50).optional(),
-  phone: z.string().optional(),
-  alternatePhone: z.string().optional(),
-  streetAddress: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().optional(),
+  firstName: z.string()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я\s'-]+$/, 'First name contains invalid characters')
+    .optional(),
+  lastName: z.string()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я\s'-]+$/, 'Last name contains invalid characters')
+    .optional(),
+  phone: z.string()
+    .regex(/^[+]?[0-9]{10,15}$/, 'Invalid phone number format')
+    .optional(),
+  alternatePhone: z.string()
+    .regex(/^[+]?[0-9]{10,15}$/, 'Invalid phone number format')
+    .optional(),
+  streetAddress: z.string()
+    .min(5, 'Street address must be at least 5 characters')
+    .max(100, 'Street address cannot exceed 100 characters')
+    .optional(),
+  city: z.string()
+    .min(2, 'City must be at least 2 characters')
+    .max(50, 'City cannot exceed 50 characters')
+    .optional(),
+  state: z.string()
+    .min(2, 'State/Province must be at least 2 characters')
+    .max(50, 'State/Province cannot exceed 50 characters')
+    .optional(),
+  postalCode: z.string()
+    .regex(/^[A-Z0-9\s-]+$/i, 'Invalid postal code format')
+    .optional(),
+  country: z.string()
+    .min(2, 'Country must be at least 2 characters')
+    .max(50, 'Country cannot exceed 50 characters')
+    .optional(),
   emailNotifications: z.boolean().optional(),
   smsNotifications: z.boolean().optional(),
   marketingEmails: z.boolean().optional(),
@@ -388,6 +441,220 @@ router.post('/change-password', authenticateToken, async (req: AuthenticatedRequ
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to change password',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// GET /api/v1/auth/confirm-email - Confirm email address
+router.get('/confirm-email', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or missing confirmation token',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Find user with matching token
+    const user = await prisma.user.findFirst({
+      where: { emailConfirmationToken: token }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: 'TOKEN_NOT_FOUND',
+          message: 'Invalid or expired confirmation token',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update user as confirmed
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailConfirmed: true,
+        emailConfirmationToken: null
+      }
+    });
+
+    res.json({
+      message: 'Email confirmed successfully! You can now login.',
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to confirm email',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// POST /api/v1/auth/forgot-password - Request password reset
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        error: {
+          code: 'EMAIL_REQUIRED',
+          message: 'Email address is required',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    // Always return success even if user doesn't exist (security best practice)
+    if (!user) {
+      return res.json({
+        message: 'If an account exists with this email, a password reset link has been sent.',
+        correlationId: res.locals.correlationId
+      });
+    }
+
+    // Generate password reset token
+    const resetToken = Buffer.from(`reset:${email}:${Date.now()}`).toString('base64');
+    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+    // Save reset token to user
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetExpires: new Date(Date.now() + 3600000) // 1 hour expiry
+      }
+    });
+
+    // Log reset link to console (in production, this would be sent via email)
+    console.log('\n========================================');
+    console.log('🔐 PASSWORD RESET REQUESTED');
+    console.log('========================================');
+    console.log(`User: ${user.email}`);
+    console.log(`Reset Link: ${resetLink}`);
+    console.log('This link will expire in 1 hour.');
+    console.log('========================================\n');
+
+    res.json({
+      message: 'If an account exists with this email, a password reset link has been sent.',
+      // In development, include the token for testing (remove in production!)
+      ...(process.env.NODE_ENV !== 'production' && { resetToken, resetLink }),
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process password reset request',
+        correlationId: res.locals.correlationId
+      }
+    });
+  }
+});
+
+// POST /api/v1/auth/reset-password - Reset password with token
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_REQUEST',
+          message: 'Token and new password are required',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Validate new password
+    const passwordValidation = z.string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(72, 'Password cannot exceed 72 characters')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+        'Password must contain uppercase, lowercase, number and special character');
+    
+    try {
+      passwordValidation.parse(newPassword);
+    } catch (validationError) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_PASSWORD',
+          message: 'Password does not meet requirements',
+          details: validationError,
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Find user with valid reset token
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or expired reset token',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update user password and clear reset token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null
+      }
+    });
+
+    console.log('\n========================================');
+    console.log('✅ PASSWORD RESET SUCCESSFUL');
+    console.log('========================================');
+    console.log(`User: ${user.email}`);
+    console.log('Password has been successfully reset.');
+    console.log('========================================\n');
+
+    res.json({
+      message: 'Password has been reset successfully. Please login with your new password.',
+      correlationId: res.locals.correlationId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to reset password',
         correlationId: res.locals.correlationId
       }
     });

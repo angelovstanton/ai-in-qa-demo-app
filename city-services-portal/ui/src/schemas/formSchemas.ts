@@ -359,26 +359,77 @@ export type SearchFilterData = z.infer<typeof searchFilterSchema>;
 // Profile Update Schema - only includes fields actually rendered in the form
 export const profileUpdateSchema = z.object({
   // Personal Information (required)
-  firstName: ValidationPatterns.name,
-  lastName: ValidationPatterns.name,
+  firstName: z.string()
+    .trim()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'First name must contain only letters'),
+  
+  lastName: z.string()
+    .trim()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 
+      'Last name must contain only letters'),
   
   // Contact Information (optional)
-  phone: ValidationPatterns.phone.optional(),
-  alternatePhone: z.string().optional().refine((val) => {
-    // If empty or undefined, it's valid (optional)
+  phone: z.string().optional().refine((val) => {
     if (!val || val.trim().length === 0) return true;
-    // If provided, must match phone pattern
-    return /^[\+]?[1-9][\d]{9,14}$/.test(val) && val.length >= 10 && val.length <= 15;
-  }, {
-    message: 'Please enter a valid phone number (10-15 digits, optional + prefix)'
-  }),
+    const cleaned = val.trim();
+    return /^[+]?[1-9][0-9]{9,14}$/.test(cleaned);
+  }, 'Phone must be 10-15 digits, optionally starting with +')
+  .refine(val => {
+    if (!val || val.trim().length === 0) return true;
+    const cleaned = val.replace(/[^0-9]/g, '');
+    return !/^(\d)\1+$/.test(cleaned);
+  }, 'Please enter a valid phone number'),
+  
+  alternatePhone: z.string().optional().refine((val) => {
+    if (!val || val.trim().length === 0) return true;
+    const cleaned = val.trim();
+    return /^[+]?[1-9][0-9]{9,14}$/.test(cleaned);
+  }, 'Phone must be 10-15 digits, optionally starting with +'),
   
   // Address Information (optional)
-  streetAddress: ValidationPatterns.streetAddress.optional(),
-  city: ValidationPatterns.city.optional(),
-  state: ValidationPatterns.state.optional(),
-  postalCode: ValidationPatterns.postalCode.optional(),
-  country: ValidationPatterns.country.optional(),
+  streetAddress: z.string()
+    .trim()
+    .min(5, 'Street address must be at least 5 characters')
+    .max(100, 'Street address cannot exceed 100 characters')
+    .regex(/^[0-9]+[a-zA-Z0-9\s,.-]*$/, 'Street address must start with a number')
+    .optional(),
+  
+  city: z.string()
+    .trim()
+    .min(2, 'City must be at least 2 characters')
+    .max(50, 'City cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 'City must contain only letters')
+    .optional(),
+  
+  state: z.string()
+    .trim()
+    .min(2, 'State/Province must be at least 2 characters')
+    .max(50, 'State/Province cannot exceed 50 characters')
+    .regex(/^[a-zA-ZÀ-ÿĀ-žА-я]+([\s'-][a-zA-ZÀ-ÿĀ-žА-я]+)*$/, 'State must contain only letters')
+    .optional(),
+  
+  postalCode: z.string()
+    .trim()
+    .refine(val => {
+      if (!val) return true; // Optional
+      const usZip = /^\d{5}(-\d{4})?$/;
+      const caPostal = /^[A-Z]\d[A-Z] ?\d[A-Z]\d$/i;
+      const ukPostal = /^[A-Z]{1,2}\d{1,2}[A-Z]? ?\d[A-Z]{2}$/i;
+      const generic = /^[A-Z0-9]{3,10}$/i;
+      return usZip.test(val) || caPostal.test(val) || ukPostal.test(val) || generic.test(val);
+    }, 'Invalid postal/ZIP code format')
+    .optional(),
+  
+  country: z.string()
+    .trim()
+    .min(2, 'Country must be at least 2 characters')
+    .max(50, 'Country cannot exceed 50 characters')
+    .optional(),
   
   // Notification Preferences (only the ones rendered in the form)
   emailNotifications: z.boolean().default(true),
@@ -394,7 +445,15 @@ export const passwordChangeSchema = z.object({
   currentPassword: z.string()
     .min(1, 'Current password is required'),
   
-  newPassword: ValidationPatterns.password,
+  newPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(72, 'Password cannot exceed 72 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[@$!%*?&#^()]/, 'Password must contain at least one special character')
+    .refine(val => !/\s/.test(val), 'Password cannot contain spaces')
+    .refine(val => !/(.)\1{2,}/.test(val), 'Password cannot contain more than 2 repeated characters'),
   
   confirmNewPassword: z.string()
     .min(1, 'Please confirm your new password'),

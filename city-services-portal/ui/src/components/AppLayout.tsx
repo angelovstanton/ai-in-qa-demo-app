@@ -110,12 +110,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         icon: <PublicIcon />,
         testId: 'cs-nav-resolved-cases'
       },
-      { 
+      // Hide ranklist from Clerk role
+      ...(user.role !== 'CLERK' ? [{
         label: t('nav.ranklist'), 
         href: '/ranklist', 
         icon: <PublicIcon />,
         testId: 'cs-nav-ranklist'
-      },
+      }] : []),
     ];
 
     const roleSpecificItems = [];

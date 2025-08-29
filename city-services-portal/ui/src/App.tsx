@@ -10,6 +10,11 @@ import ErrorBoundary from './components/ErrorBoundary';
 import PublicBoardPage from './pages/PublicBoardPage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import EmailConfirmationPage from './pages/EmailConfirmationPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import RequestDetailPage from './pages/RequestDetailPage';
 import CitizenRequestsPage from './pages/citizen/CitizenRequestsPage';
 import NewRequestPage from './pages/citizen/NewRequestPage';
@@ -86,6 +91,43 @@ const AppRoutes: React.FC = () => {
               <RegistrationPage />
             </PublicRoute>
           } 
+        />
+        
+        <Route 
+          path="/forgot-password" 
+          element={
+            <PublicRoute>
+              <ForgotPasswordPage />
+            </PublicRoute>
+          } 
+        />
+        
+        <Route 
+          path="/reset-password" 
+          element={
+            <PublicRoute>
+              <ResetPasswordPage />
+            </PublicRoute>
+          } 
+        />
+        
+        <Route 
+          path="/confirm-email" 
+          element={
+            <PublicRoute>
+              <EmailConfirmationPage />
+            </PublicRoute>
+          } 
+        />
+        
+        <Route 
+          path="/terms" 
+          element={<TermsPage />} 
+        />
+        
+        <Route 
+          path="/privacy" 
+          element={<PrivacyPage />} 
         />
         
         {/* Public board (accessible to everyone) */}
