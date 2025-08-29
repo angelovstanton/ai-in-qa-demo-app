@@ -1,16 +1,241 @@
-# React + MUI Ground Rules
-- Prefer MUI components for all UI: Stepper, Dialog, TextField, Select, Autocomplete, Snackbar, DataGrid, DateTimePicker.
-- All interactive elements MUST have data-testid="cs-<page>-<element>" and an accessible name (label/aria-label).
-- Use controlled components with react-hook-form + zod for validation. Show helperText on errors.
-- DataGrid: enable server-side sorting/filtering/pagination. Route params: page/size/sort/filter ? call API.
-- Keep DOM stable for WebDriver: avoid random ids; if MUI generates ids, override via `id` when necessary.
-- Use ThemeProvider with a custom theme; store design tokens in theme (spacing, palette, shape).
-- i18n: wire MUI locale (BG/EN) and expose a Language switch in the top bar.
-- Do not inline CSS; use `sx` prop or styled API consistently.
-- Each feature page lives under /ui/src/features/<area>/ with index.tsx and subcomponents.
+# AI in QA Demo Application - Development Guidelines
 
-# API Quality Gate
-- OpenAPI documented and served at /api-docs.
-- Errors use { error: { code, message, details?, correlationId } } and every response carries a correlationId.
-- Lists: filtering, sorting whitelist, pagination + X-Total-Count.
-- POST /requests requires Idempotency-Key; PATCH uses If-Match version ? respond 409 on mismatch.
+## 🏗️ Project Structure Overview
+
+### Monorepo Layout
+```
+ai-in-qa-demo-app/
+├── city-services-portal/          # Main application
+│   ├── api/                       # Node.js + Express + TypeScript backend
+│   │   ├── src/
+│   │   │   ├── routes/            # API endpoints (auth, requests, admin, attachments)
+│   │   │   ├── middleware/        # Auth, error handling, feature flags
+│   │   │   ├── services/          # Business logic
+│   │   │   ├── utils/             # Utilities & helpers
+│   │   │   └── config/            # Swagger, database config
+│   │   ├── prisma/                # Database schema & seeds
+│   │   └── uploads/               # File upload storage
+│   ├── ui/                        # React + TypeScript frontend
+│   │   ├── src/
+│   │   │   ├── components/        # Reusable UI components
+│   │   │   ├── pages/             # Page components by role
+│   │   │   │   ├── citizen/       # Citizen-specific pages
+│   │   │   │   ├── clerk/         # Clerk-specific pages
+│   │   │   │   ├── supervisor/    # Supervisor pages
+│   │   │   │   ├── agent/         # Field agent pages
+│   │   │   │   └── admin/         # Admin pages
+│   │   │   ├── hooks/             # Custom React hooks
+│   │   │   ├── contexts/          # React contexts (Auth, Language)
+│   │   │   ├── types/             # TypeScript definitions
+│   │   │   ├── lib/               # Utility libraries
+│   │   │   └── theme/             # MUI theme configuration
+│   │   └── public/                # Static assets
+│   ├── docker/                    # Docker configuration
+│   └── docs/                      # Documentation
+├── instructions/                  # Development requirements & tasks
+└── .github/                       # GitHub workflows & guidelines
+```
+
+## 🎯 Core Development Principles
+
+### React + MUI Guidelines
+- **Prefer MUI components**: Stepper, Dialog, TextField, Select, Autocomplete, Snackbar, DataGrid, DateTimePicker
+- **Test Selectors**: ALL interactive elements MUST have `data-testid="cs-<page>-<element>"` and accessible names
+- **Form Validation**: Use react-hook-form + zod with comprehensive validation and real-time feedback
+- **DataGrid**: Enable server-side sorting/filtering/pagination with API integration
+- **DOM Stability**: Avoid random IDs; override MUI-generated IDs when necessary for WebDriver compatibility
+- **Theme**: Use ThemeProvider with custom theme; store design tokens in theme (spacing, palette, shape)
+- **i18n**: Wire MUI locale (BG/EN) with language switch in top bar
+- **Styling**: Use `sx` prop or styled API consistently; no inline CSS
+- **Feature Organization**: Each feature page under `/ui/src/pages/<role>/` with index.tsx and subcomponents
+
+### API Quality Standards
+- **OpenAPI Documentation**: Served at `/api-docs` with comprehensive validation schemas
+- **Error Handling**: Use `{ error: { code, message, details?, correlationId } }` format
+- **Correlation IDs**: Every response carries a correlationId for request tracking
+- **Pagination**: Lists include filtering, sorting whitelist, pagination + X-Total-Count header
+- **Idempotency**: POST /requests requires Idempotency-Key header
+- **Optimistic Locking**: PATCH uses If-Match version header; respond 409 on mismatch
+- **Input Validation**: ALL API inputs validated with Zod schemas on server side
+
+## 🔐 Security & Validation Requirements
+
+### Frontend Validation (MANDATORY)
+- **Zod Schemas**: Type-safe validation with comprehensive rules for all forms
+- **Real-time Validation**: Debounced feedback (300ms default) with user-friendly messages
+- **XSS Prevention**: Input sanitization for all text fields with script tag detection
+- **Password Strength**: Real-time strength indicator with visual feedback
+- **File Upload Security**: Type, size, and security validation with progress indicators
+- **Accessibility**: ARIA attributes and screen reader support for all validation states
+- **Rate Limiting**: Form submission rate limiting (5 attempts per minute)
+
+### Backend Security (MANDATORY)
+- **Input Sanitization**: All text inputs sanitized to prevent XSS attacks
+- **Validation Patterns**: Email, phone, name, password, safe text validation
+- **Cross-field Validation**: Password confirmation, date ranges, emergency requests
+- **File Upload Security**: Type, size, and security checks with virus scan preparation
+- **Account Lockout**: 5 failed login attempts trigger 30-minute lockout
+- **Audit Logging**: All validation failures and security events logged
+
+## 🧪 QA Testing Features
+
+### Feature Flags (Bug Simulation)
+Access via Admin panel → Feature Flags:
+- `API_Random500` - 5% random server errors
+- `UI_WrongDefaultSort` - Wrong default sorting behavior
+- `API_SlowRequests` - 10% slow API responses (2.5s delay)
+- `API_UploadIntermittentFail` - Random upload failures
+
+### Test Selectors (Stable for Automation)
+```typescript
+// Authentication
+"cs-login-email", "cs-login-password", "cs-login-submit"
+"cs-registration-first-name", "cs-registration-email"
+
+// Request Management
+"cs-requests-create-button", "cs-citizen-requests-grid"
+"cs-new-request-wizard", "cs-new-request-title"
+"cs-inbox-request-list", "cs-inbox-triage-button"
+
+// Admin Features
+"cs-admin-flag-toggle-{flagName}"
+"cs-admin-seed-database"
+```
+
+### Workflow State Machine
+```
+SUBMITTED → TRIAGED → IN_PROGRESS → RESOLVED → CLOSED
+              ↓           ↓           ↓
+           REJECTED  WAITING_ON_CITIZEN  ↓
+                          ↓         REOPENED
+                      IN_PROGRESS
+```
+
+## 👥 User Roles & Capabilities
+
+### Role-based Access Control
+- **Citizen** (john@example.com): Submit requests, track status, upload attachments
+- **Clerk** (mary.clerk@city.gov): Triage requests, update status, manage inbox
+- **Supervisor** (supervisor@city.gov): Assign tasks, oversee workflow, approve actions
+- **Field Agent** (field.agent@city.gov): Complete assigned tasks, update progress
+- **Admin** (admin@city.gov): Manage feature flags, system configuration
+
+**Password for all accounts**: `password123`
+
+## 🚀 Development Commands
+
+### API Development
+```bash
+cd city-services-portal/api
+npm run dev          # Start development server (port 3001)
+npm run db:push      # Apply database schema
+npm run db:seed      # Seed with test data
+npm run db:studio    # Open Prisma Studio
+npm run build        # Build for production
+```
+
+### UI Development
+```bash
+cd city-services-portal/ui
+npm run dev          # Start development server (port 5173)
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
+
+### Docker Development
+```bash
+cd city-services-portal
+./start-docker.bat   # Windows
+# OR
+make start           # Mac/Linux
+```
+
+## 📊 Database Schema Highlights
+
+### Core Models
+- **User**: Authentication, roles, profile data, preferences
+- **ServiceRequest**: Main entity with comprehensive fields and status workflow
+- **Comment**: Request comments with visibility controls
+- **Attachment**: File uploads with security metadata
+- **Department**: Organizational structure
+- **FeatureFlag**: Runtime configuration for testing scenarios
+- **EventLog**: Audit trail for all request changes
+
+### Key Features
+- **Optimistic Locking**: Version field for concurrent update handling
+- **Audit Trail**: EventLog for all status changes and actions
+- **Test Data Marking**: isTestData flag for easy cleanup
+- **Security Fields**: Failed login attempts, lockout timestamps
+
+## 🔧 Key Implementation Details
+
+### Form Validation Patterns
+- **Email**: Format validation, uniqueness checking, business email support
+- **Password**: 8+ chars, uppercase, lowercase, number, special character
+- **Phone**: International format support, length validation
+- **Address**: Comprehensive location validation with geocoding preparation
+- **File Upload**: Type/size validation, security scanning preparation
+
+### API Endpoints
+- **Authentication**: `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/me`
+- **Requests**: `/api/v1/requests` (CRUD with filtering/sorting/pagination)
+- **Attachments**: `/api/v1/requests/:id/attachments` (file upload/download)
+- **Admin**: `/api/v1/admin/flags`, `/api/v1/admin/seed` (feature flags & data management)
+- **Health**: `/health`, `/api-docs` (monitoring & documentation)
+
+### Error Handling
+- **Structured Errors**: Consistent error format with correlation IDs
+- **Validation Errors**: Field-specific error messages with accessibility support
+- **Network Recovery**: Retry mechanisms and error boundary handling
+- **User Feedback**: Clear error messages with actionable guidance
+
+## 🎨 UI/UX Standards
+
+### Component Guidelines
+- **Responsive Design**: Mobile-first approach with breakpoint considerations
+- **Loading States**: Skeleton loaders and progress indicators
+- **Error States**: Clear error messages with recovery options
+- **Success Feedback**: Confirmation messages and visual feedback
+- **Accessibility**: WCAG 2.1 AA compliance with keyboard navigation
+
+### Theme Configuration
+- **Color Palette**: Primary, secondary, error, warning, success colors
+- **Typography**: Consistent font hierarchy and spacing
+- **Spacing**: 8px base unit system for consistent layouts
+- **Breakpoints**: Mobile (320px), tablet (768px), desktop (1024px+)
+
+## 📝 Documentation & Testing
+
+### Available Documentation
+- **API Docs**: http://localhost:3001/api-docs (Swagger UI)
+- **Architecture**: `.github/ARCHITECTURE.md`
+- **Testing Guide**: `.github/TESTING_GUIDE.md`
+- **Validation Summary**: `.github/VALIDATION_IMPLEMENTATION_SUMMARY.md`
+- **Requirements**: `instructions/requirements.md`
+
+### Testing Strategy
+- **Unit Tests**: Individual component and function testing
+- **Integration Tests**: API endpoint and database interaction testing
+- **E2E Tests**: Complete user workflow testing with stable selectors
+- **Accessibility Tests**: Screen reader and keyboard navigation testing
+- **Performance Tests**: Load testing and optimization validation
+
+## 🔄 Development Workflow
+
+### Code Standards
+- **TypeScript**: Strict type checking for all code
+- **ESLint + Prettier**: Consistent code formatting and linting
+- **Conventional Commits**: Structured git commit messages
+- **Error Handling**: Comprehensive error handling with user feedback
+- **Test Coverage**: Maintain high test coverage for new features
+
+### Git Workflow
+- **Feature Branches**: Create feature branches for new development
+- **Pull Requests**: Submit PRs with comprehensive descriptions
+- **Code Review**: Review for security, validation, and testing requirements
+- **Merge Strategy**: Squash and merge for clean history
+
+---
+
+**🎯 This application serves as a comprehensive testing playground for AI-powered QA tools and automated testing frameworks. Every feature is designed with testing, validation, and security in mind.**
