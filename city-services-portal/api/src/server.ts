@@ -20,6 +20,10 @@ import departmentRoutes from './routes/departments';
 import supervisorRoutes from './routes/supervisor';
 import metricsRoutes from './routes/metrics';
 import dashboardRoutes from './routes/dashboard';
+import fieldAgentRoutes from './routes/field-agent';
+import timeTrackingRoutes from './routes/time-tracking';
+import fieldPhotosRoutes from './routes/field-photos';
+import agentStatusRoutes from './routes/agent-status';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -51,7 +55,6 @@ app.use(featureFlagMiddleware);
 // Correlation ID middleware
 app.use((req, res, next) => {
   res.locals.correlationId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  console.log('JWT Secret:', process.env.JWT_SECRET); // Print the JWT secret to the console for debugging
   next();
 });
 
@@ -81,6 +84,10 @@ app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/supervisor', supervisorRoutes);
 app.use('/api/v1/metrics', metricsRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/field-agent', fieldAgentRoutes);
+app.use('/api/v1/time-tracking', timeTrackingRoutes);
+app.use('/api/v1/field-photos', fieldPhotosRoutes);
+app.use('/api/v1/agent-status', agentStatusRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

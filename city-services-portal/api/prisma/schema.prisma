@@ -69,6 +69,15 @@ model User {
   performanceGoalsAsUser   PerformanceGoal[]    @relation("GoalUser")
   performanceGoalsAsSupervisor PerformanceGoal[] @relation("GoalSupervisor")
   createdCollaborations    TeamCollaboration[]  @relation("CollaborationCreator")
+  
+  // Field Agent relations
+  fieldWorkOrders          FieldWorkOrder[]     @relation("AssignedAgent")
+  supervisedWorkOrders     FieldWorkOrder[]     @relation("SupervisorAgent")
+  agentTimeTracking        AgentTimeTracking[]
+  agentStatusUpdates       AgentStatus[]
+  fieldPhotos              FieldPhoto[]
+  additionalIssuesReported AdditionalIssue[]
+  partsUsed                PartUsage[]
 
   @@map("users")
 }
@@ -172,6 +181,9 @@ model ServiceRequest {
   // Supervisor role relations
   qualityReviews      QualityReview[]
   workloadAssignments WorkloadAssignment[]
+  
+  // Field Agent relations
+  fieldWorkOrders     FieldWorkOrder[]
 
   @@map("service_requests")
 }
@@ -383,4 +395,146 @@ model TeamCollaboration {
   creator    User       @relation("CollaborationCreator", fields: [createdBy], references: [id])
 
   @@map("team_collaborations")
+}
+
+// Field Agent Models
+
+model FieldWorkOrder {
+  id           String   @id @default(uuid())
+  requestId    String
+  assignedAgentId String
+  supervisorId String?
+  priority     String   @default("NORMAL") // EMERGENCY, HIGH, NORMAL, LOW
+  
+  // Location Intelligence
+  gpsLat       Float?
+  gpsLng       Float?
+  gpsAccuracy  Float?
+  navigationLink String?
+  estimatedTravelTime Int? // in minutes
+  optimalRoute String?   // JSON string of route points
+  
+  // Work Details
+  taskType     String
+  estimatedDuration Int    // in minutes
+  requiredSkills String?  // JSON array as string
+  requiredTools String?   // JSON array as string
+  safetyNotes  String?
+  
+  // Progress Tracking
+  status       String   @default("ASSIGNED") // ASSIGNED, EN_ROUTE, ON_SITE, IN_PROGRESS, COMPLETED, CANCELLED
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  actualDuration Int?   // in minutes
+  
+  // Documentation
+  completionNotes String?
+  citizenSignature String? // Base64 encoded signature
+  followUpRequired Boolean @default(false)
+  nextVisitScheduled DateTime?
+  
+  // System fields
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  completedAt  DateTime?
+  
+  request      ServiceRequest @relation(fields: [requestId], references: [id])
+  assignedAgent User          @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  supervisor   User?          @relation("SupervisorAgent", fields: [supervisorId], references: [id])
+  
+  // Related data
+  photos       FieldPhoto[]
+  timeTracking AgentTimeTracking[]
+  additionalIssues AdditionalIssue[]
+  partsUsed    PartUsage[]
+  
+  @@map("field_work_orders")
+}
+
+model FieldPhoto {
+  id          String   @id @default(uuid())
+  workOrderId String
+  agentId     String
+  photoType   String   // BEFORE, DURING, AFTER, ISSUE, SAFETY
+  filename    String
+  mime        String
+  size        Int
+  data        Bytes    // Store image data directly
+  caption     String?
+  gpsLat      Float?
+  gpsLng      Float?
+  timestamp   DateTime @default(now())
+  
+  workOrder   FieldWorkOrder @relation(fields: [workOrderId], references: [id])
+  agent       User           @relation(fields: [agentId], references: [id])
+  
+  @@map("field_photos")
+}
+
+model AgentTimeTracking {
+  id          String   @id @default(uuid())
+  workOrderId String
+  agentId     String
+  timeType    String   // TRAVEL, SETUP, WORK, DOCUMENTATION, BREAK
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?     // in minutes
+  notes       String?
+  
+  workOrder   FieldWorkOrder @relation(fields: [workOrderId], references: [id])
+  agent       User           @relation(fields: [agentId], references: [id])
+  
+  @@map("agent_time_tracking")
+}
+
+model AgentStatus {
+  id          String   @id @default(uuid())
+  agentId     String
+  status      String   // AVAILABLE, BUSY, BREAK, OFF_DUTY, EN_ROUTE
+  currentTaskId String?
+  currentLocation String? // JSON with lat/lng
+  vehicleStatus String? // IN_TRANSIT, PARKED, MAINTENANCE
+  estimatedAvailableTime DateTime?
+  lastUpdateTime DateTime @default(now())
+  
+  agent       User     @relation(fields: [agentId], references: [id])
+  
+  @@unique([agentId])
+  @@map("agent_status")
+}
+
+model AdditionalIssue {
+  id          String   @id @default(uuid())
+  workOrderId String
+  reportedById String
+  issueType   String
+  description String
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  location    String?
+  photoIds    String?  // JSON array of photo IDs
+  requiresFollowUp Boolean @default(true)
+  createdAt   DateTime @default(now())
+  
+  workOrder   FieldWorkOrder @relation(fields: [workOrderId], references: [id])
+  reportedBy  User           @relation(fields: [reportedById], references: [id])
+  
+  @@map("additional_issues")
+}
+
+model PartUsage {
+  id          String   @id @default(uuid())
+  workOrderId String
+  agentId     String
+  partName    String
+  partNumber  String?
+  quantity    Int
+  unitCost    Float?
+  totalCost   Float?
+  notes       String?
+  usedAt      DateTime @default(now())
+  
+  workOrder   FieldWorkOrder @relation(fields: [workOrderId], references: [id])
+  agent       User           @relation(fields: [agentId], references: [id])
+  
+  @@map("part_usage")
 }

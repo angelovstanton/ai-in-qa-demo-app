@@ -454,6 +454,206 @@ const options = {
               format: 'date-time'
             }
           }
+        },
+        FieldWorkOrder: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            requestId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            assignedAgentId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            supervisorId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            priority: {
+              type: 'string',
+              enum: ['EMERGENCY', 'HIGH', 'NORMAL', 'LOW']
+            },
+            taskType: {
+              type: 'string',
+              example: 'Street Light Repair'
+            },
+            status: {
+              type: 'string',
+              enum: ['ASSIGNED', 'EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+            },
+            estimatedDuration: {
+              type: 'integer',
+              description: 'Estimated duration in minutes'
+            },
+            actualDuration: {
+              type: 'integer',
+              description: 'Actual duration in minutes'
+            },
+            gpsLat: {
+              type: 'number',
+              format: 'double'
+            },
+            gpsLng: {
+              type: 'number',
+              format: 'double'
+            },
+            navigationLink: {
+              type: 'string',
+              format: 'uri'
+            },
+            checkInTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            checkOutTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            completionNotes: {
+              type: 'string'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            request: {
+              $ref: '#/components/schemas/ServiceRequest'
+            },
+            assignedAgent: {
+              $ref: '#/components/schemas/User'
+            }
+          }
+        },
+        AgentStatus: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            agentId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            status: {
+              type: 'string',
+              enum: ['AVAILABLE', 'BUSY', 'BREAK', 'OFF_DUTY', 'EN_ROUTE']
+            },
+            currentTaskId: {
+              type: 'string',
+              format: 'uuid',
+              nullable: true
+            },
+            currentLocation: {
+              type: 'object',
+              properties: {
+                lat: { type: 'number' },
+                lng: { type: 'number' },
+                accuracy: { type: 'number' }
+              }
+            },
+            vehicleStatus: {
+              type: 'string',
+              enum: ['IN_TRANSIT', 'PARKED', 'MAINTENANCE'],
+              nullable: true
+            },
+            lastUpdateTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            activeWorkOrder: {
+              $ref: '#/components/schemas/FieldWorkOrder'
+            }
+          }
+        },
+        AgentTimeTracking: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            workOrderId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            agentId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            timeType: {
+              type: 'string',
+              enum: ['TRAVEL', 'SETUP', 'WORK', 'DOCUMENTATION', 'BREAK']
+            },
+            startTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            endTime: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true
+            },
+            duration: {
+              type: 'integer',
+              description: 'Duration in minutes',
+              nullable: true
+            },
+            notes: {
+              type: 'string',
+              nullable: true
+            },
+            workOrder: {
+              $ref: '#/components/schemas/FieldWorkOrder'
+            }
+          }
+        },
+        FieldPhoto: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            workOrderId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            agentId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            photoType: {
+              type: 'string',
+              enum: ['BEFORE', 'DURING', 'AFTER', 'ISSUE', 'SAFETY']
+            },
+            filename: {
+              type: 'string'
+            },
+            caption: {
+              type: 'string',
+              nullable: true
+            },
+            gpsLat: {
+              type: 'number',
+              format: 'double',
+              nullable: true
+            },
+            gpsLng: {
+              type: 'number',
+              format: 'double',
+              nullable: true
+            },
+            timestamp: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
         }
       },
       responses: {
@@ -1612,6 +1812,409 @@ const options = {
               }
             },
             '401': { $ref: '#/components/responses/Unauthorized' }
+          }
+        }
+      },
+      '/api/v1/rankings/stats': {
+        get: {
+          tags: ['Rankings'],
+          summary: 'Get ranking statistics',
+          description: 'Retrieve overall ranking statistics',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'timeframe', in: 'query', schema: { type: 'string', enum: ['week', 'month', 'quarter', 'year', 'all'], default: 'month' } },
+            { name: 'category', in: 'query', schema: { type: 'string' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Ranking statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          activeCitizens: { type: 'integer' },
+                          approvedRequests: { type: 'integer' },
+                          avgApprovalRate: { type: 'number' },
+                          topPerformerGrowth: { type: 'number' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' }
+          }
+        }
+      },
+
+      // Field Agent Endpoints
+      '/api/v1/field-agent/dashboard': {
+        get: {
+          tags: ['Field Agent'],
+          summary: 'Get field agent dashboard',
+          description: 'Retrieve dashboard data for the authenticated field agent including today\'s work orders, statistics, and recent activity',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Dashboard data retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          todaysOrders: {
+                            type: 'array',
+                            items: { $ref: '#/components/schemas/FieldWorkOrder' }
+                          },
+                          statistics: {
+                            type: 'object',
+                            properties: {
+                              total: { type: 'integer' },
+                              byStatus: {
+                                type: 'object',
+                                additionalProperties: { type: 'integer' }
+                              },
+                              todayCompleted: { type: 'integer' },
+                              todayWorkTimeMinutes: { type: 'integer' }
+                            }
+                          },
+                          recentActivity: {
+                            type: 'array',
+                            items: { $ref: '#/components/schemas/AgentTimeTracking' }
+                          }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/field-agent/work-orders': {
+        get: {
+          tags: ['Field Agent'],
+          summary: 'Get work orders',
+          description: 'Retrieve paginated list of work orders for the authenticated field agent',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['ASSIGNED', 'EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] } },
+            { name: 'priority', in: 'query', schema: { type: 'string', enum: ['EMERGENCY', 'HIGH', 'NORMAL', 'LOW'] } },
+            { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['createdAt', 'priority', 'status', 'estimatedDuration'], default: 'createdAt' } },
+            { name: 'sortOrder', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'], default: 'desc' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Work orders retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FieldWorkOrder' }
+                      },
+                      pagination: { $ref: '#/components/schemas/Pagination' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/field-agent/work-orders/{id}': {
+        get: {
+          tags: ['Field Agent'],
+          summary: 'Get work order details',
+          description: 'Retrieve detailed information about a specific work order',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Work order retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/FieldWorkOrder' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        },
+        patch: {
+          tags: ['Field Agent'],
+          summary: 'Update work order',
+          description: 'Update work order status, completion notes, and other fields',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'string',
+                      enum: ['ASSIGNED', 'EN_ROUTE', 'ON_SITE', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+                    },
+                    completionNotes: { type: 'string' },
+                    followUpRequired: { type: 'boolean' },
+                    actualDuration: { type: 'integer' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Work order updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/FieldWorkOrder' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/agent-status/current': {
+        get: {
+          tags: ['Field Agent'],
+          summary: 'Get current agent status',
+          description: 'Retrieve the current status of the authenticated field agent',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Agent status retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/AgentStatus' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/agent-status': {
+        put: {
+          tags: ['Field Agent'],
+          summary: 'Update agent status',
+          description: 'Update the status of the authenticated field agent',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'string',
+                      enum: ['AVAILABLE', 'BUSY', 'BREAK', 'OFF_DUTY', 'EN_ROUTE']
+                    },
+                    currentTaskId: { type: 'string', format: 'uuid', nullable: true },
+                    currentLocation: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number' },
+                        lng: { type: 'number' }
+                      }
+                    },
+                    vehicleStatus: {
+                      type: 'string',
+                      enum: ['IN_TRANSIT', 'PARKED', 'MAINTENANCE'],
+                      nullable: true
+                    }
+                  },
+                  required: ['status']
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Agent status updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/AgentStatus' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/time-tracking/active': {
+        get: {
+          tags: ['Field Agent'],
+          summary: 'Get active time tracking',
+          description: 'Retrieve currently active time tracking session for the authenticated field agent',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Active time tracking retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/AgentTimeTracking' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/time-tracking/start': {
+        post: {
+          tags: ['Field Agent'],
+          summary: 'Start time tracking',
+          description: 'Start a new time tracking session for a work order',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    workOrderId: { type: 'string', format: 'uuid' },
+                    timeType: {
+                      type: 'string',
+                      enum: ['TRAVEL', 'SETUP', 'WORK', 'DOCUMENTATION', 'BREAK']
+                    },
+                    notes: { type: 'string' }
+                  },
+                  required: ['workOrderId', 'timeType']
+                }
+              }
+            }
+          },
+          responses: {
+            '201': {
+              description: 'Time tracking started successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/AgentTimeTracking' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/v1/time-tracking/{id}/end': {
+        post: {
+          tags: ['Field Agent'],
+          summary: 'End time tracking',
+          description: 'End an active time tracking session',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    notes: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Time tracking ended successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/AgentTimeTracking' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
           }
         }
       }

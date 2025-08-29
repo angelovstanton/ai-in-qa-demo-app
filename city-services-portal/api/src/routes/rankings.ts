@@ -80,7 +80,7 @@ router.get('/users', authenticateToken, async (req: AuthenticatedRequest, res: R
       const requests = user.createdRequests;
       const totalRequests = requests.length;
       const approvedRequests = requests.filter(r => 
-        ['RESOLVED', 'CLOSED'].includes(r.status)
+        ['RESOLVED', 'CLOSED', 'COMPLETED'].includes(r.status)
       ).length;
       const approvalRate = totalRequests > 0 ? (approvedRequests / totalRequests) * 100 : 0;
       
@@ -199,7 +199,7 @@ router.get('/stats', authenticateToken, async (req: AuthenticatedRequest, res: R
       prisma.serviceRequest.count({ 
         where: { 
           ...requestFilter, 
-          status: { in: ['RESOLVED', 'CLOSED'] } 
+          status: { in: ['RESOLVED', 'CLOSED', 'COMPLETED'] } 
         } 
       }),
       prisma.user.count({

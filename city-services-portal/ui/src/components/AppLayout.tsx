@@ -110,8 +110,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         icon: <PublicIcon />,
         testId: 'cs-nav-resolved-cases'
       },
-      // Hide ranklist from Clerk role
-      ...(user.role !== 'CLERK' ? [{
+      // Hide ranklist from Clerk and Field Agent roles
+      ...(user.role !== 'CLERK' && user.role !== 'FIELD_AGENT' ? [{
         label: t('nav.ranklist'), 
         href: '/ranklist', 
         icon: <PublicIcon />,

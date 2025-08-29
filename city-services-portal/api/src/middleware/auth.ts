@@ -97,6 +97,9 @@ export const rbacGuard = (allowedRoles: string[]) => {
   };
 };
 
+// Alias for compatibility
+export const authorizeRoles = rbacGuard;
+
 export const generateToken = (user: { id: string; email: string; role: string }) => {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },

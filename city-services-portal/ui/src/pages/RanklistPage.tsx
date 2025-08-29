@@ -221,7 +221,7 @@ const RanklistPage: React.FC = () => {
           </Button>
         </Box>
 
-        <Typography variant="body1" color="text.secondary" gutterBottom>
+        <Typography variant="body1" color="text.secondary" gutterBottom component="div">
           Recognizing citizens who contribute most effectively to community improvement
         </Typography>
 
@@ -286,7 +286,7 @@ const RanklistPage: React.FC = () => {
                   <Typography variant="h4" color="primary.main">
                     {stats.totalUsers}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" component="div">
                     Active Citizens
                   </Typography>
                 </CardContent>
@@ -300,7 +300,7 @@ const RanklistPage: React.FC = () => {
                   <Typography variant="h4" color="success.main">
                     {stats.totalApprovedRequests}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" component="div">
                     Approved Requests
                   </Typography>
                 </CardContent>
@@ -314,7 +314,7 @@ const RanklistPage: React.FC = () => {
                   <Typography variant="h4" color="warning.main">
                     {stats.averageApprovalRate}%
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" component="div">
                     Avg Approval Rate
                   </Typography>
                 </CardContent>
@@ -328,7 +328,7 @@ const RanklistPage: React.FC = () => {
                   <Typography variant="h4" color="info.main">
                     +{stats.topPerformerImprovement}%
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" component="div">
                     Top Performer Growth
                   </Typography>
                 </CardContent>
@@ -347,7 +347,7 @@ const RanklistPage: React.FC = () => {
             {loading ? (
               <Box sx={{ py: 4 }}>
                 <LinearProgress />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary" component="div" sx={{ mt: 2, textAlign: 'center' }}>
                   Loading ranking data...
                 </Typography>
               </Box>
@@ -469,7 +469,7 @@ const RanklistPage: React.FC = () => {
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   No ranking data available
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" component="div">
                   Be the first to submit approved requests and climb the leaderboard!
                 </Typography>
               </Box>
@@ -488,7 +488,7 @@ const RanklistPage: React.FC = () => {
                 <TrophyIcon sx={{ color: '#FFD700', mr: 1 }} />
                 <Typography variant="subtitle2">Gold Badge</Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" component="div">
                 90%+ approval rate with 30+ approved requests
               </Typography>
             </Grid>
@@ -498,7 +498,7 @@ const RanklistPage: React.FC = () => {
                 <TrophyIcon sx={{ color: '#C0C0C0', mr: 1 }} />
                 <Typography variant="subtitle2">Silver Badge</Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" component="div">
                 85%+ approval rate with 20+ approved requests
               </Typography>
             </Grid>
@@ -508,7 +508,7 @@ const RanklistPage: React.FC = () => {
                 <TrophyIcon sx={{ color: '#CD7F32', mr: 1 }} />
                 <Typography variant="subtitle2">Bronze Badge</Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" component="div">
                 80%+ approval rate with 10+ approved requests
               </Typography>
             </Grid>

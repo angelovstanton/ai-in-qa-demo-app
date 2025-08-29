@@ -30,6 +30,11 @@ import DepartmentMetricsPage from './pages/supervisor/DepartmentMetricsPage';
 import QualityReviewPage from './pages/supervisor/QualityReviewPage';
 import PerformanceGoalsPage from './pages/supervisor/PerformanceGoalsPage';
 import AgentTasksPage from './pages/agent/AgentTasksPage';
+import WorkOrdersPage from './pages/agent/WorkOrdersPage';
+import WorkOrderDetailPage from './pages/agent/WorkOrderDetailPage';
+import TimeTrackingPage from './pages/agent/TimeTrackingPage';
+import PhotosPage from './pages/agent/PhotosPage';
+import MapViewPage from './pages/agent/MapViewPage';
 import AdminFlagsPage from './pages/admin/AdminFlagsPage';
 import EditProfilePage from './pages/EditProfilePage';
 
@@ -323,6 +328,56 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
               <AppLayout>
                 <AgentTasksPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/work-orders" 
+          element={
+            <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
+              <AppLayout>
+                <WorkOrdersPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/work-orders/:id" 
+          element={
+            <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
+              <AppLayout>
+                <WorkOrderDetailPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/time-tracking" 
+          element={
+            <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
+              <AppLayout>
+                <TimeTrackingPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/photos" 
+          element={
+            <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
+              <AppLayout>
+                <PhotosPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/map" 
+          element={
+            <ProtectedRoute allowedRoles={['FIELD_AGENT']}>
+              <AppLayout>
+                <MapViewPage />
               </AppLayout>
             </ProtectedRoute>
           } 
