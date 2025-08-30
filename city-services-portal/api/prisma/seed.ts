@@ -10,12 +10,13 @@ async function clearDatabase() {
   console.log('🧹 Clearing existing data...');
   
   // Clear in dependency order (supervisor tables first due to foreign keys)
-  await prisma.teamCollaboration.deleteMany({});
-  await prisma.performanceGoal.deleteMany({});
-  await prisma.workloadAssignment.deleteMany({});
-  await prisma.staffPerformance.deleteMany({});
-  await prisma.qualityReview.deleteMany({});
-  await prisma.departmentMetrics.deleteMany({});
+  // Using try-catch to handle tables that might not exist yet
+  try { await prisma.teamCollaboration.deleteMany({}); } catch(e) {}
+  try { await prisma.performanceGoal.deleteMany({}); } catch(e) {}
+  try { await prisma.workloadAssignment.deleteMany({}); } catch(e) {}
+  try { await prisma.staffPerformance.deleteMany({}); } catch(e) {}
+  try { await prisma.qualityReview.deleteMany({}); } catch(e) {}
+  try { await prisma.departmentMetrics.deleteMany({}); } catch(e) {}
   
   // Clear main application tables
   await prisma.upvote.deleteMany({});
