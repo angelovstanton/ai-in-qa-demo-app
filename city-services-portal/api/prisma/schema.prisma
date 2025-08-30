@@ -78,6 +78,10 @@ model User {
   fieldPhotos              FieldPhoto[]
   additionalIssuesReported AdditionalIssue[]
   partsUsed                PartUsage[]
+  
+  // Community ranking relations
+  communityStats           CommunityStats[]
+  achievements             UserAchievement[]
 
   @@map("users")
 }
@@ -537,4 +541,102 @@ model PartUsage {
   agent       User           @relation(fields: [agentId], references: [id])
   
   @@map("part_usage")
+}
+
+// Community Ranking Models
+
+model CommunityStats {
+  id              String   @id @default(uuid())
+  userId          String
+  period          String   // "daily", "weekly", "monthly", "yearly", "all-time"
+  periodStart     DateTime
+  periodEnd       DateTime
+  
+  // Contribution metrics
+  requestsSubmitted      Int @default(0)
+  requestsApproved       Int @default(0)
+  requestsResolved       Int @default(0)
+  commentsPosted         Int @default(0)
+  upvotesReceived        Int @default(0)
+  upvotesGiven          Int @default(0)
+  
+  // Engagement metrics
+  helpfulComments        Int @default(0)
+  solutionsProvided      Int @default(0)
+  averageResponseTime    Float? // in hours
+  participationDays      Int @default(0)
+  
+  // Quality metrics
+  approvalRate           Float? // percentage
+  resolutionRate         Float? // percentage
+  satisfactionScore      Float? // average rating
+  
+  // Ranking scores
+  contributionScore      Float @default(0)
+  engagementScore        Float @default(0)
+  qualityScore           Float @default(0)
+  overallScore           Float @default(0)
+  rank                   Int?
+  previousRank           Int?
+  
+  // Metadata
+  calculatedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, period, periodStart])
+  @@index([period, periodStart])
+  @@index([overallScore])
+  @@map("community_stats")
+}
+
+model UserAchievement {
+  id           String   @id @default(uuid())
+  userId       String
+  achievementId String
+  unlockedAt   DateTime @default(now())
+  progress     Int      @default(100) // percentage
+  metadata     String?  // JSON for additional data
+  
+  user         User        @relation(fields: [userId], references: [id])
+  achievement  Achievement @relation(fields: [achievementId], references: [id])
+  
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model Achievement {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  description  String
+  icon         String?
+  category     String   // "contribution", "engagement", "quality", "milestone"
+  tier         String   // "bronze", "silver", "gold", "platinum"
+  points       Int      @default(0)
+  requirement  String   // JSON describing requirements
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  
+  userAchievements UserAchievement[]
+  
+  @@map("achievements")
+}
+
+model CommunityTrend {
+  id           String   @id @default(uuid())
+  category     String
+  metric       String
+  value        Float
+  change       Float    // percentage change from previous period
+  period       String
+  periodStart  DateTime
+  periodEnd    DateTime
+  metadata     String?  // JSON for additional data
+  createdAt    DateTime @default(now())
+  
+  @@unique([category, metric, period, periodStart])
+  @@index([category, period])
+  @@map("community_trends")
 }

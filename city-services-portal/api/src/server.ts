@@ -24,6 +24,7 @@ import fieldAgentRoutes from './routes/field-agent';
 import timeTrackingRoutes from './routes/time-tracking';
 import fieldPhotosRoutes from './routes/field-photos';
 import agentStatusRoutes from './routes/agent-status';
+import communityRoutes from './routes/community';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -88,6 +89,8 @@ app.use('/api/v1/field-agent', fieldAgentRoutes);
 app.use('/api/v1/time-tracking', timeTrackingRoutes);
 app.use('/api/v1/field-photos', fieldPhotosRoutes);
 app.use('/api/v1/agent-status', agentStatusRoutes);
+app.use('/api/v1/community', communityRoutes);
+app.use('/api/departments', departmentRoutes); // Alternative path without version
 
 // Root endpoint
 app.get('/', (req, res) => {

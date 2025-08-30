@@ -100,7 +100,7 @@ async function seedFieldAgentData() {
             safetyNotes: 'Follow standard safety protocols. Use traffic cones for road work.',
             gpsLat,
             gpsLng,
-            navigationLink: `https://maps.google.com/directions?q=${gpsLat},${gpsLng}`,
+            navigationLink: `https://www.google.com/maps/dir/?api=1&destination=${gpsLat},${gpsLng}`,
             status,
             checkInTime,
             checkOutTime,

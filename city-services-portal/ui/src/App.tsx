@@ -20,7 +20,7 @@ import CitizenRequestsPage from './pages/citizen/CitizenRequestsPage';
 import NewRequestPage from './pages/citizen/NewRequestPage';
 import AllRequestsPage from './pages/AllRequestsPage';
 import ResolvedCasesPage from './pages/ResolvedCasesPage';
-import RanklistPage from './pages/RanklistPage';
+import CommunityRankingPage from './pages/CommunityRankingPage';
 import ClerkInboxPage from './pages/clerk/ClerkInboxPage';
 import SupervisorAssignPage from './pages/supervisor/SupervisorAssignPage';
 import SupervisorDashboardPage from './pages/supervisor/SupervisorDashboardPage';
@@ -220,7 +220,7 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <RanklistPage />
+                <CommunityRankingPage />
               </AppLayout>
             </ProtectedRoute>
           } 

@@ -91,7 +91,7 @@ const MapViewPage: React.FC = () => {
     if (workOrder.navigationLink) {
       window.open(workOrder.navigationLink, '_blank');
     } else if (workOrder.gpsLat && workOrder.gpsLng) {
-      const googleMapsUrl = `https://maps.google.com/directions?q=${workOrder.gpsLat},${workOrder.gpsLng}`;
+      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${workOrder.gpsLat},${workOrder.gpsLng}`;
       window.open(googleMapsUrl, '_blank');
     }
   };
@@ -153,8 +153,8 @@ const MapViewPage: React.FC = () => {
               <Typography variant="h6">Your Current Location</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Lat: {JSON.parse(agentStatus.currentLocation as string).lat.toFixed(6)}, 
-              Lng: {JSON.parse(agentStatus.currentLocation as string).lng.toFixed(6)}
+              Lat: {agentStatus.currentLocation.lat.toFixed(6)}, 
+              Lng: {agentStatus.currentLocation.lng.toFixed(6)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Status: {agentStatus.status} | Vehicle: {agentStatus.vehicleStatus || 'Unknown'}

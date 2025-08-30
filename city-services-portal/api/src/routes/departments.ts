@@ -1,78 +1,163 @@
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, rbacGuard, AuthenticatedRequest } from '../middleware/auth';
+import { z } from 'zod';
+import { authenticateToken, rbacGuard } from '../middleware/auth';
+import { validateRequest } from '../middleware/validation';
+import { ApiResponse, createApiResponse } from '../utils/response';
 
 const router = Router();
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Department:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         slug:
+ *           type: string
+ *       required:
+ *         - name
+ *         - slug
+ * 
+ *     CreateDepartmentDto:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         slug:
+ *           type: string
+ *           pattern: '^[a-z0-9-]+$'
+ *       required:
+ *         - name
+ *         - slug
+ * 
+ *     UpdateDepartmentDto:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         slug:
+ *           type: string
+ *           pattern: '^[a-z0-9-]+$'
+ */
+
 // Validation schemas
 const createDepartmentSchema = z.object({
   name: z.string().min(2).max(100),
-  slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
-  description: z.string().max(500).optional(),
-  isActive: z.boolean().optional().default(true),
+  slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
 });
 
-const updateDepartmentSchema = z.object({
-  name: z.string().min(2).max(100).optional(),
-  slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens').optional(),
-  description: z.string().max(500).optional(),
-  isActive: z.boolean().optional(),
-});
+const updateDepartmentSchema = createDepartmentSchema.partial();
 
-const querySchema = z.object({
-  isActive: z.boolean().optional(),
+const departmentFiltersSchema = z.object({
+  name: z.string().optional(),
+  slug: z.string().optional(),
   search: z.string().optional(),
-  page: z.string().optional().default('1'),
-  size: z.string().optional().default('20'),
-  sort: z.string().optional().default('name:asc'),
-});
+  page: z.string().transform(Number).default('1'),
+  pageSize: z.string().transform(Number).default('10'),
+  sortBy: z.enum(['name', 'slug', 'id']).default('name'),
+  sortOrder: z.enum(['asc', 'desc']).default('asc')
+}).optional();
 
-// GET /api/v1/departments - List all departments
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * @swagger
+ * /api/departments:
+ *   get:
+ *     tags: [Departments]
+ *     summary: Get all departments
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Filter by department name
+ *       - in: query
+ *         name: slug
+ *         schema:
+ *           type: string
+ *         description: Filter by department slug
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in name and slug
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, slug, id]
+ *           default: name
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *     responses:
+ *       200:
+ *         description: List of departments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Department'
+ *                 pagination:
+ *                   type: object
+ */
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const query = querySchema.parse(req.query);
-
+    const filters = departmentFiltersSchema.parse(req.query);
+    const { page = 1, pageSize = 10, sortBy = 'name', sortOrder = 'asc' } = filters || {};
+    
     // Build where clause
-    let where: any = {};
-    
-    if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
+    const where: any = {};
+    if (filters?.name) {
+      where.name = { contains: filters.name };
     }
-    
-    if (query.search) {
+    if (filters?.slug) {
+      where.slug = filters.slug;
+    }
+    if (filters?.search) {
       where.OR = [
-        { name: { contains: query.search } },
-        { slug: { contains: query.search } },
-        { description: { contains: query.search } }
+        { name: { contains: filters.search } },
+        { slug: { contains: filters.search } }
       ];
     }
 
-    // Parse sorting
-    const sortParts = query.sort.split(':');
-    const sortField = sortParts[0] || 'name';
-    const sortOrder = sortParts[1] === 'desc' ? 'desc' : 'asc';
-    
-    const allowedSortFields = ['name', 'slug', 'createdAt', 'updatedAt'];
-    const orderBy = allowedSortFields.includes(sortField) 
-      ? { [sortField]: sortOrder as 'asc' | 'desc' }
-      : { name: 'asc' as const };
-
-    // Pagination
-    const page = Math.max(1, parseInt(query.page));
-    const pageSize = Math.min(100, Math.max(1, parseInt(query.size)));
-    const skip = (page - 1) * pageSize;
-
     // Get total count
-    const totalCount = await prisma.department.count({ where });
+    const total = await prisma.department.count({ where });
 
-    // Get departments with user counts
+    // Get departments with pagination
     const departments = await prisma.department.findMany({
       where,
-      orderBy,
-      skip,
+      skip: (page - 1) * pageSize,
       take: pageSize,
+      orderBy: { [sortBy]: sortOrder },
       include: {
         _count: {
           select: {
@@ -83,559 +168,397 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
       }
     });
 
-    res.setHeader('X-Total-Count', totalCount.toString());
-    
-    res.json({
-      data: departments,
-      pagination: {
-        page,
-        pageSize,
-        totalCount,
-        totalPages: Math.ceil(totalCount / pageSize)
-      },
-      correlationId: res.locals.correlationId
-    });
-
+    res.json(createApiResponse(departments, {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize)
+    }));
   } catch (error) {
-    console.error('Departments fetch error:', error);
-    
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid query parameters',
-          details: error.errors,
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch departments',
-        correlationId: res.locals.correlationId
-      }
-    });
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ error: 'Failed to fetch departments' });
   }
 });
 
-// POST /api/v1/departments - Create new department
-router.post('/', authenticateToken, rbacGuard(['ADMIN', 'SUPERVISOR']), async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * @swagger
+ * /api/departments/{id}:
+ *   get:
+ *     tags: [Departments]
+ *     summary: Get department by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID (UUID) or slug
+ *     responses:
+ *       200:
+ *         description: Department details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Department'
+ *       404:
+ *         description: Department not found
+ */
+router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const validatedData = createDepartmentSchema.parse(req.body);
-
-    // Check if department with same name or slug already exists
-    const existingDepartment = await prisma.department.findFirst({
+    const { id } = req.params;
+    
+    // Try to find by ID first, then by slug
+    const department = await prisma.department.findFirst({
       where: {
         OR: [
-          { name: validatedData.name },
-          { slug: validatedData.slug }
+          { id },
+          { slug: id }
+        ]
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        _count: {
+          select: {
+            serviceRequests: true,
+            users: true
+          }
+        }
+      }
+    });
+
+    if (!department) {
+      return res.status(404).json({ error: 'Department not found' });
+    }
+
+    res.json(createApiResponse(department));
+  } catch (error) {
+    console.error('Error fetching department:', error);
+    res.status(500).json({ error: 'Failed to fetch department' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/departments:
+ *   post:
+ *     tags: [Departments]
+ *     summary: Create a new department
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateDepartmentDto'
+ *     responses:
+ *       201:
+ *         description: Department created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Department'
+ *       400:
+ *         description: Invalid input or slug already exists
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin only
+ */
+router.post(
+  '/',
+  authenticateToken,
+  rbacGuard('ADMIN'),
+  validateRequest(createDepartmentSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { name, slug } = req.body;
+
+      // Check if slug already exists
+      const existing = await prisma.department.findUnique({
+        where: { slug }
+      });
+
+      if (existing) {
+        return res.status(400).json({ error: 'Department slug already exists' });
+      }
+
+      const department = await prisma.department.create({
+        data: { name, slug }
+      });
+
+      res.status(201).json(createApiResponse(department));
+    } catch (error) {
+      console.error('Error creating department:', error);
+      res.status(500).json({ error: 'Failed to create department' });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/departments/{id}:
+ *   patch:
+ *     tags: [Departments]
+ *     summary: Update a department
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID (UUID) or slug
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateDepartmentDto'
+ *     responses:
+ *       200:
+ *         description: Department updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Department'
+ *       400:
+ *         description: Invalid input or slug already exists
+ *       404:
+ *         description: Department not found
+ */
+router.patch(
+  '/:id',
+  authenticateToken,
+  rbacGuard('ADMIN'),
+  validateRequest(updateDepartmentSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      // Find department
+      const department = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id },
+            { slug: id }
+          ]
+        }
+      });
+
+      if (!department) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
+
+      // Check if new slug already exists
+      if (updates.slug && updates.slug !== department.slug) {
+        const existing = await prisma.department.findUnique({
+          where: { slug: updates.slug }
+        });
+
+        if (existing) {
+          return res.status(400).json({ error: 'Department slug already exists' });
+        }
+      }
+
+      const updated = await prisma.department.update({
+        where: { id: department.id },
+        data: updates
+      });
+
+      res.json(createApiResponse(updated));
+    } catch (error) {
+      console.error('Error updating department:', error);
+      res.status(500).json({ error: 'Failed to update department' });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/departments/{id}:
+ *   delete:
+ *     tags: [Departments]
+ *     summary: Delete a department
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID (UUID) or slug
+ *     responses:
+ *       200:
+ *         description: Department deleted successfully
+ *       400:
+ *         description: Cannot delete department with active users or requests
+ *       404:
+ *         description: Department not found
+ */
+router.delete(
+  '/:id',
+  authenticateToken,
+  rbacGuard('ADMIN'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      // Find department
+      const department = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id },
+            { slug: id }
+          ]
+        },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              serviceRequests: true
+            }
+          }
+        }
+      });
+
+      if (!department) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
+
+      // Check if department has users or requests
+      if (department._count.users > 0 || department._count.serviceRequests > 0) {
+        return res.status(400).json({ 
+          error: 'Cannot delete department with active users or service requests',
+          details: {
+            users: department._count.users,
+            requests: department._count.serviceRequests
+          }
+        });
+      }
+
+      await prisma.department.delete({
+        where: { id: department.id }
+      });
+
+      res.json(createApiResponse({ message: 'Department deleted successfully' }));
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      res.status(500).json({ error: 'Failed to delete department' });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/departments/{id}/statistics:
+ *   get:
+ *     tags: [Departments]
+ *     summary: Get department statistics
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID (UUID) or slug
+ *     responses:
+ *       200:
+ *         description: Department statistics
+ *       404:
+ *         description: Department not found
+ */
+router.get('/:id/statistics', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const department = await prisma.department.findFirst({
+      where: {
+        OR: [
+          { id },
+          { slug: id }
         ]
       }
     });
 
-    if (existingDepartment) {
-      return res.status(409).json({
-        error: {
-          code: 'DEPARTMENT_EXISTS',
-          message: existingDepartment.name === validatedData.name 
-            ? 'Department with this name already exists' 
-            : 'Department with this slug already exists',
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Create department
-    const department = await prisma.department.create({
-      data: validatedData,
-      include: {
-        _count: {
-          select: {
-            users: true,
-            serviceRequests: true
-          }
-        }
-      }
-    });
-
-    res.status(201).json({
-      data: department,
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    console.error('Department creation error:', error);
-    
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid department data',
-          details: error.errors,
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to create department',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// GET /api/v1/departments/:id - Get specific department
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const department = await prisma.department.findUnique({
-      where: { id },
-      include: {
-        users: {
-          select: { 
-            id: true, 
-            name: true, 
-            email: true, 
-            role: true, 
-            isActive: true,
-            createdAt: true
-          },
-          where: { isActive: true },
-          orderBy: { name: 'asc' },
-          take: 50 // Limit for performance
-        },
-        serviceRequests: {
-          select: { 
-            id: true, 
-            code: true, 
-            title: true, 
-            status: true, 
-            priority: true,
-            createdAt: true 
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 20 // Recent requests
-        },
-        _count: {
-          select: {
-            users: true,
-            serviceRequests: true
-          }
-        }
-      }
-    });
-
     if (!department) {
-      return res.status(404).json({
-        error: {
-          code: 'DEPARTMENT_NOT_FOUND',
-          message: 'Department not found',
-          correlationId: res.locals.correlationId
-        }
-      });
+      return res.status(404).json({ error: 'Department not found' });
     }
 
-    res.json({
-      data: department,
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    console.error('Department fetch error:', error);
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch department',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// PATCH /api/v1/departments/:id - Update department
-router.patch('/:id', authenticateToken, rbacGuard(['ADMIN', 'SUPERVISOR']), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const validatedData = updateDepartmentSchema.parse(req.body);
-
-    // Check if department exists
-    const existingDepartment = await prisma.department.findUnique({
-      where: { id }
-    });
-
-    if (!existingDepartment) {
-      return res.status(404).json({
-        error: {
-          code: 'DEPARTMENT_NOT_FOUND',
-          message: 'Department not found',
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Check for name/slug conflicts if being changed
-    if (validatedData.name || validatedData.slug) {
-      const conflicts = [];
-      if (validatedData.name && validatedData.name !== existingDepartment.name) {
-        const nameExists = await prisma.department.findFirst({
-          where: { 
-            name: validatedData.name,
-            NOT: { id }
-          }
-        });
-        if (nameExists) conflicts.push('name');
-      }
-
-      if (validatedData.slug && validatedData.slug !== existingDepartment.slug) {
-        const slugExists = await prisma.department.findFirst({
-          where: { 
-            slug: validatedData.slug,
-            NOT: { id }
-          }
-        });
-        if (slugExists) conflicts.push('slug');
-      }
-
-      if (conflicts.length > 0) {
-        return res.status(409).json({
-          error: {
-            code: 'DEPARTMENT_CONFLICT',
-            message: `Department with this ${conflicts.join(' and ')} already exists`,
-            correlationId: res.locals.correlationId
-          }
-        });
-      }
-    }
-
-    // Update department
-    const updatedDepartment = await prisma.department.update({
-      where: { id },
-      data: validatedData,
-      include: {
-        _count: {
-          select: {
-            users: true,
-            serviceRequests: true
-          }
-        }
-      }
-    });
-
-    res.json({
-      data: updatedDepartment,
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    console.error('Department update error:', error);
-    
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid department data',
-          details: error.errors,
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to update department',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// DELETE /api/v1/departments/:id - Soft delete department
-router.delete('/:id', authenticateToken, rbacGuard(['ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Check if department exists
-    const existingDepartment = await prisma.department.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            serviceRequests: true
-          }
-        }
-      }
-    });
-
-    if (!existingDepartment) {
-      return res.status(404).json({
-        error: {
-          code: 'DEPARTMENT_NOT_FOUND',
-          message: 'Department not found',
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Check if department has active users or requests
-    if (existingDepartment._count.users > 0) {
-      return res.status(400).json({
-        error: {
-          code: 'DEPARTMENT_HAS_USERS',
-          message: 'Cannot delete department with assigned users. Please reassign users first.',
-          userCount: existingDepartment._count.users,
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Soft delete by deactivating the department
-    await prisma.department.update({
-      where: { id },
-      data: { 
-        isActive: false,
-        slug: `deleted_${Date.now()}_${existingDepartment.slug}` // Prevent slug conflicts
-      }
-    });
-
-    res.json({
-      message: 'Department deleted successfully',
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    console.error('Department deletion error:', error);
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to delete department',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// GET /api/v1/departments/:id/users - Get users in department
-router.get('/:id/users', authenticateToken, rbacGuard(['ADMIN', 'SUPERVISOR']), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Verify department exists
-    const department = await prisma.department.findUnique({
-      where: { id }
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        error: {
-          code: 'DEPARTMENT_NOT_FOUND',
-          message: 'Department not found',
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Get users in department
-    const users = await prisma.user.findMany({
-      where: { departmentId: id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        createdAt: true,
-        _count: {
-          select: {
-            createdRequests: true,
-            assignedRequests: true
-          }
-        }
-      },
-      orderBy: { name: 'asc' }
-    });
-
-    res.json({
-      data: {
-        department: {
-          id: department.id,
-          name: department.name,
-          slug: department.slug
-        },
-        users: users,
-        userCount: users.length
-      },
-      correlationId: res.locals.correlationId
-    });
-
-  } catch (error) {
-    console.error('Department users fetch error:', error);
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch department users',
-        correlationId: res.locals.correlationId
-      }
-    });
-  }
-});
-
-// GET /api/v1/departments/:id/stats - Get department statistics
-router.get('/:id/stats', authenticateToken, rbacGuard(['ADMIN', 'SUPERVISOR']), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Verify department exists
-    const department = await prisma.department.findUnique({
-      where: { id }
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        error: {
-          code: 'DEPARTMENT_NOT_FOUND',
-          message: 'Department not found',
-          correlationId: res.locals.correlationId
-        }
-      });
-    }
-
-    // Get comprehensive statistics
+    // Get statistics
     const [
       totalUsers,
-      activeUsers,
       totalRequests,
-      requestsByStatus,
-      avgResolutionTime,
-      topPerformers
+      openRequests,
+      resolvedRequests,
+      avgResolutionTime
     ] = await Promise.all([
-      // Total users in department
-      prisma.user.count({
-        where: { departmentId: id }
+      prisma.user.count({ where: { departmentId: department.id } }),
+      prisma.serviceRequest.count({ where: { departmentId: department.id } }),
+      prisma.serviceRequest.count({ 
+        where: { 
+          departmentId: department.id,
+          status: { in: ['SUBMITTED', 'TRIAGED', 'IN_REVIEW', 'APPROVED', 'IN_PROGRESS'] }
+        } 
       }),
-      
-      // Active users
-      prisma.user.count({
-        where: { departmentId: id, isActive: true }
+      prisma.serviceRequest.count({ 
+        where: { 
+          departmentId: department.id,
+          status: { in: ['RESOLVED', 'CLOSED'] }
+        } 
       }),
-      
-      // Total requests assigned to department
-      prisma.serviceRequest.count({
-        where: { departmentId: id }
-      }),
-      
-      // Requests by status
-      prisma.serviceRequest.groupBy({
-        by: ['status'],
-        where: { departmentId: id },
-        _count: { status: true }
-      }),
-      
-      // Average resolution time (in hours)
-      prisma.serviceRequest.aggregate({
-        where: {
-          departmentId: id,
-          status: { in: ['RESOLVED', 'CLOSED'] },
-          updatedAt: { not: null }
-        },
-        _avg: {
-          // This would need a computed field in real implementation
-          // For now, we'll return null and calculate client-side if needed
-        }
-      }),
-      
-      // Top 5 performers by resolved requests
-      prisma.user.findMany({
-        where: {
-          departmentId: id,
-          isActive: true,
-          assignedRequests: {
-            some: {
-              status: { in: ['RESOLVED', 'CLOSED'] }
-            }
-          }
+      prisma.serviceRequest.findMany({
+        where: { 
+          departmentId: department.id,
+          status: 'CLOSED',
+          closedAt: { not: null }
         },
         select: {
-          id: true,
-          name: true,
-          email: true,
-          _count: {
-            select: {
-              assignedRequests: {
-                where: {
-                  status: { in: ['RESOLVED', 'CLOSED'] }
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          assignedRequests: {
-            _count: 'desc'
-          }
-        },
-        take: 5
+          createdAt: true,
+          closedAt: true
+        }
+      }).then(requests => {
+        if (requests.length === 0) return 0;
+        const totalTime = requests.reduce((sum, req) => {
+          const time = req.closedAt!.getTime() - req.createdAt.getTime();
+          return sum + time;
+        }, 0);
+        return totalTime / requests.length / (1000 * 60 * 60); // Convert to hours
       })
     ]);
 
-    // Format status counts
-    const statusCounts = requestsByStatus.reduce((acc, item) => {
-      acc[item.status] = item._count.status;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const stats = {
+    const statistics = {
       department: {
         id: department.id,
         name: department.name,
         slug: department.slug
       },
       users: {
-        total: totalUsers,
-        active: activeUsers,
-        inactive: totalUsers - activeUsers
+        total: totalUsers
       },
       requests: {
         total: totalRequests,
-        byStatus: statusCounts
-      },
-      performance: {
-        avgResolutionTimeHours: null, // Would need proper calculation
-        topPerformers: topPerformers.map(user => ({
-          ...user,
-          resolvedRequests: user._count.assignedRequests
-        }))
-      },
-      generatedAt: new Date().toISOString()
+        open: openRequests,
+        resolved: resolvedRequests,
+        resolutionRate: totalRequests > 0 ? (resolvedRequests / totalRequests) * 100 : 0,
+        averageResolutionTime: avgResolutionTime
+      }
     };
 
-    res.json({
-      data: stats,
-      correlationId: res.locals.correlationId
-    });
-
+    res.json(createApiResponse(statistics));
   } catch (error) {
-    console.error('Department statistics error:', error);
-    
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch department statistics',
-        correlationId: res.locals.correlationId
-      }
-    });
+    console.error('Error fetching department statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch department statistics' });
   }
 });
 
