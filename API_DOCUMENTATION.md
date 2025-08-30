@@ -471,55 +471,79 @@ Delete performance goal
 
 ### 🏢 Departments
 
-#### GET /api/v1/departments
-List all departments
-- **Auth Required**: Yes
+#### GET /api/departments
+List all departments with filtering and pagination
+- **Auth Required**: No
 - **Query Parameters**:
-  - `isActive`: boolean
-  - `page`: integer
-  - `size`: integer
-  - `sort`: field:direction
+  - `name`: string (filter by name)
+  - `slug`: string (filter by slug)
+  - `search`: string (search in name and slug)
+  - `page`: integer (default: 1)
+  - `pageSize`: integer (default: 10)
+  - `sortBy`: name | slug | id (default: name)
+  - `sortOrder`: asc | desc (default: asc)
 - **Response**: `{ data: Department[], pagination: Pagination, correlationId: string }`
 
-#### POST /api/v1/departments
-Create department
-- **Auth Required**: Yes (ADMIN, SUPERVISOR)
+#### GET /api/departments/:id
+Get department by ID or slug
+- **Auth Required**: No
+- **Parameters**:
+  - `id`: uuid or slug string
+- **Response**: `{ data: Department, correlationId: string }`
+
+#### POST /api/departments
+Create new department
+- **Auth Required**: Yes (ADMIN only)
 - **Request Body**:
   ```json
   {
-    "name": "string",
-    "slug": "string",
-    "description": "string",
-    "isActive": true
+    "name": "string (2-100 chars)",
+    "slug": "string (lowercase, numbers, hyphens only)"
   }
   ```
 - **Response**: `{ data: Department, correlationId: string }`
 
-#### GET /api/v1/departments/:id
-Get department details
-- **Auth Required**: Yes
-- **Response**: `{ data: Department, correlationId: string }`
-
-#### PATCH /api/v1/departments/:id
+#### PATCH /api/departments/:id
 Update department
-- **Auth Required**: Yes (ADMIN, SUPERVISOR)
-- **Request Body**: Partial Department object
+- **Auth Required**: Yes (ADMIN only)
+- **Parameters**:
+  - `id`: uuid or slug string
+- **Request Body**: Partial Department object (name, slug)
 - **Response**: `{ data: Department, correlationId: string }`
 
-#### DELETE /api/v1/departments/:id
+#### DELETE /api/departments/:id
 Delete department
-- **Auth Required**: Yes (ADMIN)
+- **Auth Required**: Yes (ADMIN only)
+- **Parameters**:
+  - `id`: uuid or slug string
 - **Response**: `{ data: { deleted: true }, correlationId: string }`
 
-#### GET /api/v1/departments/:id/users
-Get department users
-- **Auth Required**: Yes (ADMIN, SUPERVISOR)
-- **Response**: `{ data: User[], correlationId: string }`
-
-#### GET /api/v1/departments/:id/stats
+#### GET /api/departments/:id/statistics
 Get department statistics
-- **Auth Required**: Yes (ADMIN, SUPERVISOR)
-- **Response**: Department statistics object
+- **Auth Required**: No
+- **Parameters**:
+  - `id`: uuid or slug string
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "department": Department,
+      "totalUsers": number,
+      "usersByRole": { [role]: count },
+      "totalRequests": number,
+      "requestsByStatus": { [status]: count },
+      "requestsByPriority": { [priority]: count },
+      "avgResolutionTime": number,
+      "avgResponseTime": number,
+      "last30Days": {
+        "requestsCreated": number,
+        "requestsResolved": number,
+        "avgResolutionTime": number
+      }
+    },
+    "correlationId": string
+  }
+  ```
 
 ---
 
@@ -609,7 +633,182 @@ Control metrics scheduler
 
 ---
 
-### 🏆 Rankings
+### 🏆 Community Rankings
+
+#### GET /api/v1/community/leaderboard
+Get ranked users with filters
+- **Auth Required**: No
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly | yearly | all-time (default: monthly)
+  - `category`: string (filter by request category)
+  - `limit`: integer (1-100, default: 10)
+  - `offset`: integer (default: 0)
+  - `includeInactive`: boolean (default: false)
+  - `startDate`: datetime (for custom date range)
+  - `endDate`: datetime (for custom date range)
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "leaderboard": [LeaderboardEntry],
+      "period": string,
+      "periodStart": datetime,
+      "periodEnd": datetime,
+      "totalParticipants": number
+    },
+    "correlationId": string
+  }
+  ```
+
+#### GET /api/v1/community/users/:userId/stats
+Get specific user statistics
+- **Auth Required**: No
+- **Parameters**:
+  - `userId`: uuid
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly | yearly | all-time
+  - `startDate`: datetime
+  - `endDate`: datetime
+- **Response**: `{ data: CommunityStats, correlationId: string }`
+
+#### GET /api/v1/community/my-stats
+Get current user's stats (authenticated)
+- **Auth Required**: Yes
+- **Query Parameters**: Same as user stats endpoint
+- **Response**: `{ data: CommunityStats, correlationId: string }`
+
+#### GET /api/v1/community/categories/:category/stats
+Statistics by category
+- **Auth Required**: No
+- **Parameters**:
+  - `category`: string
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly | yearly | all-time
+- **Response**: `{ data: CategoryStats, correlationId: string }`
+
+#### GET /api/v1/community/trends
+Trending statistics
+- **Auth Required**: No
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly (default: weekly)
+  - `limit`: integer (default: 5)
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "trendingCategories": [{ category: string, count: number, growth: number }],
+      "risingContributors": [LeaderboardEntry],
+      "hotRequests": [ServiceRequest]
+    },
+    "correlationId": string
+  }
+  ```
+
+#### GET /api/v1/community/summary
+Community summary
+- **Auth Required**: No
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly | yearly | all-time
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "totalRequests": number,
+      "totalApproved": number,
+      "totalResolved": number,
+      "totalComments": number,
+      "totalUpvotes": number,
+      "activeCitizens": number,
+      "topCategories": [{ category: string, count: number }],
+      "averageResolutionTime": number,
+      "satisfactionRate": number
+    },
+    "correlationId": string
+  }
+  ```
+
+#### GET /api/v1/community/achievements
+List all achievements
+- **Auth Required**: No
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "achievements": [
+        {
+          "id": string,
+          "name": string,
+          "description": string,
+          "icon": string,
+          "category": string,
+          "points": number,
+          "requirements": object
+        }
+      ]
+    },
+    "correlationId": string
+  }
+  ```
+
+#### GET /api/v1/community/users/:userId/achievements
+User's achievements
+- **Auth Required**: No
+- **Parameters**:
+  - `userId`: uuid
+- **Response**: 
+  ```json
+  {
+    "data": {
+      "achievements": [
+        {
+          "achievement": Achievement,
+          "unlockedAt": datetime,
+          "progress": number
+        }
+      ],
+      "totalPoints": number,
+      "level": number
+    },
+    "correlationId": string
+  }
+  ```
+
+#### GET /api/v1/community/users/:userId/requests
+User's requests
+- **Auth Required**: No
+- **Parameters**:
+  - `userId`: uuid
+- **Query Parameters**:
+  - `status`: string
+  - `category`: string
+  - `page`: integer (default: 1)
+  - `limit`: integer (default: 20)
+- **Response**: `{ data: ServiceRequest[], pagination: Pagination, correlationId: string }`
+
+#### GET /api/v1/community/statistics/overview
+Community statistics overview
+- **Auth Required**: No
+- **Query Parameters**:
+  - `period`: daily | weekly | monthly | yearly
+  - `startDate`: datetime
+  - `endDate`: datetime
+- **Response**: Comprehensive statistics object with metrics, trends, and distributions
+
+#### GET /api/v1/community/comments
+Get community comments
+- **Auth Required**: No
+- **Query Parameters**:
+  - `userId`: uuid
+  - `requestId`: uuid
+  - `visibility`: PUBLIC | INTERNAL
+  - `page`: integer (default: 1)
+  - `limit`: integer (default: 20)
+  - `sort`: createdAt:desc | createdAt:asc
+- **Response**: `{ data: Comment[], pagination: Pagination, correlationId: string }`
+
+---
+
+### 🏆 Rankings (Legacy)
 
 #### GET /api/v1/rankings/users
 Get user rankings

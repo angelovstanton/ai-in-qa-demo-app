@@ -654,6 +654,134 @@ const options = {
               format: 'date-time'
             }
           }
+        },
+        LeaderboardEntry: {
+          type: 'object',
+          properties: {
+            rank: {
+              type: 'integer'
+            },
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            userName: {
+              type: 'string'
+            },
+            overallScore: {
+              type: 'number'
+            },
+            contributionScore: {
+              type: 'number'
+            },
+            engagementScore: {
+              type: 'number'
+            },
+            qualityScore: {
+              type: 'number'
+            },
+            requestsSubmitted: {
+              type: 'integer'
+            },
+            requestsApproved: {
+              type: 'integer'
+            },
+            commentsPosted: {
+              type: 'integer'
+            },
+            upvotesReceived: {
+              type: 'integer'
+            },
+            badges: {
+              type: 'array',
+              items: {
+                type: 'object'
+              }
+            },
+            change: {
+              type: 'integer',
+              description: 'Rank change from previous period'
+            }
+          }
+        },
+        CommunityStats: {
+          type: 'object',
+          properties: {
+            period: {
+              type: 'string',
+              enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time']
+            },
+            periodStart: {
+              type: 'string',
+              format: 'date-time'
+            },
+            periodEnd: {
+              type: 'string',
+              format: 'date-time'
+            },
+            requestsSubmitted: {
+              type: 'integer'
+            },
+            requestsApproved: {
+              type: 'integer'
+            },
+            requestsResolved: {
+              type: 'integer'
+            },
+            commentsPosted: {
+              type: 'integer'
+            },
+            upvotesReceived: {
+              type: 'integer'
+            },
+            upvotesGiven: {
+              type: 'integer'
+            },
+            contributionScore: {
+              type: 'number'
+            },
+            engagementScore: {
+              type: 'number'
+            },
+            qualityScore: {
+              type: 'number'
+            },
+            overallScore: {
+              type: 'number'
+            },
+            rank: {
+              type: 'integer'
+            }
+          }
+        },
+        CategoryStats: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string'
+            },
+            totalRequests: {
+              type: 'integer'
+            },
+            approvedRequests: {
+              type: 'integer'
+            },
+            averageResolutionTime: {
+              type: 'number'
+            },
+            topContributors: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/LeaderboardEntry'
+              }
+            },
+            trends: {
+              type: 'array',
+              items: {
+                type: 'object'
+              }
+            }
+          }
         }
       },
       responses: {
@@ -1742,14 +1870,19 @@ const options = {
       },
 
       // Departments
-      '/api/v1/departments': {
+      '/api/departments': {
         get: {
           tags: ['Departments'],
-          summary: 'List departments',
-          description: 'Get all departments with optional filtering',
-          security: [{ bearerAuth: [] }],
+          summary: 'List all departments',
+          description: 'Get all departments with filtering and pagination',
           parameters: [
-            { name: 'isActive', in: 'query', schema: { type: 'boolean' } }
+            { name: 'name', in: 'query', schema: { type: 'string' }, description: 'Filter by department name' },
+            { name: 'slug', in: 'query', schema: { type: 'string' }, description: 'Filter by department slug' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Search in name and slug' },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 10 } },
+            { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['name', 'slug', 'id'], default: 'name' } },
+            { name: 'sortOrder', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'], default: 'asc' } }
           ],
           responses: {
             '200': {
@@ -1760,6 +1893,294 @@ const options = {
                     type: 'object',
                     properties: {
                       data: { type: 'array', items: { $ref: '#/components/schemas/Department' } },
+                      pagination: { $ref: '#/components/schemas/Pagination' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        post: {
+          tags: ['Departments'],
+          summary: 'Create new department',
+          description: 'Create a new department (Admin only)',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', minLength: 2, maxLength: 100 },
+                    slug: { type: 'string', pattern: '^[a-z0-9-]+$' }
+                  },
+                  required: ['name', 'slug']
+                }
+              }
+            }
+          },
+          responses: {
+            '201': {
+              description: 'Department created successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/Department' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' }
+          }
+        }
+      },
+      '/api/departments/{id}': {
+        get: {
+          tags: ['Departments'],
+          summary: 'Get department by ID or slug',
+          description: 'Get detailed information about a specific department',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Department ID (UUID) or slug' }
+          ],
+          responses: {
+            '200': {
+              description: 'Department retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/Department' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        },
+        patch: {
+          tags: ['Departments'],
+          summary: 'Update department',
+          description: 'Update department information (Admin only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Department ID (UUID) or slug' }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', minLength: 2, maxLength: 100 },
+                    slug: { type: 'string', pattern: '^[a-z0-9-]+$' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': {
+              description: 'Department updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/Department' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '400': { $ref: '#/components/responses/ValidationError' },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        },
+        delete: {
+          tags: ['Departments'],
+          summary: 'Delete department',
+          description: 'Delete a department (Admin only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Department ID (UUID) or slug' }
+          ],
+          responses: {
+            '200': {
+              description: 'Department deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { type: 'object', properties: { deleted: { type: 'boolean' } } },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '401': { $ref: '#/components/responses/Unauthorized' },
+            '403': { $ref: '#/components/responses/Forbidden' },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/departments/{id}/statistics': {
+        get: {
+          tags: ['Departments'],
+          summary: 'Get department statistics',
+          description: 'Get comprehensive statistics for a specific department',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Department ID (UUID) or slug' }
+          ],
+          responses: {
+            '200': {
+              description: 'Department statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          department: { $ref: '#/components/schemas/Department' },
+                          totalUsers: { type: 'integer' },
+                          usersByRole: { type: 'object' },
+                          totalRequests: { type: 'integer' },
+                          requestsByStatus: { type: 'object' },
+                          requestsByPriority: { type: 'object' },
+                          avgResolutionTime: { type: 'number' },
+                          avgResponseTime: { type: 'number' },
+                          last30Days: {
+                            type: 'object',
+                            properties: {
+                              requestsCreated: { type: 'integer' },
+                              requestsResolved: { type: 'integer' },
+                              avgResolutionTime: { type: 'number' }
+                            }
+                          }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+
+      // Community
+      '/api/v1/community/leaderboard': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get community leaderboard',
+          description: 'Retrieve ranked users with filtering and period options',
+          parameters: [
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'], default: 'monthly' } },
+            { name: 'category', in: 'query', schema: { type: 'string' }, description: 'Filter by request category' },
+            { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 } },
+            { name: 'offset', in: 'query', schema: { type: 'integer', default: 0 } },
+            { name: 'includeInactive', in: 'query', schema: { type: 'boolean', default: false } },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Leaderboard retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          leaderboard: { type: 'array', items: { $ref: '#/components/schemas/LeaderboardEntry' } },
+                          period: { type: 'string' },
+                          periodStart: { type: 'string', format: 'date-time' },
+                          periodEnd: { type: 'string', format: 'date-time' },
+                          totalParticipants: { type: 'integer' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/api/v1/community/users/{userId}/stats': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get user community statistics',
+          description: 'Retrieve detailed statistics for a specific user',
+          parameters: [
+            { name: 'userId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'] } },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } }
+          ],
+          responses: {
+            '200': {
+              description: 'User statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/CommunityStats' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/community/my-stats': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get my community statistics',
+          description: 'Get community statistics for the authenticated user',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'] } },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } }
+          ],
+          responses: {
+            '200': {
+              description: 'User statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/CommunityStats' },
                       correlationId: { type: 'string' }
                     }
                   }
@@ -1767,6 +2188,210 @@ const options = {
               }
             },
             '401': { $ref: '#/components/responses/Unauthorized' }
+          }
+        }
+      },
+      '/api/v1/community/categories/{category}/stats': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get category statistics',
+          description: 'Get community statistics for a specific category',
+          parameters: [
+            { name: 'category', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'] } }
+          ],
+          responses: {
+            '200': {
+              description: 'Category statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/CategoryStats' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/api/v1/community/trends': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get community trends',
+          description: 'Get trending categories, contributors, and requests',
+          parameters: [
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly'], default: 'weekly' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 5 } }
+          ],
+          responses: {
+            '200': {
+              description: 'Trends retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          trendingCategories: { type: 'array', items: { type: 'object' } },
+                          risingContributors: { type: 'array', items: { $ref: '#/components/schemas/LeaderboardEntry' } },
+                          hotRequests: { type: 'array', items: { $ref: '#/components/schemas/ServiceRequest' } }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/api/v1/community/summary': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get community summary',
+          description: 'Get overall community statistics and summary',
+          parameters: [
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly', 'all-time'] } }
+          ],
+          responses: {
+            '200': {
+              description: 'Community summary retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          totalRequests: { type: 'integer' },
+                          totalApproved: { type: 'integer' },
+                          totalResolved: { type: 'integer' },
+                          totalComments: { type: 'integer' },
+                          totalUpvotes: { type: 'integer' },
+                          activeCitizens: { type: 'integer' },
+                          topCategories: { type: 'array', items: { type: 'object' } },
+                          averageResolutionTime: { type: 'number' },
+                          satisfactionRate: { type: 'number' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/api/v1/community/achievements': {
+        get: {
+          tags: ['Community'],
+          summary: 'List all achievements',
+          description: 'Get list of all available achievements',
+          responses: {
+            '200': {
+              description: 'Achievements retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          achievements: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string' },
+                                description: { type: 'string' },
+                                icon: { type: 'string' },
+                                category: { type: 'string' },
+                                points: { type: 'integer' },
+                                requirements: { type: 'object' }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/api/v1/community/users/{userId}/achievements': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get user achievements',
+          description: 'Get achievements for a specific user',
+          parameters: [
+            { name: 'userId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+          ],
+          responses: {
+            '200': {
+              description: 'User achievements retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          achievements: { type: 'array', items: { type: 'object' } },
+                          totalPoints: { type: 'integer' },
+                          level: { type: 'integer' }
+                        }
+                      },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            '404': { $ref: '#/components/responses/NotFound' }
+          }
+        }
+      },
+      '/api/v1/community/statistics/overview': {
+        get: {
+          tags: ['Community'],
+          summary: 'Get community statistics overview',
+          description: 'Get comprehensive community statistics overview',
+          parameters: [
+            { name: 'period', in: 'query', schema: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly'] } },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } }
+          ],
+          responses: {
+            '200': {
+              description: 'Statistics overview retrieved successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { type: 'object' },
+                      correlationId: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
