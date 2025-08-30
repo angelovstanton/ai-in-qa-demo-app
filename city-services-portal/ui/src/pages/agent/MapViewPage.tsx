@@ -32,6 +32,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import fieldAgentService from '../../services/fieldAgentService';
 import type { WorkOrder, AgentStatus } from '../../services/fieldAgentService';
+import InteractiveMap from '../../components/InteractiveMap';
 
 const MapViewPage: React.FC = () => {
   const theme = useTheme();
@@ -163,30 +164,16 @@ const MapViewPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Map Placeholder */}
-      <Card sx={{ mb: 3, minHeight: 400 }}>
-        <CardContent>
-          <Box 
-            sx={{ 
-              height: 350,
-              bgcolor: 'grey.100',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              border: '2px dashed',
-              borderColor: 'grey.300',
-              borderRadius: 1
-            }}
-          >
-            <MapIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Interactive Map View
-            </Typography>
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              This would display an interactive map with work order markers,<br />
-              your current location, and navigation routes.
-            </Typography>
+      {/* Interactive Map */}
+      <Card sx={{ mb: 3, minHeight: 500 }}>
+        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+          <Box sx={{ height: 500, width: '100%' }}>
+            <InteractiveMap
+              workOrders={workOrders.filter(order => order.gpsLat && order.gpsLng)}
+              currentLocation={agentStatus?.currentLocation}
+              mapView={mapView}
+              onMarkerClick={(order) => navigate(`/agent/work-orders/${order.id}`)}
+            />
           </Box>
         </CardContent>
       </Card>
