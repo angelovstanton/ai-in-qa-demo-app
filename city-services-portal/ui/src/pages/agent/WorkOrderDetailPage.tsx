@@ -69,6 +69,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import fieldAgentService from '../../services/fieldAgentService';
 import type { WorkOrder, FieldPhoto } from '../../services/fieldAgentService';
+import AuthenticatedImage from '../../components/AuthenticatedImage';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -529,12 +530,16 @@ const WorkOrderDetailPage: React.FC = () => {
                       <ImageList sx={{ width: '100%' }} cols={isMobile ? 2 : 4} rowHeight={200}>
                         {typePhotos.map((photo) => (
                           <ImageListItem key={photo.id}>
-                            <img
-                              src={fieldAgentService.getPhotoUrl(photo.id)}
+                            <AuthenticatedImage
+                              photoId={photo.id}
                               alt={photo.caption || photo.filename}
-                              loading="lazy"
-                              style={{ cursor: 'pointer' }}
-                              onClick={() => window.open(fieldAgentService.getPhotoUrl(photo.id), '_blank')}
+                              style={{ cursor: 'pointer', width: '100%', height: 'auto' }}
+                              onClick={() => {
+                                // Open in new tab using blob URL
+                                fieldAgentService.getPhotoBlob(photo.id).then(url => {
+                                  window.open(url, '_blank');
+                                }).catch(err => console.error('Failed to open photo:', err));
+                              }}
                             />
                             <ImageListItemBar
                               title={photo.caption || photo.filename}

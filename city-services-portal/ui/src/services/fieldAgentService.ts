@@ -252,13 +252,39 @@ class FieldAgentService {
     return response.data;
   }
 
+  // Upload a single field photo (convenience method)
+  async uploadFieldPhoto(formData: FormData) {
+    const response = await apiClient.post('/field-photos/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  }
+
   async getWorkOrderPhotos(workOrderId: string) {
     const response = await apiClient.get(`/field-photos/work-order/${workOrderId}`);
     return response.data;
   }
 
-  async getPhotoUrl(photoId: string) {
-    return `${apiClient.defaults.baseURL}/field-photos/${photoId}`;
+  getPhotoUrl(photoId: string) {
+    // Include auth token in URL for direct image access
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.warn('No auth token found for photo URL');
+      return `${apiClient.defaults.baseURL}/field-photos/${photoId}`;
+    }
+    return `${apiClient.defaults.baseURL}/field-photos/${photoId}?token=${token}`;
+  }
+
+  async getPhotoBlob(photoId: string): Promise<string> {
+    try {
+      const response = await apiClient.get(`/field-photos/${photoId}`, {
+        responseType: 'blob'
+      });
+      return URL.createObjectURL(response.data);
+    } catch (error) {
+      console.error('Failed to load photo:', error);
+      throw error;
+    }
   }
 
   async updatePhoto(id: string, updates: {

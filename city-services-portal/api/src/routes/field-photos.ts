@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import { authenticateToken, authorizeRoles } from '../middleware/auth';
+import { authenticateTokenWithQuery } from '../middleware/authWithQuery';
 import { validateRequest } from '../middleware/validation';
 import { generateCorrelationId } from '../utils/correlation';
 
@@ -217,16 +218,23 @@ router.get(
   }
 );
 
+// OPTIONS /api/v1/field-photos/:id - Handle preflight requests
+router.options('/:id', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.status(200).end();
+});
+
 // GET /api/v1/field-photos/:id - Get specific photo with data
 router.get(
   '/:id',
-  authenticateToken,
-  authorizeRoles(['FIELD_AGENT', 'SUPERVISOR', 'ADMIN', 'CLERK']),
+  authenticateTokenWithQuery, // Allow token from query parameter for image loading
   async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
 
       // Get photo
       const photo = await prisma.fieldPhoto.findUnique({
@@ -248,18 +256,20 @@ router.get(
         });
       }
 
-      // Verify access for field agents
-      if (userRole === 'FIELD_AGENT' && photo.workOrder.assignedAgentId !== userId) {
+      // Verify access for field agents (skip for other roles)
+      if (userRole === 'FIELD_AGENT' && userId && photo.workOrder.assignedAgentId !== userId) {
         return res.status(403).json({ 
           error: 'Access denied',
           correlationId: generateCorrelationId(req)
         });
       }
 
-      // Send image data
+      // Send image data with proper CORS headers
       res.setHeader('Content-Type', photo.mime);
       res.setHeader('Content-Length', photo.size.toString());
       res.setHeader('Content-Disposition', `inline; filename="${photo.filename}"`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       res.send(photo.data);
     } catch (error) {
       console.error('Error fetching photo:', error);

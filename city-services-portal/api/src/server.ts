@@ -30,7 +30,10 @@ const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['http://localhost:5173', 'http://127.0.0.1:5173'] 
