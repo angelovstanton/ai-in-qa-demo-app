@@ -47,7 +47,7 @@ const CitizenRequestsPage: React.FC = () => {
     pageSize: 10,
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: 'createdAt', sort: 'desc' },
+    { field: 'id', sort: 'desc' },
   ]);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
 
@@ -97,7 +97,7 @@ const CitizenRequestsPage: React.FC = () => {
   // Convert sort model to API format
   const sortParam = sortModel.length > 0 
     ? `${sortModel[0].field}:${sortModel[0].sort}`
-    : 'createdAt:desc';
+    : 'id:desc';
 
   const { data, loading, error, totalCount } = useServiceRequests({
     page: paginationModel.page + 1, // API is 1-based

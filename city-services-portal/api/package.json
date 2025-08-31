@@ -9,6 +9,9 @@
     "start": "node dist/server.js",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:all": "tsx prisma/seed-all.ts",
+    "db:seed:bulgarian": "tsx prisma/seed-bulgarian.ts",
+    "db:seed:workflow": "tsx prisma/seeds/workflow.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:reset": "prisma migrate reset --force"

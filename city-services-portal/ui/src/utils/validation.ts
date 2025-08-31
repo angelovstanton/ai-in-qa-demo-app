@@ -227,20 +227,11 @@ export const ServiceRequestPatterns = {
     .min(1, 'Category is required')
     .refine(
       (category) => [
-        'roads-transportation',
-        'street-lighting',
+        'roads-and-infrastructure',
         'waste-management',
-        'water-sewer',
-        'parks-recreation',
-        'public-safety',
-        'building-permits',
-        'snow-removal',
-        'traffic-signals',
-        'sidewalk-maintenance',
-        'tree-services',
-        'noise-complaints',
-        'animal-control',
-        'other'
+        'water-and-utilities',
+        'parks-and-recreation',
+        'public-safety'
       ].includes(category),
       'Please select a valid category'
     ),

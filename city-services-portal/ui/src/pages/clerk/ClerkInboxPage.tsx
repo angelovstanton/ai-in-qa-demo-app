@@ -49,28 +49,39 @@ const ClerkInboxPage: React.FC = () => {
   const [statusReason, setStatusReason] = useState<string>('');
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const { data: requests, loading, error, totalCount, refetch } = useServiceRequests({
-    status: statusFilter || undefined,
-    priority: priorityFilter || undefined,
-    text: searchQuery || undefined,
+    status: statusFilter === '' ? undefined : statusFilter,
+    priority: priorityFilter === '' ? undefined : priorityFilter,
+    text: searchQuery === '' ? undefined : searchQuery,
     page: page,
     pageSize: 20,
+    sort: 'id:desc', // Sort by ID descending
   });
 
-  // Use debounced search and reset data on filter change
+  // Use debounced search
   useEffect(() => {
+    // Don't clear data if we haven't initialized yet
+    if (!hasInitialized) return;
+    
     const timeoutId = setTimeout(() => {
       setSearchQuery(searchText);
-      setPage(1);
-      setAllRequests([]);
-      setHasNextPage(true);
+      if (searchText !== '') {
+        // Only reset if there's actual search text
+        setPage(1);
+        setAllRequests([]);
+        setHasNextPage(true);
+      }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchText]);
+  }, [searchText, hasInitialized]);
 
-  // Reset data when filters change
+  // Reset data when filters change (but not on initial mount)
   useEffect(() => {
+    // Skip on initial mount
+    if (!hasInitialized) return;
+    
     setPage(1);
     setAllRequests([]);
     setHasNextPage(true);
@@ -84,6 +95,10 @@ const ClerkInboxPage: React.FC = () => {
       if (page === 1) {
         // First page or filter change - replace all requests
         setAllRequests(requests);
+        // Mark as initialized after first successful data load
+        if (!hasInitialized) {
+          setHasInitialized(true);
+        }
       } else {
         // Subsequent pages - append new requests
         setAllRequests(prev => {
@@ -96,13 +111,17 @@ const ClerkInboxPage: React.FC = () => {
       // Check if there are more pages
       setHasNextPage(requests.length === 20);
       setLoadingMore(false);
-    } else if (page === 1) {
-      // No results for first page
+    } else if (page === 1 && !loading) {
+      // No results for first page (but only after loading is done)
       setAllRequests([]);
       setHasNextPage(false);
       setLoadingMore(false);
+      // Still mark as initialized even if no data
+      if (!hasInitialized) {
+        setHasInitialized(true);
+      }
     }
-  }, [requests, page, totalCount]);
+  }, [requests, page, totalCount, loading, hasInitialized]);
 
   const selectedRequest = allRequests.find(req => req.id === selectedRequestId);
 
@@ -404,11 +423,11 @@ const ClerkInboxPage: React.FC = () => {
                     >
                       <ListItemText
                         primary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box component="span" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box component="span" sx={{ fontWeight: 'medium', fontSize: '0.875rem' }}>
                               {request.code}
                             </Box>
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Box component="span" sx={{ display: 'flex', gap: 0.5 }}>
                               <Chip
                                 label={request.priority}
                                 color={getPriorityColor(request.priority) as any}
@@ -424,14 +443,14 @@ const ClerkInboxPage: React.FC = () => {
                           </Box>
                         }
                         secondary={
-                          <Box>
+                          <>
                             <Box component="span" sx={{ display: 'block', fontWeight: 'medium', fontSize: '0.875rem', color: 'text.primary' }}>
                               {request.title}
                             </Box>
                             <Box component="span" sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary' }}>
                               {request.category} • {format(new Date(request.createdAt), 'MMM dd, yyyy')}
                             </Box>
-                          </Box>
+                          </>
                         }
                       />
                     </ListItemButton>

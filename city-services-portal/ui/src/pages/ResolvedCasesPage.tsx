@@ -22,7 +22,7 @@ import {
   CheckCircle as ResolvedIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import { useServiceRequests } from '../hooks/useServiceRequests';
 import { ServiceRequest } from '../types';
 // import { useAuth } from '../contexts/AuthContext'; // Not needed for resolved cases view
@@ -33,14 +33,28 @@ const ResolvedCasesPage: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 25,
+  });
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: 'id', sort: 'desc' },
+  ]);
+
+  // Convert sort model to API format
+  const sortParam = sortModel.length > 0 
+    ? `${sortModel[0].field}:${sortModel[0].sort}`
+    : 'id:desc';
 
   // Fetch resolved requests (RESOLVED and CLOSED status)
   const { data: requests, loading, error, refetch, totalCount } = useServiceRequests({
+    page: paginationModel.page + 1, // API is 1-based
+    pageSize: paginationModel.pageSize,
+    sort: sortParam,
     status: 'RESOLVED,CLOSED', // Filter for resolved and closed cases only
     priority: priorityFilter || undefined,
     category: categoryFilter || undefined,
     text: searchText || undefined,
-    pageSize: 25,
     // Show all resolved requests - everyone can see resolved cases
     showAll: true,
   });
@@ -327,12 +341,14 @@ const ResolvedCasesPage: React.FC = () => {
               rows={rows}
               columns={columns}
               loading={loading}
+              rowCount={totalCount}
               pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 25 },
-                },
-              }}
+              paginationMode="server"
+              sortingMode="server"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              sortModel={sortModel}
+              onSortModelChange={setSortModel}
               disableRowSelectionOnClick
               onRowClick={(params) => handleViewRequest(params.row.id)}
               data-testid="cs-resolved-cases-grid"

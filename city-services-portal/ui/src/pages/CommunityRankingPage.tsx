@@ -191,7 +191,7 @@ const CommunityRankingPage: React.FC = () => {
       }
       
       if (myAchievementsRes?.data) {
-        setMyAchievements(myAchievementsRes.data.data.map((ua: any) => ua.achievement));
+        setMyAchievements(myAchievementsRes.data.data.map((ua: any) => ua.achievement).filter(Boolean));
       }
       
       if (achievementsRes.data) {
@@ -245,8 +245,8 @@ const CommunityRankingPage: React.FC = () => {
     <Box>
       {category && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Showing users with activity in <strong>{category}</strong> category. 
-          Note: Scores reflect overall contributions across all categories.
+          Showing users who have submitted requests in the <strong>{category.replace(/-/g, ' ')}</strong> category. 
+          Note: Scores shown are overall scores across all categories, not category-specific.
         </Alert>
       )}
       <TableContainer component={Paper}>
@@ -456,7 +456,7 @@ const CommunityRankingPage: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {categoryAchievements.map((achievement) => {
-                const isUnlocked = myAchievements.some(ma => ma.id === achievement.id);
+                const isUnlocked = myAchievements.some(ma => ma && ma.id === achievement.id);
                 return (
                   <Grid item xs={12} sm={6} md={3} key={achievement.id}>
                     <Card 
@@ -672,15 +672,11 @@ const CommunityRankingPage: React.FC = () => {
                 onChange={(e) => setCategory(e.target.value)}
               >
                 <MenuItem value="">All Categories</MenuItem>
-                <MenuItem value="Infrastructure">Infrastructure</MenuItem>
-                <MenuItem value="Parks & Recreation">Parks & Recreation</MenuItem>
-                <MenuItem value="Public Safety">Public Safety</MenuItem>
-                <MenuItem value="Transportation">Transportation</MenuItem>
-                <MenuItem value="Utilities">Utilities</MenuItem>
-                <MenuItem value="Waste Management">Waste Management</MenuItem>
-                <MenuItem value="Environmental">Environmental</MenuItem>
-                <MenuItem value="Code Enforcement">Code Enforcement</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
+                <MenuItem value="roads-and-infrastructure">Roads & Infrastructure</MenuItem>
+                <MenuItem value="parks-and-recreation">Parks & Recreation</MenuItem>
+                <MenuItem value="public-safety">Public Safety</MenuItem>
+                <MenuItem value="water-and-utilities">Water & Utilities</MenuItem>
+                <MenuItem value="waste-management">Waste Management</MenuItem>
               </Select>
             </FormControl>
           </Grid>

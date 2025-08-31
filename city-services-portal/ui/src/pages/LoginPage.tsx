@@ -72,55 +72,37 @@ const LoginPage: React.FC = () => {
     }
   ];
 
-  // All demo accounts including additional ones
-  const allDemoAccounts = [
-    ...mainDemoAccounts,
-    // Additional Citizens
-    ...Array.from({ length: 20 }, (_, i) => ({
-      role: 'Citizen',
-      email: `citizen${i + 1}@example.com`,
-      password: 'password123',
-      icon: <Person />,
-      color: 'primary' as const,
-      description: `Citizen ${i + 1}`
-    })),
+  // Additional real accounts from database
+  const additionalAccounts = [
     // Additional Clerks
-    ...Array.from({ length: 5 }, (_, i) => ({
-      role: 'Clerk',
-      email: `clerk${i + 1}@city.gov`,
-      password: 'password123',
-      icon: <Work />,
-      color: 'secondary' as const,
-      description: `Clerk ${i + 1}`
-    })),
-    // Additional Supervisors
-    ...Array.from({ length: 3 }, (_, i) => ({
-      role: 'Supervisor',
-      email: `supervisor${i + 1}@city.gov`,
-      password: 'password123',
-      icon: <SupervisorAccount />,
-      color: 'warning' as const,
-      description: `Supervisor ${i + 1}`
-    })),
+    { role: 'Clerk', email: 'victoria.clerk4@public-safety.gov', password: 'password123', icon: <Work />, color: 'secondary' as const, description: 'Public Safety Clerk' },
+    { role: 'Clerk', email: 'margarita.clerk2@waste-management.gov', password: 'password123', icon: <Work />, color: 'secondary' as const, description: 'Waste Management Clerk' },
+    { role: 'Clerk', email: 'kristina.clerk4@roads-and-infrastructure.gov', password: 'password123', icon: <Work />, color: 'secondary' as const, description: 'Roads Clerk' },
+    { role: 'Clerk', email: 'georgi.clerk4@parks-and-recreation.gov', password: 'password123', icon: <Work />, color: 'secondary' as const, description: 'Parks Clerk' },
+    { role: 'Clerk', email: 'stoyan.clerk3@water-and-utilities.gov', password: 'password123', icon: <Work />, color: 'secondary' as const, description: 'Water Utilities Clerk' },
+    
+    // Additional Supervisors  
+    { role: 'Supervisor', email: 'victoria.supervisor1@parks-and-recreation.gov', password: 'password123', icon: <SupervisorAccount />, color: 'warning' as const, description: 'Parks Supervisor' },
+    { role: 'Supervisor', email: 'rumyana.supervisor1@water-and-utilities.gov', password: 'password123', icon: <SupervisorAccount />, color: 'warning' as const, description: 'Water Supervisor' },
+    { role: 'Supervisor', email: 'yana.supervisor1@public-safety.gov', password: 'password123', icon: <SupervisorAccount />, color: 'warning' as const, description: 'Public Safety Supervisor' },
+    { role: 'Supervisor', email: 'stoyan.supervisor0@water-and-utilities.gov', password: 'password123', icon: <SupervisorAccount />, color: 'warning' as const, description: 'Water Supervisor' },
+    { role: 'Supervisor', email: 'angel.supervisor2@roads-and-infrastructure.gov', password: 'password123', icon: <SupervisorAccount />, color: 'warning' as const, description: 'Roads Supervisor' },
+    
     // Additional Field Agents
-    ...Array.from({ length: 3 }, (_, i) => ({
-      role: 'Field Agent',
-      email: `agent${i + 1}@city.gov`,
-      password: 'password123',
-      icon: <Build />,
-      color: 'info' as const,
-      description: `Field Agent ${i + 1}`
-    })),
-    // Additional Admins
-    ...Array.from({ length: 2 }, (_, i) => ({
-      role: 'Admin',
-      email: `admin${i + 1}@city.gov`,
-      password: 'password123',
-      icon: <AdminPanelSettings />,
-      color: 'error' as const,
-      description: `Admin ${i + 1}`
-    }))
+    { role: 'Field Agent', email: 'gabriela.agent3@water-and-utilities.gov', password: 'password123', icon: <Build />, color: 'info' as const, description: 'Water Field Agent' },
+    { role: 'Field Agent', email: 'asen.agent1@parks-and-recreation.gov', password: 'password123', icon: <Build />, color: 'info' as const, description: 'Parks Field Agent' },
+    { role: 'Field Agent', email: 'polina.agent3@roads-and-infrastructure.gov', password: 'password123', icon: <Build />, color: 'info' as const, description: 'Roads Field Agent' },
+    { role: 'Field Agent', email: 'daniela.agent1@waste-management.gov', password: 'password123', icon: <Build />, color: 'info' as const, description: 'Waste Field Agent' },
+    { role: 'Field Agent', email: 'simona.agent3@public-safety.gov', password: 'password123', icon: <Build />, color: 'info' as const, description: 'Public Safety Field Agent' },
+    
+    // Additional Citizens
+    { role: 'Citizen', email: 'margarita.aleksandrov8@example.com', password: 'password123', icon: <Person />, color: 'primary' as const, description: 'Citizen - Margarita' },
+    { role: 'Citizen', email: 'simona.penchev44@example.com', password: 'password123', icon: <Person />, color: 'primary' as const, description: 'Citizen - Simona' },
+    { role: 'Citizen', email: 'lilyana.yankov43@example.com', password: 'password123', icon: <Person />, color: 'primary' as const, description: 'Citizen - Lilyana' },
   ];
+
+  // All demo accounts - combine main and additional real accounts
+  const allDemoAccounts = [...mainDemoAccounts, ...additionalAccounts];
 
   const [selectedDemoAccount, setSelectedDemoAccount] = useState('');
 

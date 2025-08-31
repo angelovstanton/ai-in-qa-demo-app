@@ -86,40 +86,13 @@ async function main() {
       admins: []
     };
     
-    // Demo accounts - Main accounts plus all accounts from login dropdown
+    // Demo accounts (keep these for testing)
     const demoAccounts = [
-      // Main demo accounts
       { email: 'john@example.com', name: 'John Doe', role: 'CITIZEN' },
       { email: 'mary.clerk@city.gov', name: 'Mary Johnson', role: 'CLERK', departmentId: departments[0].id },
       { email: 'supervisor@city.gov', name: 'Tom Wilson', role: 'SUPERVISOR', departmentId: departments[0].id },
       { email: 'field.agent@city.gov', name: 'Bob Anderson', role: 'FIELD_AGENT', departmentId: departments[0].id },
-      { email: 'admin@city.gov', name: 'Admin User', role: 'ADMIN' },
-      
-      // Additional Clerks from login dropdown
-      { email: 'victoria.clerk4@public-safety.gov', name: 'Victoria Petrov', role: 'CLERK', departmentId: departments[3].id },
-      { email: 'margarita.clerk2@waste-management.gov', name: 'Margarita Ivanov', role: 'CLERK', departmentId: departments[4].id },
-      { email: 'kristina.clerk4@roads-and-infrastructure.gov', name: 'Kristina Dimitrov', role: 'CLERK', departmentId: departments[0].id },
-      { email: 'georgi.clerk4@parks-and-recreation.gov', name: 'Georgi Nikolov', role: 'CLERK', departmentId: departments[2].id },
-      { email: 'stoyan.clerk3@water-and-utilities.gov', name: 'Stoyan Georgiev', role: 'CLERK', departmentId: departments[1].id },
-      
-      // Additional Supervisors from login dropdown
-      { email: 'victoria.supervisor1@parks-and-recreation.gov', name: 'Victoria Stoyanov', role: 'SUPERVISOR', departmentId: departments[2].id },
-      { email: 'rumyana.supervisor1@water-and-utilities.gov', name: 'Rumyana Petkov', role: 'SUPERVISOR', departmentId: departments[1].id },
-      { email: 'yana.supervisor1@public-safety.gov', name: 'Yana Vasilev', role: 'SUPERVISOR', departmentId: departments[3].id },
-      { email: 'stoyan.supervisor0@water-and-utilities.gov', name: 'Stoyan Todorov', role: 'SUPERVISOR', departmentId: departments[1].id },
-      { email: 'angel.supervisor2@roads-and-infrastructure.gov', name: 'Angel Kolev', role: 'SUPERVISOR', departmentId: departments[0].id },
-      
-      // Additional Field Agents from login dropdown
-      { email: 'gabriela.agent3@water-and-utilities.gov', name: 'Gabriela Angelov', role: 'FIELD_AGENT', departmentId: departments[1].id },
-      { email: 'asen.agent1@parks-and-recreation.gov', name: 'Asen Dimitrov', role: 'FIELD_AGENT', departmentId: departments[2].id },
-      { email: 'polina.agent3@roads-and-infrastructure.gov', name: 'Polina Ivanov', role: 'FIELD_AGENT', departmentId: departments[0].id },
-      { email: 'daniela.agent1@waste-management.gov', name: 'Daniela Petrov', role: 'FIELD_AGENT', departmentId: departments[4].id },
-      { email: 'simona.agent3@public-safety.gov', name: 'Simona Nikolov', role: 'FIELD_AGENT', departmentId: departments[3].id },
-      
-      // Additional Citizens from login dropdown
-      { email: 'margarita.aleksandrov8@example.com', name: 'Margarita Aleksandrov', role: 'CITIZEN' },
-      { email: 'simona.penchev44@example.com', name: 'Simona Penchev', role: 'CITIZEN' },
-      { email: 'lilyana.yankov43@example.com', name: 'Lilyana Yankov', role: 'CITIZEN' }
+      { email: 'admin@city.gov', name: 'Admin User', role: 'ADMIN' }
     ];
     
     for (const account of demoAccounts) {
@@ -356,29 +329,6 @@ async function main() {
         create: flag
       });
     }
-    
-    // Import and run field agent seeding with Bulgarian coordinates
-    console.log('\n🚐 Creating field agent work orders...');
-    const { seedFieldAgentData } = require('./field-agent-seed');
-    await seedFieldAgentData();
-    
-    // Import and run supervisor data seeding
-    console.log('\n📊 Creating supervisor data...');
-    const { seedSupervisorData } = require('./seeds/supervisorData');
-    await seedSupervisorData(
-      prisma, 
-      departments, 
-      { 
-        supervisors: users.supervisors, 
-        staffUsers: [...users.clerks, ...users.fieldAgents] 
-      },
-      requests
-    );
-    
-    // Import and run community data seeding (rankings, achievements, stats)
-    console.log('\n🏆 Seeding Community Data...');
-    const { seedCommunityData } = require('./seeds/modules/06-community');
-    await seedCommunityData(prisma, users, requests);
     
     const endTime = Date.now();
     const duration = (endTime - startTime) / 1000;

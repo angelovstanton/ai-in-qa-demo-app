@@ -61,7 +61,19 @@ export const useServiceRequests = (params: UseServiceRequestsParams = {}): UseSe
     } finally {
       setLoading(false);
     }
-  }, [params]);
+  }, [
+    params.page,
+    params.pageSize,
+    params.sort,
+    params.status,
+    params.category,
+    params.priority,
+    params.department,
+    params.assignedTo,
+    params.text,
+    params.createdBy,
+    params.showAll
+  ]);
 
   useEffect(() => {
     fetchData();

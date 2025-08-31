@@ -1,4 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
+import { BULGARIAN_CITIES } from './seeds/bulgarian-data';
 
 const prisma = new PrismaClient();
 
@@ -36,9 +39,15 @@ async function seedFieldAgentData() {
     let agentStatusCreated = 0;
     let timeTrackingCreated = 0;
 
-    // Base GPS coordinates for the city
-    const baseLat = 40.7128; // NYC coordinates as example
-    const baseLng = -74.0060;
+    // Use real Bulgarian city coordinates
+    const cities = Object.keys(BULGARIAN_CITIES);
+    const cityCoordinates = [
+      BULGARIAN_CITIES.Sofia,
+      BULGARIAN_CITIES.Plovdiv,
+      BULGARIAN_CITIES.Varna,
+      BULGARIAN_CITIES.Burgas,
+      BULGARIAN_CITIES.Ruse
+    ];
 
     // Create work orders for each field agent
     for (let i = 0; i < fieldAgents.length && i < serviceRequests.length; i++) {
@@ -63,9 +72,11 @@ async function seedFieldAgentData() {
         const priority = priorities[Math.floor(Math.random() * priorities.length)];
         const taskType = taskTypes[Math.floor(Math.random() * taskTypes.length)];
         
-        // Generate random GPS coordinates (around a city center)
-        const gpsLat = baseLat + (Math.random() - 0.5) * 0.2; // ±0.1 degree variation
-        const gpsLng = baseLng + (Math.random() - 0.5) * 0.2;
+        // Use actual Bulgarian city coordinates with small realistic variation
+        const cityIndex = Math.floor(Math.random() * cityCoordinates.length);
+        const city = cityCoordinates[cityIndex];
+        const gpsLat = city.lat + (Math.random() - 0.5) * 0.02; // Small variation within city
+        const gpsLng = city.lng + (Math.random() - 0.5) * 0.02;
         
         const estimatedDuration = Math.floor(Math.random() * 240) + 30; // 30-270 minutes
         
@@ -162,14 +173,19 @@ async function seedFieldAgentData() {
         }
       });
 
+      // Use Sofia as the base for agent locations
+      const agentCity = BULGARIAN_CITIES.Sofia;
+      const agentLat = agentCity.lat + (Math.random() - 0.5) * 0.01;
+      const agentLng = agentCity.lng + (Math.random() - 0.5) * 0.01;
+
       await prisma.agentStatus.upsert({
         where: { agentId: agent.id },
         update: {
           status: currentWorkOrder ? 'BUSY' : agentStatus,
           currentTaskId: currentWorkOrder?.id || null,
           currentLocation: JSON.stringify({
-            lat: baseLat + (Math.random() - 0.5) * 0.1,
-            lng: baseLng + (Math.random() - 0.5) * 0.1,
+            lat: agentLat,
+            lng: agentLng,
             accuracy: 5
           }),
           vehicleStatus: Math.random() > 0.5 ? 'IN_TRANSIT' : 'PARKED',
@@ -180,8 +196,8 @@ async function seedFieldAgentData() {
           status: currentWorkOrder ? 'BUSY' : agentStatus,
           currentTaskId: currentWorkOrder?.id || null,
           currentLocation: JSON.stringify({
-            lat: baseLat + (Math.random() - 0.5) * 0.1,
-            lng: baseLng + (Math.random() - 0.5) * 0.1,
+            lat: agentLat,
+            lng: agentLng,
             accuracy: 5
           }),
           vehicleStatus: Math.random() > 0.5 ? 'IN_TRANSIT' : 'PARKED',
@@ -192,7 +208,7 @@ async function seedFieldAgentData() {
       agentStatusCreated++;
     }
 
-    // Create some field photos
+    // Create some field photos using real city incident images
     const activeWorkOrders = await prisma.fieldWorkOrder.findMany({
       where: {
         status: { in: ['ON_SITE', 'IN_PROGRESS', 'COMPLETED'] }
@@ -200,12 +216,34 @@ async function seedFieldAgentData() {
       take: 20
     });
 
+    // Load real city incident photos
+    const cityPhotos = [
+      'city_incident2.jpg',
+      'city_incident5.jpg', 
+      'city_incident6.jpg',
+      'city_incident7.jpg',
+      'city_incident8.jpg',
+      'city_incident9.jpg'
+    ];
+    
+    const photoBuffers: { [key: string]: Buffer } = {};
+    for (const photoName of cityPhotos) {
+      const photoPath = path.join(__dirname, '..', '..', 'ui', 'images', photoName);
+      if (fs.existsSync(photoPath)) {
+        photoBuffers[photoName] = fs.readFileSync(photoPath);
+      }
+    }
+
     let photosCreated = 0;
     for (const workOrder of activeWorkOrders) {
       const photoTypes = ['BEFORE', 'DURING', 'AFTER', 'DAMAGE', 'COMPLETION'];
       const numPhotos = Math.floor(Math.random() * 3) + 1;
       
       for (let i = 0; i < numPhotos; i++) {
+        // Use a random city incident photo
+        const photoName = cityPhotos[Math.floor(Math.random() * cityPhotos.length)];
+        const photoData = photoBuffers[photoName] || Buffer.from('placeholder');
+        
         await prisma.fieldPhoto.create({
           data: {
             workOrderId: workOrder.id,
@@ -213,12 +251,12 @@ async function seedFieldAgentData() {
             photoType: photoTypes[Math.floor(Math.random() * photoTypes.length)],
             filename: `work-${workOrder.id}-${i + 1}.jpg`,
             mime: 'image/jpeg',
-            size: Math.floor(Math.random() * 1000000) + 500000, // 500KB - 1.5MB
-            data: Buffer.from('fake-image-data-placeholder'), // Placeholder image data
-            caption: `Work progress photo ${i + 1}`,
+            size: photoData.length,
+            data: photoData,
+            caption: `${workOrder.taskType} - Photo ${i + 1}`,
             timestamp: new Date(),
-            gpsLat: Math.random() > 0.5 ? 40.7128 + (Math.random() - 0.5) * 0.1 : null,
-            gpsLng: Math.random() > 0.5 ? -74.0060 + (Math.random() - 0.5) * 0.1 : null
+            gpsLat: workOrder.gpsLat,
+            gpsLng: workOrder.gpsLng
           }
         });
         photosCreated++;

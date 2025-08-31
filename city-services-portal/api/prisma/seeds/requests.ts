@@ -25,10 +25,10 @@ function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function generateRequestCode(): string {
+function generateRequestCode(index: number): string {
   const year = new Date().getFullYear();
-  const randomNum = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
-  return `REQ-${year}-${randomNum}`;
+  const num = (index + 1).toString().padStart(6, '0');
+  return `REQ-${year}-${num}`;
 }
 
 export async function seedRequests(prisma: PrismaClient, departments: any[], users: any) {
@@ -101,7 +101,7 @@ export async function seedRequests(prisma: PrismaClient, departments: any[], use
     
     const request = await prisma.serviceRequest.create({
       data: {
-        code: generateRequestCode(),
+        code: generateRequestCode(i),
         title: title,
         description: `Detailed description for ${title.toLowerCase()}. This issue was reported by a citizen and requires attention from the appropriate department.`,
         category: category,

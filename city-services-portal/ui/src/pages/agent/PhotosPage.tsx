@@ -322,24 +322,24 @@ const PhotosPage: React.FC = () => {
               <ImageListItemBar
                 title={photo.caption || 'No caption'}
                 subtitle={
-                  <Box>
+                  <Box component="span">
                     <Chip 
                       label={photo.photoType} 
                       size="small" 
                       color={getPhotoTypeColor(photo.photoType) as any}
                       sx={{ mr: 1, mb: 1 }}
                     />
-                    <Typography variant="caption" display="block">
+                    <Box component="span" display="block" sx={{ fontSize: '0.75rem' }}>
                       By: {photo.agent?.name || 'Unknown'}
-                    </Typography>
-                    <Typography variant="caption" display="block">
+                    </Box>
+                    <Box component="span" display="block" sx={{ fontSize: '0.75rem' }}>
                       {format(new Date(photo.timestamp), 'MMM dd, yyyy HH:mm')}
-                    </Typography>
+                    </Box>
                     {photo.gpsLat && photo.gpsLng && (
-                      <Typography variant="caption" display="block">
-                        <LocationIcon sx={{ fontSize: 12, mr: 0.5 }} />
+                      <Box component="span" display="block" sx={{ fontSize: '0.75rem' }}>
+                        <LocationIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
                         {photo.gpsLat.toFixed(4)}, {photo.gpsLng.toFixed(4)}
-                      </Typography>
+                      </Box>
                     )}
                   </Box>
                 }

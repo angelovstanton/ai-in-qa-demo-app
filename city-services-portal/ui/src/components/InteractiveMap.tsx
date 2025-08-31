@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -65,13 +65,17 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Component to handle map centering when location changes
-function MapCenterController({ center }: { center: [number, number] }) {
+// Component to handle map centering and bounds
+function MapController({ center, bounds }: { center: [number, number], bounds?: L.LatLngBoundsExpression }) {
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, bounds, map]);
   
   return null;
 }
@@ -82,18 +86,56 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   mapView,
   onMarkerClick
 }) => {
-  // Default to NYC coordinates if no current location
-  const defaultCenter: [number, number] = currentLocation 
-    ? [currentLocation.lat, currentLocation.lng]
-    : [40.7128, -74.0060];
+  // Calculate bounds for all work orders
+  const calculateBounds = useMemo(() => {
+    const validOrders = workOrders.filter(o => o.gpsLat && o.gpsLng);
     
-  const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
-
-  useEffect(() => {
+    if (validOrders.length === 0) return null;
+    
+    let minLat = validOrders[0].gpsLat!;
+    let maxLat = validOrders[0].gpsLat!;
+    let minLng = validOrders[0].gpsLng!;
+    let maxLng = validOrders[0].gpsLng!;
+    
+    validOrders.forEach(order => {
+      if (order.gpsLat! < minLat) minLat = order.gpsLat!;
+      if (order.gpsLat! > maxLat) maxLat = order.gpsLat!;
+      if (order.gpsLng! < minLng) minLng = order.gpsLng!;
+      if (order.gpsLng! > maxLng) maxLng = order.gpsLng!;
+    });
+    
+    // Add some padding to the bounds
+    const latPadding = (maxLat - minLat) * 0.1 || 0.01;
+    const lngPadding = (maxLng - minLng) * 0.1 || 0.01;
+    
+    return [
+      [minLat - latPadding, minLng - lngPadding],
+      [maxLat + latPadding, maxLng + lngPadding]
+    ] as L.LatLngBoundsExpression;
+  }, [workOrders]);
+  
+  // Calculate center based on work orders or default to Sofia, Bulgaria
+  const calculateCenter = (): [number, number] => {
     if (currentLocation) {
-      setMapCenter([currentLocation.lat, currentLocation.lng]);
+      return [currentLocation.lat, currentLocation.lng];
     }
-  }, [currentLocation]);
+    
+    // If we have work orders, center on them
+    if (workOrders.length > 0) {
+      const validOrders = workOrders.filter(o => o.gpsLat && o.gpsLng);
+      if (validOrders.length > 0) {
+        const avgLat = validOrders.reduce((sum, o) => sum + o.gpsLat!, 0) / validOrders.length;
+        const avgLng = validOrders.reduce((sum, o) => sum + o.gpsLng!, 0) / validOrders.length;
+        return [avgLat, avgLng];
+      }
+    }
+    
+    // Default to Sofia, Bulgaria
+    return [42.6977, 23.3219];
+  };
+  
+  const defaultCenter = calculateCenter();
+  const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
 
   // Determine tile layer based on mapView
   const getTileLayer = () => {
@@ -132,11 +174,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
       <MapContainer
         center={mapCenter}
-        zoom={13}
+        zoom={workOrders.length > 0 ? 12 : 11}
         style={{ height: '100%', width: '100%' }}
+        bounds={calculateBounds || undefined}
       >
         {getTileLayer()}
-        <MapCenterController center={mapCenter} />
+        <MapController center={mapCenter} bounds={calculateBounds || undefined} />
         
         {/* Current location marker */}
         {currentLocation && (

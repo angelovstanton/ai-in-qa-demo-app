@@ -157,37 +157,19 @@ const ValidationFeedback: React.FC<{
 };
 
 const categories = [
-  'roads-transportation',
-  'street-lighting', 
+  'roads-and-infrastructure',
   'waste-management',
-  'water-sewer',
-  'parks-recreation',
-  'public-safety',
-  'building-permits',
-  'snow-removal',
-  'traffic-signals',
-  'sidewalk-maintenance',
-  'tree-services',
-  'noise-complaints',
-  'animal-control',
-  'other'
+  'water-and-utilities',
+  'parks-and-recreation',
+  'public-safety'
 ];
 
 const categoryLabels: Record<string, string> = {
-  'roads-transportation': 'Roads and Transportation',
-  'street-lighting': 'Street Lighting',
+  'roads-and-infrastructure': 'Roads & Infrastructure',
   'waste-management': 'Waste Management',
-  'water-sewer': 'Water and Sewer',
-  'parks-recreation': 'Parks and Recreation',
-  'public-safety': 'Public Safety',
-  'building-permits': 'Building and Permits',
-  'snow-removal': 'Snow Removal',
-  'traffic-signals': 'Traffic Signals',
-  'sidewalk-maintenance': 'Sidewalk Maintenance',
-  'tree-services': 'Tree Services',
-  'noise-complaints': 'Noise Complaints',
-  'animal-control': 'Animal Control',
-  'other': 'Other'
+  'water-and-utilities': 'Water & Utilities',
+  'parks-and-recreation': 'Parks & Recreation',
+  'public-safety': 'Public Safety'
 };
 
 const NewRequestPage: React.FC = () => {

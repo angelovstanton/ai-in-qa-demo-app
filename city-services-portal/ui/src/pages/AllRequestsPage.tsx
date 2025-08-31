@@ -22,7 +22,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import { useServiceRequests } from '../hooks/useServiceRequests';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,14 +36,28 @@ const AllRequestsPage: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 25,
+  });
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: 'id', sort: 'desc' },
+  ]);
+
+  // Convert sort model to API format
+  const sortParam = sortModel.length > 0 
+    ? `${sortModel[0].field}:${sortModel[0].sort}`
+    : 'id:desc';
 
   // Fetch all requests (not filtered by user for citizens)
   const { data: requests, loading, error, refetch, totalCount } = useServiceRequests({
+    page: paginationModel.page + 1, // API is 1-based
+    pageSize: paginationModel.pageSize,
+    sort: sortParam,
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
     category: categoryFilter || undefined,
     text: searchText || undefined,
-    pageSize: 25,
     // Don't filter by createdBy - show all requests
     showAll: true,
   });
@@ -298,19 +312,11 @@ const AllRequestsPage: React.FC = () => {
                   data-testid="cs-filter-category"
                 >
                   <MenuItem value="">All Categories</MenuItem>
-                  <MenuItem value="roads-transportation">Roads & Transportation</MenuItem>
-                  <MenuItem value="street-lighting">Street Lighting</MenuItem>
+                  <MenuItem value="roads-and-infrastructure">Roads & Infrastructure</MenuItem>
                   <MenuItem value="waste-management">Waste Management</MenuItem>
-                  <MenuItem value="water-sewer">Water & Sewer</MenuItem>
-                  <MenuItem value="parks-recreation">Parks & Recreation</MenuItem>
+                  <MenuItem value="water-and-utilities">Water & Utilities</MenuItem>
+                  <MenuItem value="parks-and-recreation">Parks & Recreation</MenuItem>
                   <MenuItem value="public-safety">Public Safety</MenuItem>
-                  <MenuItem value="building-permits">Building Permits</MenuItem>
-                  <MenuItem value="snow-removal">Snow Removal</MenuItem>
-                  <MenuItem value="traffic-signals">Traffic Signals</MenuItem>
-                  <MenuItem value="tree-services">Tree Services</MenuItem>
-                  <MenuItem value="noise-complaints">Noise Complaints</MenuItem>
-                  <MenuItem value="animal-control">Animal Control</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -341,12 +347,14 @@ const AllRequestsPage: React.FC = () => {
               rows={rows}
               columns={columns}
               loading={loading}
+              rowCount={totalCount}
               pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 25 },
-                },
-              }}
+              paginationMode="server"
+              sortingMode="server"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              sortModel={sortModel}
+              onSortModelChange={setSortModel}
               disableRowSelectionOnClick
               onRowClick={(params) => handleViewRequest(params.row.id)}
               data-testid="cs-all-requests-grid"
