@@ -12,7 +12,8 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(bash:*)",
-      "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\api\\prisma\\update-demo-profiles.ts\")"
+      "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\api\\prisma\\update-demo-profiles.ts\")",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

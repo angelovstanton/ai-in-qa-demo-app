@@ -163,6 +163,10 @@ SUBMITTED ? TRIAGED ? IN_PROGRESS ? RESOLVED ? CLOSED
 - Auto-save and form recovery
 
 ### **?? Search & Filtering**
+- **Dual Search Endpoints**: GET for simple queries, POST for complex searches
+- **Advanced Filtering**: Geolocation, date ranges, citizen interactions
+- **Real-time Suggestions**: Autocomplete for categories and locations
+- **Export Capabilities**: CSV, JSON, and XLSX formats
 - Debounced search with real-time results
 - Multi-criteria filtering (status, priority, category)
 - Sortable columns with server-side sorting
@@ -197,6 +201,13 @@ Service Requests
 ??? GET    /api/v1/requests/:id      # Get specific request
 ??? PATCH  /api/v1/requests/:id      # Update request
 ??? POST   /api/v1/requests/:id/status # Change request status
+
+Search & Export
+??? GET    /api/v1/service-requests/search     # Simple search with query params
+??? POST   /api/v1/service-requests/search     # Complex search with JSON body
+??? GET    /api/v1/service-requests/search/suggestions # Search autocomplete
+??? POST   /api/v1/service-requests/search/export     # Export results (CSV/JSON)
+??? DELETE /api/v1/service-requests/search/cache      # Clear search cache
 
 File Management
 ??? POST   /api/v1/requests/:id/attachments # Upload files

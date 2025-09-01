@@ -14,6 +14,7 @@ import { metricsScheduler } from './services/metricsScheduler';
 import authRoutes from './routes/auth';
 import authDemoRoutes from './routes/auth-demo'; // Demo routes for new auth system
 import requestRoutes from './routes/requests';
+import searchRoutes from './routes/search';
 import attachmentRoutes from './routes/attachments';
 import adminRoutes from './routes/admin';
 import rankingRoutes from './routes/rankings';
@@ -82,6 +83,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth-demo', authDemoRoutes); // Demo endpoints for new auth system
 app.use('/api/v1/requests', requestRoutes);
+app.use('/api/v1', searchRoutes); // Search endpoints
 app.use('/api/v1/requests', attachmentRoutes); // For request-specific attachment endpoints
 app.use('/api/v1/attachments', attachmentRoutes); // For standalone attachment endpoints (image serving)
 app.use('/api/v1/admin', adminRoutes);

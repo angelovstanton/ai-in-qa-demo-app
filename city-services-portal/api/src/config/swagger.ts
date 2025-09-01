@@ -2845,7 +2845,7 @@ const options = {
       }
     }
   },
-  apis: [], // We're defining everything inline above
+  apis: ['./src/docs/*.yaml', './src/routes/*.ts'], // Include external API documentation files
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
