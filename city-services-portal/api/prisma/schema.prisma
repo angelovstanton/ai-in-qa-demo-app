@@ -18,13 +18,17 @@ model User {
   // Email verification
   emailConfirmed Boolean @default(false)
   emailConfirmationToken String?
+  emailConfirmationExpires DateTime?
   
   // Password reset
   passwordResetToken String?
   passwordResetExpires DateTime?
   
-  // Account status
-  isActive Boolean @default(true)
+  // Account status with enhanced lifecycle management
+  status String @default("PENDING_EMAIL_VERIFICATION") // ACTIVE, INACTIVE, PENDING_EMAIL_VERIFICATION, PASSWORD_RESET_REQUIRED, SUSPENDED, ARCHIVED
+  isActive Boolean @default(true) // Legacy field, kept for backward compatibility
+  statusChangedAt DateTime?
+  statusChangeReason String?
   
   // Profile fields
   firstName    String?

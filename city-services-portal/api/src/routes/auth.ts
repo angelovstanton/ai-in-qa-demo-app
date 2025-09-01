@@ -69,7 +69,10 @@ router.post('/register', async (req: Request, res: Response) => {
         passwordHash,
         role: 'CITIZEN',
         emailConfirmed: false,
-        emailConfirmationToken: confirmationToken
+        emailConfirmationToken: confirmationToken,
+        emailConfirmationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        status: 'PENDING_EMAIL_VERIFICATION', // Set initial status
+        isActive: false
       }
     });
 
@@ -155,6 +158,36 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
+    // Check account status
+    if (!user.emailConfirmed) {
+      return res.status(403).json({
+        error: {
+          code: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email address before logging in',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Check user status if it exists
+    if (user.status && user.status !== 'ACTIVE') {
+      const statusMessages: Record<string, string> = {
+        'PENDING_EMAIL_VERIFICATION': 'Please verify your email address before logging in',
+        'INACTIVE': 'Your account is inactive. Please contact support.',
+        'SUSPENDED': 'Your account has been suspended. Please contact support.',
+        'ARCHIVED': 'This account no longer exists.',
+        'PASSWORD_RESET_REQUIRED': 'You must reset your password before logging in.'
+      };
+
+      return res.status(403).json({
+        error: {
+          code: 'ACCOUNT_STATUS_INVALID',
+          message: statusMessages[user.status] || 'Your account status prevents login',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
     // Generate token
     const token = generateToken({
       id: user.id,
@@ -226,6 +259,22 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
         name: user.name,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        alternatePhone: user.alternatePhone,
+        streetAddress: user.streetAddress,
+        city: user.city,
+        state: user.state,
+        postalCode: user.postalCode,
+        country: user.country,
+        preferredLanguage: user.preferredLanguage,
+        communicationMethod: user.communicationMethod,
+        emailNotifications: user.emailNotifications,
+        smsNotifications: user.smsNotifications,
+        marketingEmails: user.marketingEmails,
+        serviceUpdates: user.serviceUpdates,
+        twoFactorEnabled: user.twoFactorEnabled,
         department: user.department ? {
           id: user.department.id,
           name: user.department.name,
@@ -462,9 +511,11 @@ router.get('/confirm-email', async (req: Request, res: Response) => {
       });
     }
 
-    // Find user with matching token
+    // Find user with matching token (check both new and old token fields)
     const user = await prisma.user.findFirst({
-      where: { emailConfirmationToken: token }
+      where: { 
+        emailConfirmationToken: token
+      }
     });
 
     if (!user) {
@@ -477,12 +528,26 @@ router.get('/confirm-email', async (req: Request, res: Response) => {
       });
     }
 
-    // Update user as confirmed
+    // Check if token is expired (if we have an expiry date)
+    if (user.emailConfirmationExpires && new Date() > user.emailConfirmationExpires) {
+      return res.status(400).json({
+        error: {
+          code: 'TOKEN_EXPIRED',
+          message: 'Confirmation token has expired. Please request a new one.',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+
+    // Update user as confirmed and activate account
     await prisma.user.update({
       where: { id: user.id },
       data: {
         emailConfirmed: true,
-        emailConfirmationToken: null
+        emailConfirmationToken: null,
+        emailConfirmationExpires: null,
+        status: 'ACTIVE', // Set status to ACTIVE when email is confirmed
+        isActive: true
       }
     });
 

@@ -20,20 +20,42 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Handle both 401 (Unauthorized) and 403 (Forbidden) as token issues
-      console.warn('Authentication error:', error.response?.status, error.response?.data);
+    if (error.response?.status === 401) {
+      const errorCode = error.response?.data?.error?.code;
+      const errorMessage = error.response?.data?.error?.message;
       
-      // Only redirect if this isn't the auth check endpoint
-      if (!error.config?.url?.includes('/auth/me')) {
+      console.warn('Authentication error:', error.response?.status, errorCode, errorMessage);
+      
+      // Only handle token-related 401 errors, not login failures
+      const isTokenError = errorCode === 'TOKEN_EXPIRED' || 
+                          errorCode === 'INVALID_TOKEN' || 
+                          errorCode === 'UNAUTHORIZED';
+      
+      // Don't redirect for login attempts or auth checks
+      const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+                           error.config?.url?.includes('/auth/register') ||
+                           error.config?.url?.includes('/auth/me');
+      
+      if (isTokenError && !isAuthEndpoint) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        localStorage.removeItem('new-request-form-data'); // Clear form data to prevent loss
+        localStorage.removeItem('new-request-form-data');
         
-        // Show user-friendly message
-        alert('Your session has expired. Please log in again.');
+        // Only show session expired for actual token expiration
+        if (errorCode === 'TOKEN_EXPIRED') {
+          alert('Your session has expired. Please log in again.');
+        } else {
+          alert('Authentication failed. Please log in again.');
+        }
         window.location.href = '/login';
       }
+    } else if (error.response?.status === 403) {
+      // 403 is for permission issues, not session expiration
+      const errorMessage = error.response?.data?.error?.message;
+      console.warn('Permission error:', errorMessage);
+      
+      // Don't automatically redirect for 403 errors
+      // These are typically role-based access issues
     }
     return Promise.reject(error);
   }

@@ -88,19 +88,181 @@ async function main() {
     
     // Demo accounts - Main accounts plus all accounts from login dropdown
     const demoAccounts = [
-      // Main demo accounts
-      { email: 'john@example.com', name: 'John Doe', role: 'CITIZEN' },
-      { email: 'mary.clerk@city.gov', name: 'Mary Johnson', role: 'CLERK', departmentId: departments[0].id },
-      { email: 'supervisor@city.gov', name: 'Tom Wilson', role: 'SUPERVISOR', departmentId: departments[0].id },
-      { email: 'field.agent@city.gov', name: 'Bob Anderson', role: 'FIELD_AGENT', departmentId: departments[0].id },
-      { email: 'admin@city.gov', name: 'Admin User', role: 'ADMIN' },
+      // Main demo accounts with complete profile information
+      { 
+        email: 'john@example.com', 
+        name: 'John Doe', 
+        role: 'CITIZEN',
+        firstName: 'John',
+        lastName: 'Doe',
+        phone: '+359888123456',
+        alternatePhone: '+35929876543',
+        streetAddress: '123 Alexander Nevsky Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL',
+        emailNotifications: true,
+        smsNotifications: false,
+        marketingEmails: false,
+        serviceUpdates: true,
+        twoFactorEnabled: false
+      },
+      { 
+        email: 'mary.clerk@city.gov', 
+        name: 'Mary Johnson', 
+        role: 'CLERK', 
+        departmentId: departments[0].id,
+        firstName: 'Mary',
+        lastName: 'Johnson',
+        phone: '+35921234567',
+        alternatePhone: '+359888765432',
+        streetAddress: '45 Vitosha Boulevard',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1463',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL',
+        emailNotifications: true,
+        smsNotifications: true,
+        marketingEmails: false,
+        serviceUpdates: true,
+        twoFactorEnabled: false
+      },
+      { 
+        email: 'supervisor@city.gov', 
+        name: 'Tom Wilson', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[0].id,
+        firstName: 'Tom',
+        lastName: 'Wilson',
+        phone: '+35922345678',
+        alternatePhone: '+359877234567',
+        streetAddress: '78 Tsarigradsko Shose',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1784',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL',
+        emailNotifications: true,
+        smsNotifications: true,
+        marketingEmails: false,
+        serviceUpdates: true,
+        twoFactorEnabled: true,
+        securityQuestion: 'What was the name of your first pet?',
+        securityAnswer: await bcrypt.hash('fluffy', 10)
+      },
+      { 
+        email: 'field.agent@city.gov', 
+        name: 'Bob Anderson', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[0].id,
+        firstName: 'Bob',
+        lastName: 'Anderson',
+        phone: '+359888345678',
+        alternatePhone: '+35928765432',
+        streetAddress: '56 Bulgaria Boulevard',
+        city: 'Sofia',
+        state: 'Sofia-Capital',
+        postalCode: '1404',
+        country: 'BG',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS',
+        emailNotifications: true,
+        smsNotifications: true,
+        marketingEmails: false,
+        serviceUpdates: true,
+        twoFactorEnabled: false
+      },
+      { 
+        email: 'admin@city.gov', 
+        name: 'Admin User', 
+        role: 'ADMIN',
+        firstName: 'Admin',
+        lastName: 'User',
+        phone: '+35929998888',
+        alternatePhone: '+359888999888',
+        streetAddress: '1 Council Building, NDK',
+        city: 'Sofia',
+        state: 'Sofia-Capital',
+        postalCode: '1421',
+        country: 'BG',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL',
+        emailNotifications: true,
+        smsNotifications: true,
+        marketingEmails: false,
+        serviceUpdates: true,
+        twoFactorEnabled: true,
+        securityQuestion: 'What is your favorite color?',
+        securityAnswer: await bcrypt.hash('blue', 10)
+      },
       
-      // Additional Clerks from login dropdown
-      { email: 'victoria.clerk4@public-safety.gov', name: 'Victoria Petrov', role: 'CLERK', departmentId: departments[3].id },
-      { email: 'margarita.clerk2@waste-management.gov', name: 'Margarita Ivanov', role: 'CLERK', departmentId: departments[4].id },
-      { email: 'kristina.clerk4@roads-and-infrastructure.gov', name: 'Kristina Dimitrov', role: 'CLERK', departmentId: departments[0].id },
-      { email: 'georgi.clerk4@parks-and-recreation.gov', name: 'Georgi Nikolov', role: 'CLERK', departmentId: departments[2].id },
-      { email: 'stoyan.clerk3@water-and-utilities.gov', name: 'Stoyan Georgiev', role: 'CLERK', departmentId: departments[1].id },
+      // Additional Clerks from login dropdown with basic profile info
+      { 
+        email: 'victoria.clerk4@public-safety.gov', 
+        name: 'Victoria Petrov', 
+        role: 'CLERK', 
+        departmentId: departments[3].id,
+        firstName: 'Victoria',
+        lastName: 'Petrov',
+        phone: '+35924567890',
+        city: 'Sofia',
+        postalCode: '1000',
+        country: 'BG'
+      },
+      { 
+        email: 'margarita.clerk2@waste-management.gov', 
+        name: 'Margarita Ivanov', 
+        role: 'CLERK', 
+        departmentId: departments[4].id,
+        firstName: 'Margarita',
+        lastName: 'Ivanov',
+        phone: '+35925678901',
+        city: 'Sofia',
+        postalCode: '1000',
+        country: 'BG'
+      },
+      { 
+        email: 'kristina.clerk4@roads-and-infrastructure.gov', 
+        name: 'Kristina Dimitrov', 
+        role: 'CLERK', 
+        departmentId: departments[0].id,
+        firstName: 'Kristina',
+        lastName: 'Dimitrov',
+        phone: '+35926789012',
+        city: 'Sofia',
+        postalCode: '1000',
+        country: 'BG'
+      },
+      { 
+        email: 'georgi.clerk4@parks-and-recreation.gov', 
+        name: 'Georgi Nikolov', 
+        role: 'CLERK', 
+        departmentId: departments[2].id,
+        firstName: 'Georgi',
+        lastName: 'Nikolov',
+        phone: '+35927890123',
+        city: 'Sofia',
+        postalCode: '1000',
+        country: 'BG'
+      },
+      { 
+        email: 'stoyan.clerk3@water-and-utilities.gov', 
+        name: 'Stoyan Georgiev', 
+        role: 'CLERK', 
+        departmentId: departments[1].id,
+        firstName: 'Stoyan',
+        lastName: 'Georgiev',
+        phone: '+35928901234',
+        city: 'Sofia',
+        postalCode: '1000',
+        country: 'BG'
+      },
       
       // Additional Supervisors from login dropdown
       { email: 'victoria.supervisor1@parks-and-recreation.gov', name: 'Victoria Stoyanov', role: 'SUPERVISOR', departmentId: departments[2].id },
@@ -131,7 +293,9 @@ async function main() {
           role,
           ...rest,
           passwordHash,
-          isActive: true
+          isActive: true,
+          status: 'ACTIVE',
+          emailConfirmed: true
         }
       });
       
@@ -156,7 +320,9 @@ async function main() {
           role: 'CITIZEN',
           passwordHash,
           isActive: true,
-          phone: `+359 ${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 90000000) + 10000000}`,
+          status: 'ACTIVE',
+          emailConfirmed: true,
+          phone: `+359${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 90000000) + 10000000}`,
           streetAddress: address.street,
           city: address.city,
           postalCode: String(Math.floor(Math.random() * 9000) + 1000)
@@ -178,7 +344,9 @@ async function main() {
             departmentId: dept.id,
             passwordHash,
             isActive: true,
-            phone: `+359 2 ${Math.floor(Math.random() * 9000000) + 1000000}`
+            status: 'ACTIVE',
+            emailConfirmed: true,
+            phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
           }
         });
         users.clerks.push(user);
@@ -195,7 +363,9 @@ async function main() {
             departmentId: dept.id,
             passwordHash,
             isActive: true,
-            phone: `+359 2 ${Math.floor(Math.random() * 9000000) + 1000000}`
+            status: 'ACTIVE',
+            emailConfirmed: true,
+            phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
           }
         });
         users.supervisors.push(user);
@@ -212,7 +382,9 @@ async function main() {
             departmentId: dept.id,
             passwordHash,
             isActive: true,
-            phone: `+359 88 ${Math.floor(Math.random() * 9000000) + 1000000}`
+            status: 'ACTIVE',
+            emailConfirmed: true,
+            phone: `+35988${Math.floor(Math.random() * 9000000) + 1000000}`
           }
         });
         users.fieldAgents.push(user);

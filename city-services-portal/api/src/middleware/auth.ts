@@ -60,11 +60,30 @@ export const authenticateToken = async (
     };
 
     next();
-  } catch (error) {
-    return res.status(403).json({
+  } catch (error: any) {
+    // Differentiate between token expiration and other errors
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        error: {
+          code: 'TOKEN_EXPIRED',
+          message: 'Token has expired',
+          correlationId: res.locals.correlationId
+        }
+      });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid token',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
+    
+    return res.status(401).json({
       error: {
-        code: 'FORBIDDEN',
-        message: 'Invalid or expired token',
+        code: 'UNAUTHORIZED',
+        message: 'Authentication failed',
         correlationId: res.locals.correlationId
       }
     });
@@ -104,6 +123,6 @@ export const generateToken = (user: { id: string; email: string; role: string })
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET || 'fallback-secret',
-    { expiresIn: '1h' }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY ? `${process.env.ACCESS_TOKEN_EXPIRY}h` : '24h' }
   );
 };

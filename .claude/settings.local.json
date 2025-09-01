@@ -10,7 +10,8 @@
       "Bash(npm run dev:*)",
       "Bash(find:*)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []
