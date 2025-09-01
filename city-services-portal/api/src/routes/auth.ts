@@ -223,6 +223,8 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
     
+    console.error('Login error:', error);
+    
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',

@@ -167,9 +167,9 @@ async function main() {
         alternatePhone: '+35928765432',
         streetAddress: '56 Bulgaria Boulevard',
         city: 'Sofia',
-        state: 'Sofia-Capital',
+        state: 'Sofia',
         postalCode: '1404',
-        country: 'BG',
+        country: 'Bulgaria',
         preferredLanguage: 'en',
         communicationMethod: 'SMS',
         emailNotifications: true,
@@ -186,11 +186,11 @@ async function main() {
         lastName: 'User',
         phone: '+35929998888',
         alternatePhone: '+359888999888',
-        streetAddress: '1 Council Building, NDK',
+        streetAddress: '1 Council Building NDK',
         city: 'Sofia',
-        state: 'Sofia-Capital',
+        state: 'Sofia',
         postalCode: '1421',
-        country: 'BG',
+        country: 'Bulgaria',
         preferredLanguage: 'en',
         communicationMethod: 'EMAIL',
         emailNotifications: true,
@@ -213,7 +213,7 @@ async function main() {
         phone: '+35924567890',
         city: 'Sofia',
         postalCode: '1000',
-        country: 'BG'
+        country: 'Bulgaria'
       },
       { 
         email: 'margarita.clerk2@waste-management.gov', 
@@ -225,7 +225,7 @@ async function main() {
         phone: '+35925678901',
         city: 'Sofia',
         postalCode: '1000',
-        country: 'BG'
+        country: 'Bulgaria'
       },
       { 
         email: 'kristina.clerk4@roads-and-infrastructure.gov', 
@@ -237,7 +237,7 @@ async function main() {
         phone: '+35926789012',
         city: 'Sofia',
         postalCode: '1000',
-        country: 'BG'
+        country: 'Bulgaria'
       },
       { 
         email: 'georgi.clerk4@parks-and-recreation.gov', 
@@ -249,7 +249,7 @@ async function main() {
         phone: '+35927890123',
         city: 'Sofia',
         postalCode: '1000',
-        country: 'BG'
+        country: 'Bulgaria'
       },
       { 
         email: 'stoyan.clerk3@water-and-utilities.gov', 
@@ -261,27 +261,219 @@ async function main() {
         phone: '+35928901234',
         city: 'Sofia',
         postalCode: '1000',
-        country: 'BG'
+        country: 'Bulgaria'
       },
       
-      // Additional Supervisors from login dropdown
-      { email: 'victoria.supervisor1@parks-and-recreation.gov', name: 'Victoria Stoyanov', role: 'SUPERVISOR', departmentId: departments[2].id },
-      { email: 'rumyana.supervisor1@water-and-utilities.gov', name: 'Rumyana Petkov', role: 'SUPERVISOR', departmentId: departments[1].id },
-      { email: 'yana.supervisor1@public-safety.gov', name: 'Yana Vasilev', role: 'SUPERVISOR', departmentId: departments[3].id },
-      { email: 'stoyan.supervisor0@water-and-utilities.gov', name: 'Stoyan Todorov', role: 'SUPERVISOR', departmentId: departments[1].id },
-      { email: 'angel.supervisor2@roads-and-infrastructure.gov', name: 'Angel Kolev', role: 'SUPERVISOR', departmentId: departments[0].id },
+      // Additional Supervisors from login dropdown with profile info
+      { 
+        email: 'victoria.supervisor1@parks-and-recreation.gov', 
+        name: 'Victoria Stoyanov', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[2].id,
+        firstName: 'Victoria',
+        lastName: 'Stoyanov',
+        phone: '+35923456789',
+        streetAddress: '100 Graf Ignatiev Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'rumyana.supervisor1@water-and-utilities.gov', 
+        name: 'Rumyana Petkov', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[1].id,
+        firstName: 'Rumyana',
+        lastName: 'Petkov',
+        phone: '+35924567890',
+        streetAddress: '120 Patriarch Evtimiy Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'yana.supervisor1@public-safety.gov', 
+        name: 'Yana Vasilev', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[3].id,
+        firstName: 'Yana',
+        lastName: 'Vasilev',
+        phone: '+35925678901',
+        streetAddress: '140 Cherni Vrah Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1407',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'stoyan.supervisor0@water-and-utilities.gov', 
+        name: 'Stoyan Todorov', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[1].id,
+        firstName: 'Stoyan',
+        lastName: 'Todorov',
+        phone: '+35926789012',
+        streetAddress: '160 Rakovski Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'angel.supervisor2@roads-and-infrastructure.gov', 
+        name: 'Angel Kolev', 
+        role: 'SUPERVISOR', 
+        departmentId: departments[0].id,
+        firstName: 'Angel',
+        lastName: 'Kolev',
+        phone: '+35927890123',
+        streetAddress: '180 Slivnitsa Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1309',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
       
-      // Additional Field Agents from login dropdown
-      { email: 'gabriela.agent3@water-and-utilities.gov', name: 'Gabriela Angelov', role: 'FIELD_AGENT', departmentId: departments[1].id },
-      { email: 'asen.agent1@parks-and-recreation.gov', name: 'Asen Dimitrov', role: 'FIELD_AGENT', departmentId: departments[2].id },
-      { email: 'polina.agent3@roads-and-infrastructure.gov', name: 'Polina Ivanov', role: 'FIELD_AGENT', departmentId: departments[0].id },
-      { email: 'daniela.agent1@waste-management.gov', name: 'Daniela Petrov', role: 'FIELD_AGENT', departmentId: departments[4].id },
-      { email: 'simona.agent3@public-safety.gov', name: 'Simona Nikolov', role: 'FIELD_AGENT', departmentId: departments[3].id },
+      // Additional Field Agents from login dropdown with profile info
+      { 
+        email: 'gabriela.agent3@water-and-utilities.gov', 
+        name: 'Gabriela Angelov', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[1].id,
+        firstName: 'Gabriela',
+        lastName: 'Angelov',
+        phone: '+359888456789',
+        streetAddress: '200 Oborishte Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS'
+      },
+      { 
+        email: 'asen.agent1@parks-and-recreation.gov', 
+        name: 'Asen Dimitrov', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[2].id,
+        firstName: 'Asen',
+        lastName: 'Dimitrov',
+        phone: '+359888567890',
+        streetAddress: '220 Knyaz Boris I Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS'
+      },
+      { 
+        email: 'polina.agent3@roads-and-infrastructure.gov', 
+        name: 'Polina Ivanov', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[0].id,
+        firstName: 'Polina',
+        lastName: 'Ivanov',
+        phone: '+359888678901',
+        streetAddress: '240 Stamboliyski Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1309',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS'
+      },
+      { 
+        email: 'daniela.agent1@waste-management.gov', 
+        name: 'Daniela Petrov', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[4].id,
+        firstName: 'Daniela',
+        lastName: 'Petrov',
+        phone: '+359888789012',
+        streetAddress: '260 Maria Luisa Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1202',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS'
+      },
+      { 
+        email: 'simona.agent3@public-safety.gov', 
+        name: 'Simona Nikolov', 
+        role: 'FIELD_AGENT', 
+        departmentId: departments[3].id,
+        firstName: 'Simona',
+        lastName: 'Nikolov',
+        phone: '+359888890123',
+        streetAddress: '280 Dondukov Blvd',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'SMS'
+      },
       
-      // Additional Citizens from login dropdown
-      { email: 'margarita.aleksandrov8@example.com', name: 'Margarita Aleksandrov', role: 'CITIZEN' },
-      { email: 'simona.penchev44@example.com', name: 'Simona Penchev', role: 'CITIZEN' },
-      { email: 'lilyana.yankov43@example.com', name: 'Lilyana Yankov', role: 'CITIZEN' }
+      // Additional Citizens from login dropdown with profile info
+      { 
+        email: 'margarita.aleksandrov8@example.com', 
+        name: 'Margarita Aleksandrov', 
+        role: 'CITIZEN',
+        firstName: 'Margarita',
+        lastName: 'Aleksandrov',
+        phone: '+359878901234',
+        streetAddress: '300 Alabin Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'simona.penchev44@example.com', 
+        name: 'Simona Penchev', 
+        role: 'CITIZEN',
+        firstName: 'Simona',
+        lastName: 'Penchev',
+        phone: '+359879012345',
+        streetAddress: '320 Solunska Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      },
+      { 
+        email: 'lilyana.yankov43@example.com', 
+        name: 'Lilyana Yankov', 
+        role: 'CITIZEN',
+        firstName: 'Lilyana',
+        lastName: 'Yankov',
+        phone: '+359879123456',
+        streetAddress: '340 Tsar Ivan Shishman Street',
+        city: 'Sofia',
+        state: 'Sofia',
+        postalCode: '1000',
+        country: 'Bulgaria',
+        preferredLanguage: 'en',
+        communicationMethod: 'EMAIL'
+      }
     ];
     
     for (const account of demoAccounts) {
@@ -331,63 +523,75 @@ async function main() {
       users.citizens.push(user);
     }
     
-    // Create staff with Bulgarian names for each department
+    // Create additional staff with Bulgarian names for each department
+    // We'll avoid creating duplicates of the demo accounts above
+    const existingEmails = new Set(demoAccounts.map(a => a.email));
+    
     for (const dept of departments) {
-      // Clerks
-      for (let i = 0; i < 5; i++) {
+      // Clerks - create additional ones not in demo accounts
+      for (let i = 5; i < 10; i++) { // Start from 5 to avoid conflicts
         const name = getRandomBulgarianName();
-        const user = await prisma.user.create({
-          data: {
-            email: `${name.firstName.toLowerCase()}.clerk${i}@${dept.slug}.gov`,
-            name: name.fullName,
-            role: 'CLERK',
-            departmentId: dept.id,
-            passwordHash,
-            isActive: true,
-            status: 'ACTIVE',
-            emailConfirmed: true,
-            phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
-          }
-        });
-        users.clerks.push(user);
+        const email = `${name.firstName.toLowerCase()}.clerk${i}@${dept.slug}.gov`;
+        if (!existingEmails.has(email)) {
+          const user = await prisma.user.create({
+            data: {
+              email,
+              name: name.fullName,
+              role: 'CLERK',
+              departmentId: dept.id,
+              passwordHash,
+              isActive: true,
+              status: 'ACTIVE',
+              emailConfirmed: true,
+              phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
+            }
+          });
+          users.clerks.push(user);
+        }
       }
       
-      // Supervisors
-      for (let i = 0; i < 3; i++) {
+      // Supervisors - create additional ones not in demo accounts
+      for (let i = 3; i < 6; i++) { // Start from 3 to avoid conflicts
         const name = getRandomBulgarianName();
-        const user = await prisma.user.create({
-          data: {
-            email: `${name.firstName.toLowerCase()}.supervisor${i}@${dept.slug}.gov`,
-            name: name.fullName,
-            role: 'SUPERVISOR',
-            departmentId: dept.id,
-            passwordHash,
-            isActive: true,
-            status: 'ACTIVE',
-            emailConfirmed: true,
-            phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
-          }
-        });
-        users.supervisors.push(user);
+        const email = `${name.firstName.toLowerCase()}.supervisor${i}@${dept.slug}.gov`;
+        if (!existingEmails.has(email)) {
+          const user = await prisma.user.create({
+            data: {
+              email,
+              name: name.fullName,
+              role: 'SUPERVISOR',
+              departmentId: dept.id,
+              passwordHash,
+              isActive: true,
+              status: 'ACTIVE',
+              emailConfirmed: true,
+              phone: `+3592${Math.floor(Math.random() * 9000000) + 1000000}`
+            }
+          });
+          users.supervisors.push(user);
+        }
       }
       
-      // Field Agents
-      for (let i = 0; i < 4; i++) {
+      // Field Agents - create additional ones not in demo accounts
+      for (let i = 4; i < 8; i++) { // Start from 4 to avoid conflicts
         const name = getRandomBulgarianName();
-        const user = await prisma.user.create({
-          data: {
-            email: `${name.firstName.toLowerCase()}.agent${i}@${dept.slug}.gov`,
-            name: name.fullName,
-            role: 'FIELD_AGENT',
-            departmentId: dept.id,
-            passwordHash,
-            isActive: true,
-            status: 'ACTIVE',
-            emailConfirmed: true,
-            phone: `+35988${Math.floor(Math.random() * 9000000) + 1000000}`
-          }
-        });
-        users.fieldAgents.push(user);
+        const email = `${name.firstName.toLowerCase()}.agent${i}@${dept.slug}.gov`;
+        if (!existingEmails.has(email)) {
+          const user = await prisma.user.create({
+            data: {
+              email,
+              name: name.fullName,
+              role: 'FIELD_AGENT',
+              departmentId: dept.id,
+              passwordHash,
+              isActive: true,
+              status: 'ACTIVE',
+              emailConfirmed: true,
+              phone: `+35988${Math.floor(Math.random() * 9000000) + 1000000}`
+            }
+          });
+          users.fieldAgents.push(user);
+        }
       }
     }
     
