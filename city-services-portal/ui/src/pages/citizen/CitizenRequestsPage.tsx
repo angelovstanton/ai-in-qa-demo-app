@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
   Button,
-  Chip,
-  IconButton,
   Alert,
   Card,
   CardContent,
@@ -18,15 +16,11 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Visibility as ViewIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
   Clear as ClearIcon,
-  ThumbUp as ThumbUpIcon,
-  Comment as CommentIcon,
 } from '@mui/icons-material';
 import {
-  GridColDef,
   GridPaginationModel,
   GridSortModel,
   GridFilterModel,
@@ -34,14 +28,17 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import DataTable from '../../components/DataTable';
 import { useServiceRequests } from '../../hooks/useServiceRequests';
 import { ServiceRequest } from '../../types';
+import { createCitizenRequestColumns, categoryLabels } from '../../config/citizenRequestColumns';
+import api from '../../lib/api';
 
 const CitizenRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: 10,
@@ -77,29 +74,13 @@ const CitizenRequestsPage: React.FC = () => {
     'other'
   ];
 
-  const categoryLabels: Record<string, string> = {
-    'roads-transportation': 'Roads and Transportation',
-    'street-lighting': 'Street Lighting',
-    'waste-management': 'Waste Management',
-    'water-sewer': 'Water and Sewer',
-    'parks-recreation': 'Parks and Recreation',
-    'public-safety': 'Public Safety',
-    'building-permits': 'Building and Permits',
-    'snow-removal': 'Snow Removal',
-    'traffic-signals': 'Traffic Signals',
-    'sidewalk-maintenance': 'Sidewalk Maintenance',
-    'tree-services': 'Tree Services',
-    'noise-complaints': 'Noise Complaints',
-    'animal-control': 'Animal Control',
-    'other': 'Other'
-  };
 
   // Convert sort model to API format
   const sortParam = sortModel.length > 0 
     ? `${sortModel[0].field}:${sortModel[0].sort}`
     : 'id:desc';
 
-  const { data, loading, error, totalCount } = useServiceRequests({
+  const { data, loading, error, totalCount, refetch } = useServiceRequests({
     page: paginationModel.page + 1, // API is 1-based
     pageSize: paginationModel.pageSize,
     sort: sortParam,
@@ -109,41 +90,18 @@ const CitizenRequestsPage: React.FC = () => {
     text: searchTerm || undefined,
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'URGENT':
-        return 'error';
-      case 'HIGH':
-        return 'warning';
-      case 'MEDIUM':
-        return 'info';
-      case 'LOW':
-        return 'success';
-      default:
-        return 'secondary';
-    }
-  };
+  const handleViewRequest = useCallback((requestId: string) => {
+    navigate(`/request/${requestId}`);
+  }, [navigate]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'SUBMITTED':
-        return 'info';
-      case 'TRIAGED':
-        return 'warning';
-      case 'IN_PROGRESS':
-        return 'primary';
-      case 'WAITING_ON_CITIZEN':
-        return 'warning';
-      case 'RESOLVED':
-        return 'success';
-      case 'CLOSED':
-        return 'secondary';
-      case 'REJECTED':
-        return 'error';
-      default:
-        return 'secondary';
+  const handleUpvote = useCallback(async (requestId: string) => {
+    try {
+      await api.post(`/service-requests/${requestId}/upvote`);
+      refetch();
+    } catch (error) {
+      console.error('Failed to upvote request:', error);
     }
-  };
+  }, [refetch]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -155,164 +113,22 @@ const CitizenRequestsPage: React.FC = () => {
     setResolvedFilter('');
   };
 
-  const handleRowClick = (params: any) => {
+  const handleRowClick = useCallback((params: any) => {
     navigate(`/request/${params.row.id}`);
-  };
+  }, [navigate]);
 
   const hasActiveFilters = searchTerm || statusFilter || categoryFilter || 
     priorityFilter || dateFromFilter || dateToFilter || resolvedFilter;
 
-  // Column definitions with proper error handling
-  const columns: GridColDef[] = [
-    {
-      field: 'code',
-      headerName: 'Request ID',
-      width: 130,
-      filterable: true,
-    },
-    {
-      field: 'title',
-      headerName: 'Title',
-      width: 200,
-      filterable: true,
-      flex: 1, // Make title column flexible
-    },
-    {
-      field: 'category',
-      headerName: 'Category',
-      width: 160,
-      filterable: true,
-      valueGetter: (params) => categoryLabels[params.value] || params.value,
-    },
-    {
-      field: 'priority',
-      headerName: 'Priority',
-      width: 100,
-      filterable: true,
-      renderCell: (params) => (
-        <Chip
-          label={params.value || 'N/A'}
-          color={getPriorityColor(params.value) as any}
-          size="small"
-          data-testid={`cs-requests-priority-${params.row.id}`}
-        />
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 130,
-      filterable: true,
-      renderCell: (params) => (
-        <Chip
-          label={params.value ? params.value.replace(/_/g, ' ') : 'N/A'}
-          color={getStatusColor(params.value) as any}
-          size="small"
-          variant="outlined"
-          data-testid={`cs-requests-status-${params.row.id}`}
-        />
-      ),
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Created',
-      width: 150,
-      filterable: true,
-      valueFormatter: (params) => {
-        try {
-          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
-        } catch {
-          return 'Invalid Date';
-        }
-      },
-    },
-    {
-      field: 'updatedAt',
-      headerName: 'Last Updated',
-      width: 150,
-      filterable: true,
-      hide: true, // Hidden by default to reduce horizontal scroll
-      valueFormatter: (params) => {
-        try {
-          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
-        } catch {
-          return 'Invalid Date';
-        }
-      },
-    },
-    {
-      field: 'dateOfRequest',
-      headerName: 'Date of Request',
-      width: 150,
-      filterable: true,
-      hide: true, // Hidden by default to reduce horizontal scroll
-      valueFormatter: (params) => {
-        try {
-          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
-        } catch {
-          return 'Invalid Date';
-        }
-      },
-    },
-    {
-      field: 'upvotes',
-      headerName: 'Upvotes',
-      width: 100,
-      filterable: false,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <ThumbUpIcon fontSize="small" color="action" />
-          <Typography variant="body2">{params.value || 0}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'comments',
-      headerName: 'Comments',
-      width: 100,
-      filterable: false,
-      valueGetter: (params) => params.row.comments?.length || 0,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <CommentIcon fontSize="small" color="action" />
-          <Typography variant="body2">{params.value || 0}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'resolvedStatus',
-      headerName: 'Resolved',
-      width: 100,
-      filterable: true,
-      renderCell: (params) => (
-        <Chip
-          label={params.value ? 'Yes' : 'No'}
-          color={params.value ? 'success' : 'default'}
-          size="small"
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      filterable: false,
-      sortable: false,
-      renderCell: (params) => (
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/request/${params.row.id}`);
-          }}
-          data-testid={`cs-requests-view-${params.row.id}`}
-          size="small"
-        >
-          <ViewIcon />
-        </IconButton>
-      ),
-    },
-  ];
+  // Use unified column definitions
+  const columns = useMemo(() => 
+    createCitizenRequestColumns({
+      isMyRequests: true,
+      userId: user?.id,
+      onViewRequest: handleViewRequest,
+      onUpvote: handleUpvote
+    }), [user?.id, handleViewRequest, handleUpvote]
+  );
 
   // Transform data for DataGrid with error handling
   const rows = (data || []).map((request: ServiceRequest) => ({

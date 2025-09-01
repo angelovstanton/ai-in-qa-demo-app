@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { createCitizenRequestColumns } from '../config/citizenRequestColumns';
 import {
   Box,
   Typography,
@@ -12,17 +13,12 @@ import {
   Button,
   Grid,
   Chip,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   FilterAlt as FilterIcon,
-  ThumbUp as ThumbUpIcon,
-  Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
-import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
+import { DataGrid, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import { useServiceRequests } from '../hooks/useServiceRequests';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -84,143 +80,16 @@ const AllRequestsPage: React.FC = () => {
 
   const hasActiveFilters = statusFilter || priorityFilter || categoryFilter || searchText;
 
-  const columns: GridColDef[] = useMemo(() => [
-    {
-      field: 'code',
-      headerName: 'Request ID',
-      width: 130,
-      filterable: true,
-    },
-    {
-      field: 'title',
-      headerName: 'Title',
-      flex: 1,
-      minWidth: 200,
-      filterable: true,
-    },
-    {
-      field: 'category',
-      headerName: 'Category',
-      width: 150,
-      filterable: true,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.value?.replace('-', ' ') || 'N/A'} 
-          size="small" 
-          variant="outlined" 
-        />
-      ),
-    },
-    {
-      field: 'priority',
-      headerName: 'Priority',
-      width: 100,
-      filterable: true,
-      renderCell: (params: GridRenderCellParams) => {
-        const priority = params.value;
-        const color = priority === 'URGENT' ? 'error' : 
-                     priority === 'HIGH' ? 'warning' : 
-                     priority === 'MEDIUM' ? 'info' : 'default';
-        return (
-          <Chip 
-            label={priority || 'N/A'} 
-            size="small" 
-            color={color as any}
-          />
-        );
-      },
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 120,
-      filterable: true,
-      renderCell: (params: GridRenderCellParams) => {
-        const status = params.value;
-        const color = status === 'RESOLVED' ? 'success' : 
-                     status === 'IN_PROGRESS' ? 'info' : 
-                     status === 'SUBMITTED' ? 'default' : 'secondary';
-        return (
-          <Chip 
-            label={status?.replace('_', ' ') || 'N/A'} 
-            size="small" 
-            color={color as any}
-          />
-        );
-      },
-    },
-    {
-      field: 'creator',
-      headerName: 'Submitted By',
-      width: 150,
-      filterable: false,
-      renderCell: (params: GridRenderCellParams) => {
-        const creator = params.row.creator;
-        return creator ? creator.name : 'Unknown';
-      },
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Created',
-      width: 120,
-      filterable: true,
-      valueFormatter: (params) => {
-        try {
-          return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
-        } catch {
-          return 'Invalid Date';
-        }
-      },
-    },
-    {
-      field: 'upvotes',
-      headerName: 'Upvotes',
-      width: 80,
-      filterable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Typography variant="caption">{params.value || 0}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      filterable: false,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="View Details">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewRequest(params.row.id);
-              }}
-              data-testid={`cs-view-request-${params.row.id}`}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {user?.role === 'CITIZEN' && params.row.creator?.id !== user.id && (
-            <Tooltip title="Upvote Request">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUpvote(params.row.id);
-                }}
-                data-testid={`cs-upvote-request-${params.row.id}`}
-              >
-                <ThumbUpIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      ),
-    },
-  ], [user, handleViewRequest, handleUpvote]);
+  // Use unified column definitions
+  const columns = useMemo(() => 
+    createCitizenRequestColumns({
+      isMyRequests: false,
+      userId: user?.id,
+      onViewRequest: handleViewRequest,
+      onUpvote: handleUpvote
+    }), [user?.id, handleViewRequest, handleUpvote]
+  );
+
 
   const rows = useMemo(() => {
     return (requests || []).map((request: ServiceRequest) => ({
