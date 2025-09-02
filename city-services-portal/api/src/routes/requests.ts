@@ -277,6 +277,16 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 // POST /api/v1/requests - Create new service request
 router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Check if service request creation should fail (testing flag)
+    if (req.testingFlags?.requestCreationFails) {
+      return res.status(500).json({
+        error: {
+          code: 'SERVICE_REQUEST_CREATION_FAILED',
+          message: 'Unable to create service request at this time',
+          correlationId: res.locals.correlationId
+        }
+      });
+    }
     console.log('📋 Received request body:', JSON.stringify(req.body, null, 2));
     console.log('🎯 lat/lng values:', req.body.lat, req.body.lng);
     console.log('🔍 issueType value:', req.body.issueType);
@@ -304,7 +314,13 @@ router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req:
     let attempts = 0;
     
     while (codeExists && attempts < 10) {
-      requestCode = generateRequestCode();
+      // Check if codes should be missing year (testing flag)
+      if (req.testingFlags?.requestCodesMissingYear) {
+        const random = Math.floor(Math.random() * 1000000);
+        requestCode = `REQ-${random.toString().padStart(6, '0')}`;
+      } else {
+        requestCode = generateRequestCode();
+      }
       const existing = await prisma.serviceRequest.findUnique({
         where: { code: requestCode }
       });
@@ -322,6 +338,13 @@ router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req:
       });
     }
 
+    // Apply critical requests low priority bug (testing flag)
+    let priority = validatedData.priority;
+    if (req.testingFlags?.criticalRequestsLowPriority && 
+        (validatedData.isEmergency || validatedData.priority === 'URGENT' || validatedData.priority === 'HIGH')) {
+      priority = 'LOW';
+    }
+
     // Create the request
     const serviceRequest = await prisma.serviceRequest.create({
       data: {
@@ -329,7 +352,7 @@ router.post('/', authenticateToken, rbacGuard(['CITIZEN', 'CLERK']), async (req:
         title: validatedData.title,
         description: validatedData.description,
         category: validatedData.category,
-        priority: validatedData.priority,
+        priority: priority,
         
         // Date fields
         dateOfRequest: validatedData.dateOfRequest ? new Date(validatedData.dateOfRequest) : new Date(),

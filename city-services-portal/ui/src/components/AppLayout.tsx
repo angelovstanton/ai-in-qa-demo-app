@@ -213,10 +213,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             testId: 'cs-nav-staff-management'
           },
           { 
-            label: t('navigation:admin-flags'), 
-            href: '/admin/flags', 
+            label: 'Database Management', 
+            href: '/admin/database', 
             icon: <SettingsIcon />,
-            testId: 'cs-nav-feature-flags'
+            testId: 'cs-nav-database-management'
+          },
+          { 
+            label: 'Testing Flags', 
+            href: '/admin/testing-flags', 
+            icon: <SettingsIcon />,
+            testId: 'cs-nav-testing-flags'
           }
         );
         break;

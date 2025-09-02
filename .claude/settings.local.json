@@ -14,7 +14,8 @@
       "Bash(bash:*)",
       "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\api\\prisma\\update-demo-profiles.ts\")",
       "Bash(git checkout:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\ui\\src\\pages\\admin\\AdminFlagsPage.tsx\")"
     ],
     "deny": [],
     "ask": []

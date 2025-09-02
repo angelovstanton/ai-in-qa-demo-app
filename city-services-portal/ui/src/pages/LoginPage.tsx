@@ -21,6 +21,7 @@ import { Person, Work, AdminPanelSettings, Build, SupervisorAccount } from '@mui
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useTestingFlag } from '../contexts/TestingFlagsContext';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -29,6 +30,11 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Testing flags
+  const loginButtonShowsRegister = useTestingFlag('LOGIN_BUTTON_SHOWS_REGISTER');
+  const passwordFieldShowsPlainText = useTestingFlag('PASSWORD_FIELD_SHOWS_PLAIN_TEXT');
+  const loginFormLosesEmailOnError = useTestingFlag('LOGIN_FORM_LOSES_EMAIL_ON_ERROR');
 
   // Demo account credentials - Main accounts
   const mainDemoAccounts = [
@@ -131,6 +137,10 @@ const LoginPage: React.FC = () => {
       window.location.href = '/';
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Login failed');
+      // Apply testing flag: clear email on error
+      if (loginFormLosesEmailOnError) {
+        setEmail('');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +199,7 @@ const LoginPage: React.FC = () => {
                 fullWidth
                 label={t('auth:login.passwordLabel')}
                 placeholder={t('auth:login.passwordPlaceholder')}
-                type="password"
+                type={passwordFieldShowsPlainText ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 margin="normal"
@@ -207,7 +217,7 @@ const LoginPage: React.FC = () => {
                 data-testid="cs-login-submit"
                 sx={{ mt: 3, mb: 2 }}
               >
-                {isLoading ? t('auth:login.signingIn') : t('auth:login.submitButton')}
+                {isLoading ? t('auth:login.signingIn') : (loginButtonShowsRegister ? 'Register Account' : t('auth:login.submitButton'))}
               </Button>
             </Box>
 

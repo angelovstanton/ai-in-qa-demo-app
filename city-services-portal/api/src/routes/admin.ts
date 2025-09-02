@@ -77,24 +77,75 @@ router.patch('/flags/:key', authenticateToken, rbacGuard(['ADMIN']), async (req:
 // GET /api/v1/admin/stats - Get system statistics
 router.get('/stats', authenticateToken, rbacGuard(['ADMIN']), async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Get current date info for time-based queries
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
     const stats = await Promise.all([
+      // User statistics
       prisma.user.count(),
       prisma.user.count({ where: { isActive: true } }),
-      prisma.user.count({ where: { isTestUser: true } }),
+      prisma.user.count({ where: { email: { endsWith: '@example.com' } } }), // Count test users by email pattern
+      prisma.user.count({ where: { createdAt: { gte: today } } }),
+      prisma.user.count({ where: { createdAt: { gte: lastWeek } } }),
+      prisma.user.groupBy({ by: ['role'], _count: true }),
+      
+      // Service request statistics
       prisma.serviceRequest.count(),
       prisma.serviceRequest.count({ where: { status: 'SUBMITTED' } }),
       prisma.serviceRequest.count({ where: { status: 'IN_PROGRESS' } }),
       prisma.serviceRequest.count({ where: { status: 'RESOLVED' } }),
+      prisma.serviceRequest.count({ where: { status: 'CLOSED' } }),
+      prisma.serviceRequest.count({ where: { createdAt: { gte: today } } }),
+      prisma.serviceRequest.count({ where: { createdAt: { gte: lastWeek } } }),
+      prisma.serviceRequest.count({ where: { updatedAt: { gte: today } } }),
+      prisma.serviceRequest.groupBy({ by: ['priority'], _count: true }),
+      prisma.serviceRequest.groupBy({ by: ['category'], _count: true, take: 5, orderBy: { _count: { category: 'desc' } } }),
+      
+      // Engagement statistics
       prisma.comment.count(),
+      prisma.comment.count({ where: { createdAt: { gte: today } } }),
       prisma.attachment.count(),
       prisma.upvote.count(),
-      prisma.department.count({ where: { isActive: true } }),
+      
+      // System statistics
+      prisma.department.count(), // All departments (assuming all are active)
+      prisma.department.count(),
+      
+      // Activity statistics
+      prisma.eventLog.count({ where: { createdAt: { gte: today } } }),
+      prisma.eventLog.count({ where: { createdAt: { gte: lastWeek } } }),
+      
+      // Field work statistics
+      prisma.fieldWorkOrder.count(),
+      prisma.fieldWorkOrder.count({ where: { status: 'IN_PROGRESS' } }),
+      prisma.fieldWorkOrder.count({ where: { status: 'COMPLETED' } }),
+      
+      // Quality statistics
+      prisma.qualityReview.count(),
+      prisma.qualityReview.aggregate({ _avg: { qualityScore: true } }),
+      
+      // Testing flags statistics
+      prisma.testingFeatureFlag.count(),
+      prisma.testingFeatureFlag.count({ where: { isEnabled: true } })
     ]);
 
     const [
-      totalUsers, activeUsers, testUsers, totalRequests, 
-      submittedRequests, inProgressRequests, resolvedRequests,
-      totalComments, totalAttachments, totalUpvotes, activeDepartments
+      totalUsers, activeUsers, testUsers, newUsersToday, newUsersWeek, usersByRole,
+      totalRequests, submittedRequests, inProgressRequests, resolvedRequests, closedRequests,
+      requestsToday, requestsWeek, updatedToday, requestsByPriority, requestsByCategory,
+      totalComments, commentsToday, totalAttachments, totalUpvotes,
+      activeDepartments, totalDepartments,
+      eventsToday, eventsWeek,
+      totalWorkOrders, activeWorkOrders, completedWorkOrders,
+      totalReviews, avgQuality,
+      totalFlags, enabledFlags
     ] = stats;
 
     res.json({
@@ -102,27 +153,66 @@ router.get('/stats', authenticateToken, rbacGuard(['ADMIN']), async (req: Authen
         users: {
           total: totalUsers,
           active: activeUsers,
-          test: testUsers
+          test: testUsers,
+          newToday: newUsersToday,
+          newThisWeek: newUsersWeek,
+          byRole: usersByRole.reduce((acc: any, item: any) => {
+            acc[item.role] = item._count;
+            return acc;
+          }, {})
         },
         requests: {
           total: totalRequests,
           submitted: submittedRequests,
           inProgress: inProgressRequests,
-          resolved: resolvedRequests
+          resolved: resolvedRequests,
+          closed: closedRequests,
+          newToday: requestsToday,
+          newThisWeek: requestsWeek,
+          updatedToday: updatedToday,
+          byPriority: requestsByPriority.reduce((acc: any, item: any) => {
+            acc[item.priority] = item._count;
+            return acc;
+          }, {}),
+          topCategories: requestsByCategory.map((item: any) => ({
+            category: item.category,
+            count: item._count
+          }))
         },
         engagement: {
           comments: totalComments,
+          commentsToday: commentsToday,
           attachments: totalAttachments,
           upvotes: totalUpvotes
         },
         system: {
-          departments: activeDepartments
-        }
+          departments: totalDepartments, // All departments are active
+          totalDepartments: totalDepartments,
+          eventsToday: eventsToday,
+          eventsThisWeek: eventsWeek
+        },
+        fieldWork: {
+          total: totalWorkOrders,
+          active: activeWorkOrders,
+          completed: completedWorkOrders,
+          completionRate: totalWorkOrders > 0 ? Math.round((completedWorkOrders / totalWorkOrders) * 100) : 0
+        },
+        quality: {
+          totalReviews: totalReviews,
+          averageScore: avgQuality._avg.qualityScore ? Math.round(avgQuality._avg.qualityScore * 10) / 10 : 0
+        },
+        testingFlags: {
+          total: totalFlags,
+          enabled: enabledFlags,
+          percentage: totalFlags > 0 ? Math.round((enabledFlags / totalFlags) * 100) : 0
+        },
+        timestamp: new Date().toISOString()
       },
       correlationId: res.locals.correlationId
     });
 
   } catch (error) {
+    console.error('Stats endpoint error:', error);
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',
@@ -195,33 +285,33 @@ router.delete('/test-data', authenticateToken, rbacGuard(['ADMIN']), async (req:
     await prisma.$transaction(async (tx) => {
       // Get counts before deletion
       const testUserCount = await tx.user.count({
-        where: { isTestUser: true }
+        where: { email: { endsWith: '@example.com' } }
       });
       
       const testRequestCount = await tx.serviceRequest.count({
         where: {
-          creator: { isTestUser: true }
+          creator: { email: { endsWith: '@example.com' } }
         }
       });
 
       // Delete upvotes by test users
       const deletedUpvotes = await tx.upvote.deleteMany({
         where: {
-          user: { isTestUser: true }
+          user: { email: { endsWith: '@example.com' } }
         }
       });
 
       // Delete comments by test users
       const deletedComments = await tx.comment.deleteMany({
         where: {
-          author: { isTestUser: true }
+          author: { email: { endsWith: '@example.com' } }
         }
       });
 
       // Delete attachments by test users
       const deletedAttachments = await tx.attachment.deleteMany({
         where: {
-          uploadedBy: { isTestUser: true }
+          uploadedBy: { email: { endsWith: '@example.com' } }
         }
       });
 
@@ -229,7 +319,7 @@ router.delete('/test-data', authenticateToken, rbacGuard(['ADMIN']), async (req:
       await tx.eventLog.deleteMany({
         where: {
           request: {
-            creator: { isTestUser: true }
+            creator: { email: { endsWith: '@example.com' } }
           }
         }
       });
@@ -237,13 +327,13 @@ router.delete('/test-data', authenticateToken, rbacGuard(['ADMIN']), async (req:
       // Delete service requests created by test users
       const deletedRequests = await tx.serviceRequest.deleteMany({
         where: {
-          creator: { isTestUser: true }
+          creator: { email: { endsWith: '@example.com' } }
         }
       });
 
       // Finally delete test users
       const deletedUsers = await tx.user.deleteMany({
-        where: { isTestUser: true }
+        where: { email: { endsWith: '@example.com' } }
       });
 
       deletedCounts = {
@@ -291,7 +381,7 @@ router.get('/test-data/validate', authenticateToken, rbacGuard(['ADMIN']), async
     // Validate users
     const [totalUsers, testUsers, activeUsers, usersWithoutDepartments] = await Promise.all([
       prisma.user.count(),
-      prisma.user.count({ where: { isTestUser: true } }),
+      prisma.user.count({ where: { email: { endsWith: '@example.com' } } }),
       prisma.user.count({ where: { isActive: true } }),
       prisma.user.count({ 
         where: { 

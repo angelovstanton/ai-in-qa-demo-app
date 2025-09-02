@@ -39,6 +39,7 @@ async function clearDatabase() {
     await prisma.user.deleteMany({});
     await prisma.department.deleteMany({});
     await prisma.featureFlag.deleteMany({});
+    await prisma.testingFeatureFlag.deleteMany({});
   } catch (error) {
     console.error('   ⚠️  Some tables might not exist yet, continuing...');
   }
@@ -755,6 +756,11 @@ async function main() {
     console.log('\n🏆 Seeding Community Data...');
     const { seedCommunityData } = require('./seeds/modules/06-community');
     await seedCommunityData(prisma, users, requests);
+    
+    // Import and seed testing feature flags
+    console.log('\n🔬 Seeding Testing Feature Flags...');
+    const { seedTestingFeatureFlags } = require('./seeds/testingFeatureFlags');
+    await seedTestingFeatureFlags();
     
     const endTime = Date.now();
     const duration = (endTime - startTime) / 1000;

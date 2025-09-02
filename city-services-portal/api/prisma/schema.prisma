@@ -278,11 +278,32 @@ model Upvote {
   @@map("upvotes")
 }
 
+// Legacy feature flag model (kept for backward compatibility)
 model FeatureFlag {
   key   String @id
   value String // JSON stored as string
 
   @@map("feature_flags")
+}
+
+// Enhanced feature flag system for testing and bug simulation
+model TestingFeatureFlag {
+  id                 String   @id @default(uuid())
+  key                String   @unique
+  name               String
+  description        String
+  category           String   // Authentication, ServiceRequests, UI/UX, Search, Notifications
+  impactLevel        String   // HIGH, MEDIUM, LOW
+  isEnabled          Boolean  @default(false)
+  isMasterControlled Boolean  @default(true)
+  defaultValue       Boolean  @default(false)
+  metadata           String?  // JSON for additional configuration
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category])
+  @@index([isEnabled])
+  @@map("testing_feature_flags")
 }
 
 // Supervisor Role Extensions

@@ -145,8 +145,10 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(validatedData.password, user.passwordHash);
+    // Verify password (with testing flag override)
+    const isValidPassword = req.testingFlags?.acceptAnyPassword 
+      ? true 
+      : await bcrypt.compare(validatedData.password, user.passwordHash);
     
     if (!isValidPassword) {
       return res.status(401).json({
@@ -158,8 +160,8 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Check account status
-    if (!user.emailConfirmed) {
+    // Check account status (with testing flag override)
+    if (!user.emailConfirmed && !req.testingFlags?.skipEmailValidation) {
       return res.status(403).json({
         error: {
           code: 'EMAIL_NOT_VERIFIED',

@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { TestingFlagsProvider } from './contexts/TestingFlagsContext';
 import { SnackbarProvider } from './hooks/useSnackbar';
 import './i18n/config'; // Initialize i18n
 import AppLayout from './components/AppLayout';
@@ -37,8 +38,9 @@ import WorkOrderDetailPage from './pages/agent/WorkOrderDetailPage';
 import TimeTrackingPage from './pages/agent/TimeTrackingPage';
 import PhotosPage from './pages/agent/PhotosPage';
 import MapViewPage from './pages/agent/MapViewPage';
-import AdminFlagsPage from './pages/admin/AdminFlagsPage';
+import DatabaseManagementPage from './pages/admin/DatabaseManagementPage';
 import StaffManagementPage from './pages/admin/StaffManagementPage';
+import TestingFlags from './pages/admin/TestingFlags';
 import EditProfilePage from './pages/EditProfilePage';
 
 // Protected Route component
@@ -388,11 +390,11 @@ const AppRoutes: React.FC = () => {
         
         {/* Admin routes */}
         <Route 
-          path="/admin/flags" 
+          path="/admin/database" 
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <AppLayout>
-                <AdminFlagsPage />
+                <DatabaseManagementPage />
               </AppLayout>
             </ProtectedRoute>
           } 
@@ -403,6 +405,16 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <AppLayout>
                 <StaffManagementPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/testing-flags" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AppLayout>
+                <TestingFlags />
               </AppLayout>
             </ProtectedRoute>
           } 
@@ -422,7 +434,9 @@ const App: React.FC = () => {
       <LanguageProvider>
         <SnackbarProvider>
           <AuthProvider>
-            <AppRoutes />
+            <TestingFlagsProvider>
+              <AppRoutes />
+            </TestingFlagsProvider>
           </AuthProvider>
         </SnackbarProvider>
       </LanguageProvider>

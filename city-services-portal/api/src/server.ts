@@ -8,6 +8,7 @@ import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/error';
 import { logger } from './utils/logger';
 import { featureFlagMiddleware } from './middleware/featureFlags';
+import { applyTestingFlags, applyAuthenticationBugs, applyServiceRequestBugs, applySearchBugs } from './middleware/testingFlags';
 import { metricsScheduler } from './services/metricsScheduler';
 
 // Route imports
@@ -28,6 +29,7 @@ import timeTrackingRoutes from './routes/time-tracking';
 import fieldPhotosRoutes from './routes/field-photos';
 import agentStatusRoutes from './routes/agent-status';
 import communityRoutes from './routes/community';
+import testingFlagsRoutes from './routes/testingFlags';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -58,6 +60,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Feature flag middleware
 app.use(featureFlagMiddleware);
+
+// Testing flag middleware
+app.use(applyTestingFlags);
+app.use(applyAuthenticationBugs);
+app.use(applyServiceRequestBugs);
+app.use(applySearchBugs);
 
 // Correlation ID middleware
 app.use((req, res, next) => {
@@ -99,6 +107,7 @@ app.use('/api/v1/time-tracking', timeTrackingRoutes);
 app.use('/api/v1/field-photos', fieldPhotosRoutes);
 app.use('/api/v1/agent-status', agentStatusRoutes);
 app.use('/api/v1/community', communityRoutes);
+app.use('/api/v1/testing-flags', testingFlagsRoutes);
 app.use('/api/departments', departmentRoutes); // Alternative path without version
 
 // Root endpoint
