@@ -16,6 +16,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 const forgotPasswordSchema = z.object({
@@ -27,6 +28,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPasswordPage: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -101,10 +103,10 @@ const ForgotPasswordPage: React.FC = () => {
                 gutterBottom
                 data-testid="cs-forgot-password-title"
               >
-                Forgot Password?
+                {t('auth:forgotPassword.title')}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                No worries! Enter your email and we'll send you reset instructions.
+                {t('auth:forgotPassword.subtitle')}
               </Typography>
             </Box>
 
@@ -133,7 +135,7 @@ const ForgotPasswordPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Email Address"
+                      label={t('auth:forgotPassword.emailLabel')}
                       type="email"
                       margin="normal"
                       error={!!errors.email}
@@ -141,7 +143,7 @@ const ForgotPasswordPage: React.FC = () => {
                       data-testid="cs-forgot-password-email"
                       autoComplete="email"
                       autoFocus
-                      placeholder="Enter your registered email"
+                      placeholder={t('auth:forgotPassword.emailPlaceholder')}
                     />
                   )}
                 />
@@ -156,7 +158,7 @@ const ForgotPasswordPage: React.FC = () => {
                   sx={{ mt: 3, mb: 2 }}
                   startIcon={loading ? <CircularProgress size={20} /> : <Email />}
                 >
-                  {loading ? 'Sending...' : 'Send Reset Instructions'}
+                  {loading ? t('auth:forgotPassword.sending') : t('auth:forgotPassword.submitButton')}
                 </Button>
 
                 <Box sx={{ textAlign: 'center' }}>
@@ -168,7 +170,7 @@ const ForgotPasswordPage: React.FC = () => {
                     sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
                   >
                     <ArrowBack fontSize="small" />
-                    Back to Login
+                    {t('auth:forgotPassword.backToLogin')}
                   </Link>
                 </Box>
               </Box>
@@ -176,10 +178,10 @@ const ForgotPasswordPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Alert severity="info" sx={{ mb: 3 }}>
                   <Typography variant="body2" gutterBottom>
-                    <strong>Check your email!</strong>
+                    <strong>{t('auth:forgotPassword.checkEmail')}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    If an account exists with this email, you will receive password reset instructions.
+                    {t('auth:forgotPassword.success')}
                   </Typography>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                     For testing: Check browser console and API console for the reset link.
@@ -193,7 +195,7 @@ const ForgotPasswordPage: React.FC = () => {
                   data-testid="cs-forgot-password-return-to-login"
                   startIcon={<ArrowBack />}
                 >
-                  Return to Login
+                  {t('auth:forgotPassword.backToLogin')}
                 </Button>
               </Box>
             )}

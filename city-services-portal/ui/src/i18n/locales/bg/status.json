@@ -1,0 +1,40 @@
+{
+  "request": {
+    "SUBMITTED": "Подадена",
+    "TRIAGED": "Разпределена",
+    "IN_PROGRESS": "В процес",
+    "WAITING_ON_CITIZEN": "Изчаква гражданина",
+    "RESOLVED": "Решена",
+    "CLOSED": "Затворена",
+    "REJECTED": "Отхвърлена",
+    "REOPENED": "Отворена отново"
+  },
+  "user": {
+    "ACTIVE": "Активен",
+    "INACTIVE": "Неактивен",
+    "PENDING_EMAIL_VERIFICATION": "Изчаква потвърждение на имейл",
+    "PASSWORD_RESET_REQUIRED": "Изисква се възстановяване на парола",
+    "SUSPENDED": "Суспендиран",
+    "ARCHIVED": "Архивиран"
+  },
+  "priority": {
+    "LOW": "Ниска",
+    "MEDIUM": "Средна",
+    "HIGH": "Висока",
+    "URGENT": "Спешна"
+  },
+  "contactMethod": {
+    "EMAIL": "Имейл",
+    "PHONE": "Телефон",
+    "SMS": "SMS"
+  },
+  "department": {
+    "roads-and-infrastructure": "Пътища и инфраструктура",
+    "water-and-utilities": "ВиК и комунални услуги",
+    "waste-management": "Управление на отпадъци",
+    "parks-and-recreation": "Паркове и отдих",
+    "public-safety": "Обществена безопасност",
+    "transportation": "Транспорт",
+    "buildings-and-property": "Сгради и имоти"
+  }
+}

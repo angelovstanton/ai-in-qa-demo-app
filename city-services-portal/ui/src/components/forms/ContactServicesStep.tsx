@@ -13,6 +13,7 @@ import {
   FormLabel,
 } from '@mui/material';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
 
 interface ValidationFeedbackProps {
@@ -43,10 +44,12 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
   handleInputChange,
   ValidationFeedback,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Box data-testid="cs-new-request-step-3">
       <Typography variant="h6" gutterBottom>
-        Contact & Service Information
+        {t('requests:form.step3', 'Contact Information')}
       </Typography>
       
       <Controller
@@ -54,11 +57,11 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
         control={control}
         render={({ field }) => (
           <FormControl fullWidth margin="normal" required>
-            <InputLabel>Preferred Contact Method</InputLabel>
+            <InputLabel>{t('requests:form.contactMethodLabel', 'Preferred Contact Method')}</InputLabel>
             <Select
               {...field}
               value={field.value || 'EMAIL'} // Ensure there's always a value
-              label="Preferred Contact Method"
+              label={t('requests:form.contactMethodLabel', 'Preferred Contact Method')}
               data-testid="cs-new-request-contact-method"
               aria-describedby={errors.contactMethod ? FormValidationTestIds.FIELD_ERROR('new-request', 'contactMethod') : undefined}
               onChange={(e) => {
@@ -66,10 +69,10 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                 field.onChange(e.target.value);
               }}
             >
-              <MenuItem value="EMAIL">Email</MenuItem>
-              <MenuItem value="PHONE">Phone</MenuItem>
-              <MenuItem value="SMS">SMS</MenuItem>
-              <MenuItem value="MAIL">Mail</MenuItem>
+              <MenuItem value="EMAIL">{t('common:email', 'Email')}</MenuItem>
+              <MenuItem value="PHONE">{t('common:phone', 'Phone')}</MenuItem>
+              <MenuItem value="SMS">{t('requests:form.contactMethodSMS', 'SMS')}</MenuItem>
+              <MenuItem value="MAIL">{t('requests:form.contactMethodMail', 'Mail')}</MenuItem>
             </Select>
             <ValidationFeedback
               field={field}
@@ -90,7 +93,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
             <TextField
               {...field}
               fullWidth
-              label="Email Address"
+              label={t('common:email', 'Email Address')}
               type="email"
               margin="normal"
               error={!!errors.email}
@@ -125,7 +128,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
             <TextField
               {...field}
               fullWidth
-              label="Phone Number"
+              label={t('common:phone', 'Phone Number')}
               type="tel"
               margin="normal"
               error={!!errors.phone}
@@ -141,7 +144,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                 field.onChange(value);
                 handleInputChange('phone', value);
               }}
-              helperText="Enter your phone number (e.g., +1-234-567-8900 or 234-567-8900)"
+              helperText={t('requests:form.phoneHelperText', 'Enter your phone number (e.g., +1-234-567-8900 or 234-567-8900)')}
             />
             <ValidationFeedback
               field={field}
@@ -157,7 +160,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
       {/* Address fields - always visible */}
       <Box>
         <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-          Mailing Address (Optional)
+          {t('requests:form.mailingAddressLabel', 'Mailing Address (Optional)')}
         </Typography>
         
         <Controller
@@ -168,7 +171,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
               <TextField
                 {...field}
                 fullWidth
-                label="Street Address"
+                label={t('requests:form.streetAddressLabel', 'Street Address')}
                 margin="normal"
                 error={!!errors.mailingStreetAddress}
                 inputProps={{
@@ -202,7 +205,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                   <TextField
                     {...field}
                     fullWidth
-                    label="City"
+                    label={t('common:city', 'City')}
                     margin="normal"
                     error={!!errors.mailingCity}
                     inputProps={{
@@ -239,7 +242,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Postal Code"
+                    label={t('common:postalCode', 'Postal Code')}
                     margin="normal"
                     error={!!errors.mailingPostalCode}
                     inputProps={{
@@ -279,7 +282,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
               <TextField
                 {...field}
                 fullWidth
-                label="Alternate Phone (Required for Emergency)"
+                label={t('requests:form.alternatePhoneLabel', 'Alternate Phone (Required for Emergency)')}
                 margin="normal"
                 error={!!errors.alternatePhone}
                 required
@@ -293,7 +296,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                   field.onChange(value);
                   handleInputChange('alternatePhone', value);
                 }}
-                helperText="Enter an alternate phone number for emergency contact"
+                helperText={t('requests:form.alternatePhoneHelperText', 'Enter an alternate phone number for emergency contact')}
               />
               <ValidationFeedback
                 field={field}
@@ -312,7 +315,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
         control={control}
         render={({ field }) => (
           <FormControl fullWidth margin="normal" error={!!errors.affectedServices}>
-            <FormLabel component="legend">Affected Services (Optional)</FormLabel>
+            <FormLabel component="legend">{t('requests:form.affectedServicesLabel', 'Affected Services (Optional)')}</FormLabel>
             <Box>
               <Autocomplete
                 multiple
@@ -333,7 +336,7 @@ const ContactServicesStep: React.FC<ContactServicesStepProps> = ({
                   <TextField
                     {...params}
                     variant="outlined"
-                    placeholder="Select affected services"
+                    placeholder={t('requests:form.affectedServicesPlaceholder', 'Select affected services')}
                     error={!!errors.affectedServices}
                     inputProps={{
                       ...params.inputProps,

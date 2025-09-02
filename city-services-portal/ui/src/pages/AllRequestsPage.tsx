@@ -19,14 +19,17 @@ import {
   FilterAlt as FilterIcon,
 } from '@mui/icons-material';
 import { DataGrid, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
 import { useServiceRequests } from '../hooks/useServiceRequests';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getDataGridLocaleText } from '../config/dataGridLocale';
 import api from '../lib/api';
 
 const AllRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -80,14 +83,15 @@ const AllRequestsPage: React.FC = () => {
 
   const hasActiveFilters = statusFilter || priorityFilter || categoryFilter || searchText;
 
-  // Use unified column definitions
+  // Use unified column definitions with translation support
   const columns = useMemo(() => 
     createCitizenRequestColumns({
       isMyRequests: false,
       userId: user?.id,
       onViewRequest: handleViewRequest,
-      onUpvote: handleUpvote
-    }), [user?.id, handleViewRequest, handleUpvote]
+      onUpvote: handleUpvote,
+      t  // Pass translation function
+    }), [user?.id, handleViewRequest, handleUpvote, t]
   );
 
 
@@ -109,7 +113,7 @@ const AllRequestsPage: React.FC = () => {
     <Box data-testid="cs-all-requests-page">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          All Service Requests ({totalCount || 0})
+          {t('requests:allRequestsTitle')} ({totalCount || 0})
         </Typography>
         <Button
           variant="outlined"
@@ -117,7 +121,7 @@ const AllRequestsPage: React.FC = () => {
           onClick={() => refetch()}
           data-testid="cs-refresh-requests"
         >
-          Refresh
+          {t('requests:refresh')}
         </Button>
       </Box>
 
@@ -129,63 +133,63 @@ const AllRequestsPage: React.FC = () => {
               <TextField
                 fullWidth
                 size="small"
-                label="Search requests..."
+                label={t('requests:searchPlaceholder')}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search by title, description, or ID"
+                placeholder={t('requests:searchByText')}
                 data-testid="cs-search-requests"
               />
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{t('requests:status')}</InputLabel>
                 <Select
                   value={statusFilter}
-                  label="Status"
+                  label={t('requests:status')}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   data-testid="cs-filter-status"
                 >
-                  <MenuItem value="">All Statuses</MenuItem>
-                  <MenuItem value="SUBMITTED">Submitted</MenuItem>
-                  <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                  <MenuItem value="WAITING_ON_CITIZEN">Waiting on Citizen</MenuItem>
-                  <MenuItem value="RESOLVED">Resolved</MenuItem>
-                  <MenuItem value="CLOSED">Closed</MenuItem>
+                  <MenuItem value="">{t('requests:allStatuses')}</MenuItem>
+                  <MenuItem value="SUBMITTED">{t('requests:statuses.SUBMITTED')}</MenuItem>
+                  <MenuItem value="IN_PROGRESS">{t('requests:statuses.IN_PROGRESS')}</MenuItem>
+                  <MenuItem value="WAITING_ON_CITIZEN">{t('requests:statuses.WAITING_ON_CITIZEN')}</MenuItem>
+                  <MenuItem value="RESOLVED">{t('requests:statuses.RESOLVED')}</MenuItem>
+                  <MenuItem value="CLOSED">{t('requests:statuses.CLOSED')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth size="small">
-                <InputLabel>Priority</InputLabel>
+                <InputLabel>{t('requests:priority')}</InputLabel>
                 <Select
                   value={priorityFilter}
-                  label="Priority"
+                  label={t('requests:priority')}
                   onChange={(e) => setPriorityFilter(e.target.value)}
                   data-testid="cs-filter-priority"
                 >
-                  <MenuItem value="">All Priorities</MenuItem>
-                  <MenuItem value="LOW">Low</MenuItem>
-                  <MenuItem value="MEDIUM">Medium</MenuItem>
-                  <MenuItem value="HIGH">High</MenuItem>
-                  <MenuItem value="URGENT">Urgent</MenuItem>
+                  <MenuItem value="">{t('requests:allPriorities')}</MenuItem>
+                  <MenuItem value="LOW">{t('requests:priorities.LOW')}</MenuItem>
+                  <MenuItem value="MEDIUM">{t('requests:priorities.MEDIUM')}</MenuItem>
+                  <MenuItem value="HIGH">{t('requests:priorities.HIGH')}</MenuItem>
+                  <MenuItem value="URGENT">{t('requests:priorities.URGENT')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
+                <InputLabel>{t('requests:category')}</InputLabel>
                 <Select
                   value={categoryFilter}
-                  label="Category"
+                  label={t('requests:category')}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   data-testid="cs-filter-category"
                 >
-                  <MenuItem value="">All Categories</MenuItem>
-                  <MenuItem value="roads-and-infrastructure">Roads & Infrastructure</MenuItem>
-                  <MenuItem value="waste-management">Waste Management</MenuItem>
-                  <MenuItem value="water-and-utilities">Water & Utilities</MenuItem>
-                  <MenuItem value="parks-and-recreation">Parks & Recreation</MenuItem>
-                  <MenuItem value="public-safety">Public Safety</MenuItem>
+                  <MenuItem value="">{t('requests:allCategories')}</MenuItem>
+                  <MenuItem value="roads-and-infrastructure">{t('requests:categories.roads')}</MenuItem>
+                  <MenuItem value="waste-management">{t('requests:categories.waste')}</MenuItem>
+                  <MenuItem value="water-and-utilities">{t('requests:categories.water')}</MenuItem>
+                  <MenuItem value="parks-and-recreation">{t('requests:categories.parks')}</MenuItem>
+                  <MenuItem value="public-safety">{t('requests:categories.safety')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -199,7 +203,7 @@ const AllRequestsPage: React.FC = () => {
                     onClick={clearFilters}
                     data-testid="cs-clear-filters"
                   >
-                    Clear Filters
+                    {t('requests:clearFilters')}
                   </Button>
                 )}
               </Box>
@@ -227,6 +231,7 @@ const AllRequestsPage: React.FC = () => {
               disableRowSelectionOnClick
               onRowClick={(params) => handleViewRequest(params.row.id)}
               data-testid="cs-all-requests-grid"
+              localeText={getDataGridLocaleText(t)}
               sx={{
                 border: 'none',
                 '& .MuiDataGrid-cell': {
@@ -247,7 +252,7 @@ const AllRequestsPage: React.FC = () => {
       {error && (
         <Box sx={{ mt: 2 }}>
           <Typography color="error" data-testid="cs-requests-error">
-            Error loading requests: {error}
+            {t('requests:errorLoading')}: {error}
           </Typography>
         </Box>
       )}

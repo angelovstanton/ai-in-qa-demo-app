@@ -21,6 +21,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   Dashboard as DashboardIcon,
   TrendingUp as TrendingUpIcon,
@@ -102,6 +103,7 @@ interface DashboardData {
 }
 
 const SupervisorDashboardPage: React.FC = () => {
+  const { t } = useTranslation(['supervisor', 'dashboard', 'common']);
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -166,7 +168,7 @@ const SupervisorDashboardPage: React.FC = () => {
       setDashboardData(data.data);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again.');
+      setError(t('common:errors.failedToLoadData'));
     } finally {
       setLoading(false);
     }
@@ -189,7 +191,7 @@ const SupervisorDashboardPage: React.FC = () => {
       <Box m={2}>
         <Alert severity="error" action={
           <Button color="inherit" size="small" onClick={fetchDashboardData}>
-            Retry
+            {t('common:actions.retry')}
           </Button>
         }>
           {error}
@@ -201,7 +203,7 @@ const SupervisorDashboardPage: React.FC = () => {
   if (!dashboardData) {
     return (
       <Box m={2}>
-        <Alert severity="info">No dashboard data available.</Alert>
+        <Alert severity="info">{t('supervisor:dashboard.noDataAvailable')}</Alert>
       </Box>
     );
   }
@@ -212,13 +214,13 @@ const SupervisorDashboardPage: React.FC = () => {
       <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Supervisor Dashboard
+            {t('supervisor:dashboard.title')}
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Welcome back, {user?.firstName || user?.name}
+            {t('supervisor:dashboard.welcome', { name: user?.firstName || user?.name })}
           </Typography>
         </Box>
-        <Tooltip title="Refresh dashboard">
+        <Tooltip title={t('supervisor:dashboard.refreshTooltip')}>
           <IconButton onClick={fetchDashboardData} disabled={loading}>
             <RefreshIcon />
           </IconButton>
@@ -233,7 +235,7 @@ const SupervisorDashboardPage: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography color="text.secondary" gutterBottom variant="body2">
-                    Total Requests
+                    {t('supervisor:metrics.totalRequests')}
                   </Typography>
                   <Typography variant="h4">
                     {dashboardData.departmentMetrics.totalRequests}
@@ -253,7 +255,7 @@ const SupervisorDashboardPage: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography color="text.secondary" gutterBottom variant="body2">
-                    Pending Requests
+                    {t('supervisor:metrics.pendingRequests')}
                   </Typography>
                   <Typography variant="h4">
                     {dashboardData.departmentMetrics.pendingRequests}
@@ -273,7 +275,7 @@ const SupervisorDashboardPage: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography color="text.secondary" gutterBottom variant="body2">
-                    Resolution Rate
+                    {t('supervisor:metrics.resolutionRate')}
                   </Typography>
                   <Typography variant="h4">
                     {dashboardData.departmentMetrics.resolutionRate.toFixed(1)}%
@@ -293,7 +295,7 @@ const SupervisorDashboardPage: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography color="text.secondary" gutterBottom variant="body2">
-                    Avg Quality Score
+                    {t('supervisor:metrics.avgQualityScore')}
                   </Typography>
                   <Typography variant="h4">
                     {dashboardData.departmentMetrics.avgQualityScore.toFixed(1)}
@@ -314,21 +316,21 @@ const SupervisorDashboardPage: React.FC = () => {
         dashboardData.alerts.lowQualityAlerts > 0) && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="subtitle2" gutterBottom>
-            Action Required:
+            {t('supervisor:alerts.actionRequired')}
           </Typography>
           {dashboardData.alerts.overdueGoals > 0 && (
             <Typography variant="body2">
-              • {dashboardData.alerts.overdueGoals} overdue performance goals
+              • {t('supervisor:alerts.overdueGoals', { count: dashboardData.alerts.overdueGoals })}
             </Typography>
           )}
           {dashboardData.alerts.upcomingDeadlines > 0 && (
             <Typography variant="body2">
-              • {dashboardData.alerts.upcomingDeadlines} upcoming deadlines
+              • {t('supervisor:alerts.upcomingDeadlines', { count: dashboardData.alerts.upcomingDeadlines })}
             </Typography>
           )}
           {dashboardData.alerts.lowQualityAlerts > 0 && (
             <Typography variant="body2">
-              • {dashboardData.alerts.lowQualityAlerts} low quality alerts
+              • {t('supervisor:alerts.lowQualityAlerts', { count: dashboardData.alerts.lowQualityAlerts })}
             </Typography>
           )}
         </Alert>
@@ -336,10 +338,10 @@ const SupervisorDashboardPage: React.FC = () => {
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard tabs">
-          <Tab icon={<PeopleIcon />} label="Team Performance" />
-          <Tab icon={<AnalyticsIcon />} label="Performance Goals" />
-          <Tab icon={<DashboardIcon />} label="Recent Activity" />
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label={t('supervisor:dashboard.tabsAriaLabel')}>
+          <Tab icon={<PeopleIcon />} label={t('supervisor:tabs.teamPerformance')} />
+          <Tab icon={<AnalyticsIcon />} label={t('supervisor:tabs.performanceGoals')} />
+          <Tab icon={<DashboardIcon />} label={t('supervisor:tabs.recentActivity')} />
         </Tabs>
       </Box>
 
@@ -351,7 +353,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Team Performance Trends
+                  {t('supervisor:charts.teamPerformanceTrends')}
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={performanceTrendData}>
@@ -365,21 +367,21 @@ const SupervisorDashboardPage: React.FC = () => {
                       dataKey="quality" 
                       stroke="#8884d8" 
                       strokeWidth={3}
-                      name="Quality Score"
+                      name={t('supervisor:charts.legends.qualityScore')}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="satisfaction" 
                       stroke="#82ca9d" 
                       strokeWidth={3}
-                      name="Satisfaction"
+                      name={t('supervisor:charts.legends.satisfaction')}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="productivity" 
                       stroke="#ffc658" 
                       strokeWidth={3}
-                      name="Productivity %"
+                      name={t('supervisor:charts.legends.productivity')}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -392,7 +394,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Weekly Request Volume
+                  {t('supervisor:charts.weeklyRequestVolume')}
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={requestVolumeData}>
@@ -401,9 +403,9 @@ const SupervisorDashboardPage: React.FC = () => {
                     <YAxis />
                     <RechartsTooltip />
                     <Legend />
-                    <Bar dataKey="submitted" fill="#8884d8" name="Submitted" />
-                    <Bar dataKey="resolved" fill="#82ca9d" name="Resolved" />
-                    <Bar dataKey="pending" fill="#ffc658" name="Pending" />
+                    <Bar dataKey="submitted" fill="#8884d8" name={t('supervisor:charts.legends.submitted')} />
+                    <Bar dataKey="resolved" fill="#82ca9d" name={t('supervisor:charts.legends.resolved')} />
+                    <Bar dataKey="pending" fill="#ffc658" name={t('supervisor:charts.legends.pending')} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -415,7 +417,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Recent Performance Scores
+                  {t('supervisor:sections.recentPerformanceScores')}
                 </Typography>
                 <List>
                   {dashboardData.teamPerformance.recentScores.slice(0, 5).map((score, index) => (
@@ -427,7 +429,10 @@ const SupervisorDashboardPage: React.FC = () => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={score.user.name || score.user.email}
-                        secondary={`Quality Score: ${score.qualityScore.toFixed(1)} | Period: ${score.performancePeriod}`}
+                        secondary={t('supervisor:labels.performanceScoreDetails', {
+                          qualityScore: score.qualityScore.toFixed(1),
+                          period: score.performancePeriod
+                        })}
                       />
                       <Chip 
                         size="small" 
@@ -440,7 +445,7 @@ const SupervisorDashboardPage: React.FC = () => {
               </CardContent>
               <CardActions>
                 <Button size="small" color="primary" href="/supervisor/staff-performance?mode=performance&sort=qualityScore&order=desc">
-                  View All Performance Data
+                  {t('supervisor:actions.viewAllPerformanceData')}
                 </Button>
               </CardActions>
             </Card>
@@ -451,7 +456,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Top Performers
+                  {t('supervisor:sections.topPerformers')}
                 </Typography>
                 <List>
                   {dashboardData.teamPerformance.topPerformers.slice(0, 5).map((performer, index) => (
@@ -466,8 +471,10 @@ const SupervisorDashboardPage: React.FC = () => {
                         secondary={
                           <Box>
                             <Typography variant="caption" display="block">
-                              Quality: {performer.qualityScore.toFixed(1)} | 
-                              Satisfaction: {performer.citizenSatisfactionRating.toFixed(1)}
+                              {t('supervisor:labels.performerDetails', {
+                                quality: performer.qualityScore.toFixed(1),
+                                satisfaction: performer.citizenSatisfactionRating.toFixed(1)
+                              })}
                             </Typography>
                             <LinearProgress 
                               variant="determinate" 
@@ -483,7 +490,7 @@ const SupervisorDashboardPage: React.FC = () => {
               </CardContent>
               <CardActions>
                 <Button size="small" color="primary" href="/supervisor/staff-performance?mode=leaderboard&sort=productivityScore&order=desc">
-                  View Team Leaderboard
+                  {t('supervisor:actions.viewTeamLeaderboard')}
                 </Button>
               </CardActions>
             </Card>
@@ -498,7 +505,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Goal Progress Overview
+                  {t('supervisor:charts.goalProgressOverview')}
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <RadialBarChart 
@@ -542,7 +549,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Request Category Distribution
+                  {t('supervisor:charts.requestCategoryDistribution')}
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -572,7 +579,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom color="success.main">
-                  Active Goals
+                  {t('supervisor:goals.activeGoals')}
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Typography variant="h3" color="success.main">
@@ -581,7 +588,7 @@ const SupervisorDashboardPage: React.FC = () => {
                   <ArrowUpwardIcon color="success" sx={{ ml: 1 }} />
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Goals currently in progress
+                  {t('supervisor:goals.activeGoalsDescription')}
                 </Typography>
               </CardContent>
             </Card>
@@ -591,7 +598,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom color="error.main">
-                  Overdue Goals
+                  {t('supervisor:goals.overdueGoals')}
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Typography variant="h3" color="error.main">
@@ -602,7 +609,7 @@ const SupervisorDashboardPage: React.FC = () => {
                   )}
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Goals past their deadline
+                  {t('supervisor:goals.overdueGoalsDescription')}
                 </Typography>
               </CardContent>
             </Card>
@@ -612,7 +619,7 @@ const SupervisorDashboardPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom color="warning.main">
-                  Upcoming Deadlines
+                  {t('supervisor:goals.upcomingDeadlines')}
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Typography variant="h3" color="warning.main">
@@ -623,7 +630,7 @@ const SupervisorDashboardPage: React.FC = () => {
                   )}
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Goals due within 7 days
+                  {t('supervisor:goals.upcomingDeadlinesDescription')}
                 </Typography>
               </CardContent>
             </Card>
@@ -635,19 +642,19 @@ const SupervisorDashboardPage: React.FC = () => {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Recent Activity
+              {t('supervisor:sections.recentActivity')}
             </Typography>
             {dashboardData.recentActivity.upcomingDeadlines.length === 0 ? (
               <Typography color="text.secondary">
-                No recent activity to display.
+                {t('supervisor:sections.noRecentActivity')}
               </Typography>
             ) : (
               <List>
                 {dashboardData.recentActivity.upcomingDeadlines.map((item, index) => (
                   <ListItem key={index} divider>
                     <ListItemText
-                      primary={`Activity ${index + 1}`}
-                      secondary="Recent activity item"
+                      primary={t('supervisor:labels.activityItem', { index: index + 1 })}
+                      secondary={t('supervisor:labels.recentActivityItem')}
                     />
                   </ListItem>
                 ))}

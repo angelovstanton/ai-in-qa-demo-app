@@ -25,6 +25,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   Assignment as AssignmentIcon,
   LocationOn as LocationIcon,
@@ -52,6 +53,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 
 const FieldAgentDashboard: React.FC = () => {
+  const { t } = useTranslation(['agent', 'dashboard', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
@@ -84,7 +86,7 @@ const FieldAgentDashboard: React.FC = () => {
       setDashboardData(response.data);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      setError('Failed to load dashboard data');
+      setError(t('agent:errors.failedToLoadDashboard'));
     }
   };
 
@@ -121,7 +123,7 @@ const FieldAgentDashboard: React.FC = () => {
       await loadAgentStatus();
     } catch (err) {
       console.error('Failed to update status:', err);
-      setError('Failed to update status');
+      setError(t('agent:errors.failedToUpdateStatus'));
     }
   };
 
@@ -131,7 +133,7 @@ const FieldAgentDashboard: React.FC = () => {
       await loadAgentStatus();
     } catch (err) {
       console.error('Failed to check in:', err);
-      setError('Failed to check in');
+      setError(t('agent:errors.failedToCheckIn'));
     }
   };
 
@@ -141,7 +143,7 @@ const FieldAgentDashboard: React.FC = () => {
       await loadAgentStatus();
     } catch (err) {
       console.error('Failed to check out:', err);
-      setError('Failed to check out');
+      setError(t('agent:errors.failedToCheckOut'));
     }
   };
 
@@ -198,10 +200,10 @@ const FieldAgentDashboard: React.FC = () => {
         <Grid container alignItems="center" spacing={2}>
           <Grid item xs={12} md={6}>
             <Typography variant="h5" gutterBottom>
-              Field Agent Dashboard
+              {t('agent:fieldAgentDashboard.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Welcome back, {user?.name}
+              {t('agent:fieldAgentDashboard.welcomeBack', { name: user?.name })}
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -214,19 +216,19 @@ const FieldAgentDashboard: React.FC = () => {
               >
                 <ToggleButton value="AVAILABLE" color="success">
                   <CheckCircleIcon sx={{ mr: 1 }} />
-                  Available
+                  {t('agent:fieldAgentDashboard.statusToggle.available')}
                 </ToggleButton>
                 <ToggleButton value="BUSY" color="primary">
                   <WorkIcon sx={{ mr: 1 }} />
-                  Busy
+                  {t('agent:fieldAgentDashboard.statusToggle.busy')}
                 </ToggleButton>
                 <ToggleButton value="BREAK" color="warning">
                   <CoffeeIcon sx={{ mr: 1 }} />
-                  Break
+                  {t('agent:fieldAgentDashboard.statusToggle.break')}
                 </ToggleButton>
                 <ToggleButton value="OFF_DUTY" color="error">
                   <HomeIcon sx={{ mr: 1 }} />
-                  Off Duty
+                  {t('agent:fieldAgentDashboard.statusToggle.offDuty')}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -252,7 +254,7 @@ const FieldAgentDashboard: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Total Tasks
+                {t('agent:fieldAgentDashboard.quickStats.totalTasks')}
               </Typography>
             </CardContent>
           </Card>
@@ -267,7 +269,7 @@ const FieldAgentDashboard: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Completed Today
+                {t('agent:fieldAgentDashboard.quickStats.completedToday')}
               </Typography>
             </CardContent>
           </Card>
@@ -282,7 +284,7 @@ const FieldAgentDashboard: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Work Time Today
+                {t('agent:fieldAgentDashboard.quickStats.workTimeToday')}
               </Typography>
             </CardContent>
           </Card>
@@ -297,7 +299,7 @@ const FieldAgentDashboard: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                In Progress
+                {t('agent:fieldAgentDashboard.quickStats.inProgress')}
               </Typography>
             </CardContent>
           </Card>
@@ -311,11 +313,14 @@ const FieldAgentDashboard: React.FC = () => {
           sx={{ mb: 2 }}
           action={
             <Button color="inherit" size="small" onClick={() => navigate(`/agent/time-tracking`)}>
-              View Details
+              {t('common:viewDetails')}
             </Button>
           }
         >
-          Active time tracking: {activeTracking.timeType} - Started {formatDistanceToNow(new Date(activeTracking.startTime))} ago
+          {t('agent:fieldAgentDashboard.timeTracking.activeTracking', { 
+            timeType: activeTracking.timeType, 
+            timeAgo: formatDistanceToNow(new Date(activeTracking.startTime)) 
+          })}
         </Alert>
       )}
 
@@ -323,13 +328,13 @@ const FieldAgentDashboard: React.FC = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Today's Work Orders</Typography>
+            <Typography variant="h6">{t('agent:fieldAgentDashboard.workOrders.title')}</Typography>
             <Button 
               variant="outlined" 
               size="small"
               onClick={() => navigate('/agent/work-orders')}
             >
-              View All
+              {t('common:viewAll')}
             </Button>
           </Box>
           
@@ -374,7 +379,7 @@ const FieldAgentDashboard: React.FC = () => {
                             {order.request.streetAddress}, {order.request.city}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Category: {order.request.category} | Est. {formatDuration(order.estimatedDuration)}
+                            {t('agent:fieldAgentDashboard.workOrders.category')}: {order.request.category} | {t('agent:fieldAgentDashboard.workOrders.estimatedTime', { duration: formatDuration(order.estimatedDuration) })}
                           </Typography>
                         </Box>
                       }
@@ -400,7 +405,7 @@ const FieldAgentDashboard: React.FC = () => {
             </List>
           ) : (
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-              No work orders scheduled for today
+              {t('agent:fieldAgentDashboard.workOrders.noOrdersToday')}
             </Typography>
           )}
         </CardContent>
@@ -439,7 +444,7 @@ const FieldAgentDashboard: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Quick Actions</Typography>
+                <Typography variant="h6" gutterBottom>{t('agent:fieldAgentDashboard.quickActions.title')}</Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={3}>
                     <Button
@@ -448,7 +453,7 @@ const FieldAgentDashboard: React.FC = () => {
                       startIcon={<AssignmentIcon />}
                       onClick={() => navigate('/agent/work-orders')}
                     >
-                      Work Orders
+                      {t('agent:fieldAgentDashboard.quickActions.workOrders')}
                     </Button>
                   </Grid>
                   <Grid item xs={3}>
@@ -459,7 +464,7 @@ const FieldAgentDashboard: React.FC = () => {
                       startIcon={<TimerIcon />}
                       onClick={() => navigate('/agent/time-tracking')}
                     >
-                      Time Tracking
+                      {t('agent:fieldAgentDashboard.quickActions.timeTracking')}
                     </Button>
                   </Grid>
                   <Grid item xs={3}>
@@ -470,7 +475,7 @@ const FieldAgentDashboard: React.FC = () => {
                       startIcon={<CameraIcon />}
                       onClick={() => navigate('/agent/photos')}
                     >
-                      Photos
+                      {t('agent:fieldAgentDashboard.quickActions.photos')}
                     </Button>
                   </Grid>
                   <Grid item xs={3}>
@@ -481,7 +486,7 @@ const FieldAgentDashboard: React.FC = () => {
                       startIcon={<MapIcon />}
                       onClick={() => navigate('/agent/map')}
                     >
-                      Map View
+                      {t('agent:fieldAgentDashboard.quickActions.mapView')}
                     </Button>
                   </Grid>
                 </Grid>

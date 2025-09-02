@@ -1,0 +1,83 @@
+{
+  "general": {
+    "title": "Error",
+    "unexpected": "An unexpected error occurred",
+    "tryAgain": "Please try again",
+    "contactSupport": "If the problem persists, please contact support",
+    "goBack": "Go Back",
+    "goHome": "Go to Homepage"
+  },
+  "network": {
+    "title": "Network Error",
+    "offline": "You appear to be offline",
+    "slowConnection": "Slow network connection detected",
+    "timeout": "Request timed out",
+    "serverUnreachable": "Unable to reach the server",
+    "checkConnection": "Please check your internet connection"
+  },
+  "auth": {
+    "unauthorized": "You are not authorized to perform this action",
+    "sessionExpired": "Your session has expired. Please sign in again",
+    "invalidCredentials": "Invalid email or password",
+    "accountLocked": "Your account has been locked. Please contact support",
+    "accountSuspended": "Your account has been suspended",
+    "emailNotVerified": "Please verify your email address",
+    "passwordResetRequired": "Password reset is required"
+  },
+  "validation": {
+    "title": "Validation Error",
+    "invalidInput": "Please check your input and try again",
+    "missingRequired": "Please fill in all required fields",
+    "invalidFormat": "Invalid format"
+  },
+  "api": {
+    "400": "Bad Request - The request could not be understood",
+    "401": "Unauthorized - Please sign in to continue",
+    "403": "Forbidden - You don't have permission to access this resource",
+    "404": "Not Found - The requested resource could not be found",
+    "409": "Conflict - The request conflicts with the current state",
+    "413": "File too large - Please upload a smaller file",
+    "422": "Unprocessable Entity - The request could not be processed",
+    "429": "Too Many Requests - Please wait before trying again",
+    "500": "Internal Server Error - Something went wrong on our end",
+    "502": "Bad Gateway - The server received an invalid response",
+    "503": "Service Unavailable - The service is temporarily unavailable",
+    "504": "Gateway Timeout - The request took too long to process"
+  },
+  "business": {
+    "duplicateEntry": "This entry already exists",
+    "invalidStatusTransition": "Invalid status transition",
+    "editTimeExpired": "Edit time has expired",
+    "cannotDelete": "This item cannot be deleted",
+    "dependencyExists": "Cannot delete - other items depend on this",
+    "quotaExceeded": "Quota exceeded",
+    "operationNotAllowed": "This operation is not allowed"
+  },
+  "file": {
+    "uploadFailed": "File upload failed",
+    "downloadFailed": "File download failed",
+    "invalidType": "Invalid file type",
+    "tooLarge": "File is too large",
+    "tooMany": "Too many files",
+    "processingFailed": "File processing failed"
+  },
+  "codes": {
+    "AUTH001": "Invalid credentials",
+    "AUTH002": "Token expired",
+    "AUTH003": "Token invalid",
+    "AUTH004": "Account locked",
+    "AUTH005": "Email not verified",
+    "AUTH006": "Account suspended",
+    "VAL001": "Validation failed",
+    "VAL002": "Required field missing",
+    "VAL003": "Invalid format",
+    "VAL004": "Value out of range",
+    "VAL005": "String too short",
+    "VAL006": "String too long",
+    "BUS001": "Invalid status transition",
+    "BUS002": "Edit time expired",
+    "BUS003": "Cannot upvote own request",
+    "BUS004": "Maximum files exceeded",
+    "BUS005": "Duplicate entry"
+  }
+}

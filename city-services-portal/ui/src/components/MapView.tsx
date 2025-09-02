@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 interface MapIssue {
@@ -62,6 +63,7 @@ const MapView: React.FC<MapViewProps> = ({
   onIssueClick,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [issues, setIssues] = useState<MapIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,21 +97,26 @@ const MapView: React.FC<MapViewProps> = ({
     'other'
   ];
 
-  const categoryLabels: Record<string, string> = {
-    'roads-transportation': 'Roads and Transportation',
-    'street-lighting': 'Street Lighting',
-    'waste-management': 'Waste Management',
-    'water-sewer': 'Water and Sewer',
-    'parks-recreation': 'Parks and Recreation',
-    'public-safety': 'Public Safety',
-    'building-permits': 'Building and Permits',
-    'snow-removal': 'Snow Removal',
-    'traffic-signals': 'Traffic Signals',
-    'sidewalk-maintenance': 'Sidewalk Maintenance',
-    'tree-services': 'Tree Services',
-    'noise-complaints': 'Noise Complaints',
-    'animal-control': 'Animal Control',
-    'other': 'Other'
+  // Helper function to get translated category labels for map view
+  const getCategoryLabelMap = (category: string): string => {
+    // Map view has different categories than the main app, use fallback labels
+    const fallbackLabels: Record<string, string> = {
+      'roads-transportation': 'Roads and Transportation',
+      'street-lighting': 'Street Lighting',
+      'waste-management': t('requests:categories.waste', 'Waste Management'),
+      'water-sewer': 'Water and Sewer',
+      'parks-recreation': t('requests:categories.parks', 'Parks and Recreation'),
+      'public-safety': t('requests:categories.safety', 'Public Safety'),
+      'building-permits': 'Building and Permits',
+      'snow-removal': 'Snow Removal',
+      'traffic-signals': 'Traffic Signals',
+      'sidewalk-maintenance': 'Sidewalk Maintenance',
+      'tree-services': 'Tree Services',
+      'noise-complaints': 'Noise Complaints',
+      'animal-control': 'Animal Control',
+      'other': t('requests:categories.other', 'Other')
+    };
+    return fallbackLabels[category] || category?.replace(/-/g, ' ') || 'N/A';
   };
 
   useEffect(() => {
@@ -525,7 +532,7 @@ const MapView: React.FC<MapViewProps> = ({
                 <MenuItem value="">All Categories</MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category} value={category}>
-                    {categoryLabels[category]}
+                    {getCategoryLabelMap(category)}
                   </MenuItem>
                 ))}
               </Select>
@@ -645,7 +652,7 @@ const MapView: React.FC<MapViewProps> = ({
               
               <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                 <Chip
-                  label={categoryLabels[selectedIssue.category] || selectedIssue.category}
+                  label={getCategoryLabelMap(selectedIssue.category)}
                   size="small"
                   variant="outlined"
                 />

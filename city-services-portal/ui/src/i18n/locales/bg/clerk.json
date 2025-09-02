@@ -1,0 +1,269 @@
+{
+  "title": "Портал на служителя",
+  "subtitle": "Обработка и управление на заявки за услуги",
+  "navigation": {
+    "dashboard": "Табло на служителя",
+    "inbox": "Входящи",
+    "processing": "Обработка",
+    "completed": "Завършени",
+    "reports": "Отчети",
+    "tools": "Инструменти"
+  },
+  "dashboard": {
+    "title": "Табло на служителя",
+    "welcomeMessage": "Добре дошли, {{clerkName}}",
+    "queueStatistics": "Статистики на опашката",
+    "pendingRequests": "Чакащи заявки",
+    "inProcessing": "В обработка",
+    "completedToday": "Завършени днес",
+    "averageProcessingTime": "Средно време за обработка",
+    "dailyStats": "Дневни статистики",
+    "weeklyStats": "Седмични статистики",
+    "monthlyStats": "Месечни статистики",
+    "quickFilters": "Бързи филтри",
+    "shortcutsPanel": "Панел за бързи връзки",
+    "todaysGoal": "Днешна цел",
+    "performance": "Работни показатели",
+    "efficiency": "Рейтинг на ефективността"
+  },
+  "inbox": {
+    "title": "Входящи заявки",
+    "subtitle": "Преглед и обработка на постъпващи заявки",
+    "tableHeaders": {
+      "requestId": "ИД на заявката",
+      "type": "Тип",
+      "category": "Категория",
+      "priority": "Приоритет",
+      "status": "Статус",
+      "submittedBy": "Подадена от",
+      "submissionDate": "Дата на подаване",
+      "lastUpdated": "Последно обновяване",
+      "assignedTo": "Назначена на",
+      "actions": "Действия"
+    },
+    "quickActions": {
+      "processNow": "Обработи сега",
+      "assignDepartment": "Назначи на отдел",
+      "setPriority": "Задай приоритет",
+      "addNotes": "Добави бележки",
+      "requestInfo": "Заяви информация",
+      "escalate": "Ескалирай",
+      "approve": "Одобри",
+      "reject": "Отхвърли"
+    },
+    "filters": {
+      "allRequests": "Всички заявки",
+      "newRequests": "Нови заявки",
+      "inReview": "В преглед",
+      "pendingInfo": "Чака информация",
+      "readyForAssignment": "Готови за назначаване",
+      "highPriority": "Висок приоритет",
+      "overdueReview": "Просрочен преглед"
+    },
+    "sorting": {
+      "submissionDate": "По дата на подаване",
+      "priority": "По приоритет",
+      "type": "По тип заявка",
+      "status": "По статус",
+      "lastActivity": "По последна активност"
+    },
+    "bulkActions": {
+      "selectAll": "Избери всички",
+      "bulkAssign": "Масово назначаване",
+      "bulkApprove": "Масово одобрение",
+      "bulkPriority": "Масова промяна на приоритет",
+      "exportSelected": "Експорт на избраните"
+    }
+  },
+  "processing": {
+    "title": "Обработка на заявки",
+    "subtitle": "Обработка на индивидуални заявки за услуги",
+    "sections": {
+      "requestDetails": "Подробности за заявката",
+      "customerInfo": "Информация за клиента",
+      "processingForm": "Формуляр за обработка",
+      "attachments": "Прикачени файлове",
+      "history": "История на обработката",
+      "internalNotes": "Вътрешни бележки"
+    },
+    "form": {
+      "requestType": "Тип заявка",
+      "category": "Категория",
+      "priority": "Приоритет",
+      "department": "Назначи на отдел",
+      "assignee": "Назначи на служител",
+      "estimatedCompletion": "Очаквано завършване",
+      "internalNotes": "Вътрешни бележки за обработка",
+      "customerMessage": "Съобщение до клиента",
+      "statusUpdate": "Обновяване на статуса",
+      "requiresFollowUp": "Изисква проследяване",
+      "flagForReview": "Маркирай за преглед от супервайзър"
+    },
+    "departments": {
+      "publicWorks": "Обществени дейности",
+      "utilities": "Комунални услуги",
+      "parks": "Паркове и отдих",
+      "transportation": "Транспорт",
+      "housing": "Жилищни въпроси",
+      "environment": "Екологични услуги",
+      "permits": "Разрешителни и лицензи",
+      "planning": "Планиране и развитие"
+    },
+    "statusTransitions": {
+      "approve": "Одобри заявката",
+      "reject": "Отхвърли заявката",
+      "needsInfo": "Заяви допълнителна информация",
+      "assign": "Назначи на отдел",
+      "escalate": "Ескалирай до супервайзър",
+      "complete": "Маркирай като завършена",
+      "onHold": "Постави в изчакване"
+    },
+    "validationWarnings": {
+      "missingInfo": "Липсва задължителна информация",
+      "invalidData": "Открити са невалидни данни",
+      "duplicateRequest": "Потенциално дублирана заявка",
+      "highPriorityOverride": "Изисква се отмяна на висок приоритет",
+      "departmentCapacity": "Отделът е на пълен капацитет",
+      "budgetExceeded": "Очакваните разходи надвишават бюджетните лимити"
+    }
+  },
+  "requestDetail": {
+    "title": "Подробности за заявката",
+    "sections": {
+      "summary": "Резюме",
+      "details": "Подробна информация",
+      "location": "Подробности за местоположението",
+      "timeline": "Хронология",
+      "communications": "Комуникации",
+      "documents": "Документи и снимки"
+    },
+    "customer": {
+      "name": "Име на клиента",
+      "email": "Имейл адрес",
+      "phone": "Телефонен номер",
+      "address": "Адрес",
+      "preferredContact": "Предпочитан начин на контакт",
+      "contactHistory": "История на контактите"
+    },
+    "request": {
+      "description": "Описание",
+      "urgency": "Ниво на спешност",
+      "impact": "Оценка на въздействието",
+      "location": "Местоположение на услугата",
+      "accessibility": "Изисквания за достъпност",
+      "specialInstructions": "Специални инструкции",
+      "relatedRequests": "Свързани заявки"
+    }
+  },
+  "communications": {
+    "title": "Комуникации с клиента",
+    "sendMessage": "Изпрати съобщение",
+    "callCustomer": "Обади се на клиента",
+    "emailCustomer": "Изпрати имейл на клиента",
+    "scheduleCallback": "Планирай обратно обаждане",
+    "messageTemplates": "Шаблони за съобщения",
+    "messageHistory": "История на съобщенията",
+    "automaticUpdates": "Автоматични обновления",
+    "notificationSettings": "Настройки за известия"
+  },
+  "tools": {
+    "title": "Инструменти на служителя",
+    "searchRequests": "Търсене на заявки",
+    "bulkOperations": "Масови операции",
+    "reportGenerator": "Генератор на отчети",
+    "dataExport": "Експорт на данни",
+    "taskManager": "Мениджър на задачи",
+    "templates": "Шаблони",
+    "shortcuts": "Клавишни комбинации",
+    "helpDesk": "Помощен център"
+  },
+  "reports": {
+    "title": "Отчети на служителя",
+    "types": {
+      "dailySummary": "Дневно резюме на обработката",
+      "weeklyReport": "Седмичен отчет за работните показатели",
+      "requestAnalysis": "Анализ на заявките",
+      "processingTimes": "Анализ на времената за обработка",
+      "departmentWorkload": "Натоварване на отдела",
+      "customerSatisfaction": "Удовлетвореност на клиентите",
+      "qualityMetrics": "Показатели за качество"
+    },
+    "filters": {
+      "dateRange": "Период от време",
+      "department": "Отдел",
+      "requestType": "Тип заявка",
+      "priority": "Ниво на приоритет",
+      "status": "Статус",
+      "assignee": "Назначен служител"
+    }
+  },
+  "performance": {
+    "metrics": {
+      "requestsProcessed": "Обработени заявки",
+      "averageTime": "Средно време за обработка",
+      "qualityScore": "Резултат за качество",
+      "customerRating": "Оценка от клиенти",
+      "escalationRate": "Процент ескалация",
+      "completionRate": "Процент завършване"
+    },
+    "goals": {
+      "daily": "Дневна цел",
+      "weekly": "Седмична цел",
+      "monthly": "Месечна цел",
+      "quality": "Цел за качество",
+      "efficiency": "Цел за ефективност"
+    }
+  },
+  "notifications": {
+    "newRequest": "Получена нова заявка: {{requestId}}",
+    "urgentRequest": "Спешна заявка изисква внимание: {{requestId}}",
+    "requestUpdated": "Заявката е обновена: {{requestId}}",
+    "customerResponse": "Клиентът отговори на: {{requestId}}",
+    "escalationRequired": "Заявката изисква ескалация: {{requestId}}",
+    "deadlineApproaching": "Приближава краен срок за обработка: {{requestId}}",
+    "qualityReview": "Заявката е маркирана за преглед на качеството: {{requestId}}",
+    "assignmentChanged": "Назначението е променено за: {{requestId}}"
+  },
+  "templates": {
+    "approvalMessage": "Вашата заявка е одобрена и назначена на {{department}}. Очаквано завършване: {{date}}.",
+    "rejectionMessage": "За съжаление, вашата заявка не може да бъде обработена поради: {{reason}}. Моля, свържете се с нас за повече информация.",
+    "infoRequest": "Имаме нужда от допълнителна информация за да обработим вашата заявка: {{details}}. Моля, отговорете възможно най-скоро.",
+    "statusUpdate": "Обновяване на статуса за вашата заявка {{requestId}}: {{status}}. {{additionalInfo}}",
+    "completion": "Вашата заявка е завършена. Благодарим ви, че използвате нашите услуги.",
+    "escalation": "Вашата заявка е ескалирана до супервайзър за приоритетно обработване."
+  },
+  "empty": {
+    "noRequests": "Няма заявки във входящите",
+    "noFiltered": "Няма заявки, отговарящи на текущите филтри",
+    "noHistory": "Няма налична история на обработката",
+    "noNotes": "Няма записани вътрешни бележки",
+    "noAttachments": "Няма качени прикачени файлове",
+    "noMessages": "Няма съобщения от клиенти"
+  },
+  "loading": {
+    "loadingRequests": "Зареждане на заявки...",
+    "processing": "Обработка на заявката...",
+    "sending": "Изпращане на съобщение...",
+    "saving": "Запазване на промените...",
+    "generating": "Генериране на отчет...",
+    "updating": "Обновяване на статуса..."
+  },
+  "errors": {
+    "loadFailed": "Неуспешно зареждане на заявки",
+    "processingFailed": "Обработката на заявката не успя",
+    "saveFailed": "Запазването на промените не успя",
+    "sendFailed": "Изпращането на съобщението не успя",
+    "assignmentFailed": "Назначаването на отдел не успя",
+    "validationError": "Моля, коригирайте грешките при валидация",
+    "permissionDenied": "Недостатъчни разрешения",
+    "networkError": "Грешка в мрежовата връзка"
+  },
+  "confirmations": {
+    "approveRequest": "Сигурни ли сте, че искате да одобрите тази заявка?",
+    "rejectRequest": "Сигурни ли сте, че искате да отхвърлите тази заявка?",
+    "escalateRequest": "Сигурни ли сте, че искате да ескалирате тази заявка?",
+    "deleteNotes": "Сигурни ли сте, че искате да изтриете тези бележки?",
+    "bulkAction": "Приложи действието към {{count}} избрани заявки?",
+    "statusChange": "Промени статуса на {{status}}?"
+  }
+}

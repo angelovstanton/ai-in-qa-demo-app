@@ -8,34 +8,15 @@ import {
   Tooltip,
   Typography,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import {
   Language as LanguageIcon,
   Check as CheckIcon,
 } from '@mui/icons-material';
-import { useLanguage, Language } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
-interface LanguageOption {
-  code: Language;
-  name: string;
-  nativeName: string;
-  flag: string;
-}
-
-const languages: LanguageOption[] = [
-  {
-    code: 'EN',
-    name: 'English',
-    nativeName: 'English',
-    flag: '🇺🇸',
-  },
-  {
-    code: 'BG',
-    name: 'Bulgarian',
-    nativeName: 'Български',
-    flag: '🇧🇬',
-  },
-];
 
 interface LanguageSwitcherProps {
   variant?: 'icon' | 'button' | 'dropdown';
@@ -48,11 +29,12 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   showFlags = true,
   color = 'inherit',
 }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { currentLanguage, changeLanguage, isChangingLanguage, supportedLanguages } = useLanguage();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const currentLanguage = languages.find(lang => lang.code === language);
+  const currentLang = supportedLanguages.find(lang => lang.code === currentLanguage);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -62,15 +44,19 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     setAnchorEl(null);
   };
 
-  const handleLanguageSelect = (languageCode: Language) => {
-    setLanguage(languageCode);
-    handleClose();
+  const handleLanguageSelect = async (languageCode: typeof currentLanguage) => {
+    try {
+      await changeLanguage(languageCode);
+      handleClose();
+    } catch (error) {
+      console.error('Failed to change language:', error);
+    }
   };
 
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title={t('nav.language-switcher') || 'Language'}>
+        <Tooltip title={t('common.language')}>
           <IconButton
             onClick={handleClick}
             color={color}
@@ -79,10 +65,13 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             aria-controls={open ? 'language-menu' : undefined}
             aria-haspopup="true"
             aria-expanded={open ? 'true' : undefined}
+            disabled={isChangingLanguage}
           >
-            {showFlags && currentLanguage ? (
-              <Typography sx={{ fontSize: '1.2rem' }} role="img" aria-label={currentLanguage.name}>
-                {currentLanguage.flag}
+            {isChangingLanguage ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : showFlags && currentLang ? (
+              <Typography sx={{ fontSize: '1.2rem' }} role="img" aria-label={currentLang.name}>
+                {currentLang.flag}
               </Typography>
             ) : (
               <LanguageIcon />
@@ -102,11 +91,11 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          {languages.map((lang) => (
+          {supportedLanguages.map((lang) => (
             <MenuItem
               key={lang.code}
               onClick={() => handleLanguageSelect(lang.code)}
-              selected={lang.code === language}
+              selected={lang.code === currentLanguage}
               data-testid={`cs-language-option-${lang.code.toLowerCase()}`}
             >
               {showFlags && (
@@ -120,7 +109,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
               <ListItemText>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography variant="body2" fontWeight={lang.code === language ? 'bold' : 'normal'}>
+                    <Typography variant="body2" fontWeight={lang.code === currentLanguage ? 'bold' : 'normal'}>
                       {lang.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -128,7 +117,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                     </Typography>
                   </Box>
                   
-                  {lang.code === language && (
+                  {lang.code === currentLanguage && (
                     <CheckIcon color="primary" sx={{ ml: 1 }} />
                   )}
                 </Box>

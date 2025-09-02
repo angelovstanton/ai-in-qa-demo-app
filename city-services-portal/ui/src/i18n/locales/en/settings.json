@@ -1,0 +1,360 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your account and system preferences",
+  "navigation": {
+    "general": "General",
+    "account": "Account",
+    "security": "Security",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "appearance": "Appearance",
+    "language": "Language & Region",
+    "integrations": "Integrations",
+    "advanced": "Advanced",
+    "about": "About"
+  },
+  "general": {
+    "title": "General Settings",
+    "subtitle": "Basic application preferences",
+    "language": {
+      "title": "Language",
+      "description": "Choose your preferred language",
+      "options": {
+        "en": "English",
+        "bg": "Bulgarian (Български)",
+        "auto": "Auto-detect"
+      }
+    },
+    "region": {
+      "title": "Region",
+      "description": "Set your region for date, time, and number formatting",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "numberFormat": "Number Format",
+      "currency": "Currency"
+    },
+    "defaultView": {
+      "title": "Default View",
+      "description": "Choose what you see when you first log in",
+      "options": {
+        "dashboard": "Dashboard",
+        "requests": "My Requests",
+        "inbox": "Inbox",
+        "tasks": "Tasks",
+        "lastVisited": "Last Visited Page"
+      }
+    },
+    "itemsPerPage": {
+      "title": "Items Per Page",
+      "description": "Default number of items to show in lists and tables",
+      "options": {
+        "10": "10 items",
+        "25": "25 items",
+        "50": "50 items",
+        "100": "100 items"
+      }
+    }
+  },
+  "account": {
+    "title": "Account Settings",
+    "subtitle": "Manage your personal information",
+    "profile": {
+      "title": "Profile Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "department": "Department",
+      "position": "Position",
+      "employeeId": "Employee ID",
+      "avatar": "Profile Picture",
+      "bio": "Biography"
+    },
+    "contactPreferences": {
+      "title": "Contact Preferences",
+      "preferredMethod": "Preferred Contact Method",
+      "workHours": "Work Hours",
+      "availability": "Availability Status",
+      "emergencyContact": "Emergency Contact"
+    },
+    "actions": {
+      "updateProfile": "Update Profile",
+      "changeAvatar": "Change Avatar",
+      "downloadData": "Download My Data",
+      "deleteAccount": "Delete Account"
+    }
+  },
+  "security": {
+    "title": "Security Settings",
+    "subtitle": "Protect your account and data",
+    "password": {
+      "title": "Password",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "requirements": "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and symbols",
+      "lastChanged": "Last changed: {{date}}"
+    },
+    "twoFactor": {
+      "title": "Two-Factor Authentication",
+      "description": "Add an extra layer of security to your account",
+      "status": {
+        "enabled": "Two-factor authentication is enabled",
+        "disabled": "Two-factor authentication is disabled"
+      },
+      "methods": {
+        "app": "Authenticator App",
+        "sms": "SMS",
+        "email": "Email"
+      },
+      "actions": {
+        "enable": "Enable 2FA",
+        "disable": "Disable 2FA",
+        "regenerate": "Regenerate Codes",
+        "showCodes": "Show Recovery Codes"
+      }
+    },
+    "sessions": {
+      "title": "Active Sessions",
+      "description": "Manage devices and sessions that are currently logged in",
+      "currentSession": "Current Session",
+      "device": "Device",
+      "location": "Location",
+      "lastActive": "Last Active",
+      "actions": {
+        "terminateSession": "Terminate Session",
+        "terminateAll": "Terminate All Other Sessions"
+      }
+    },
+    "loginHistory": {
+      "title": "Login History",
+      "description": "Review recent login attempts",
+      "showAll": "Show All",
+      "exportHistory": "Export History"
+    }
+  },
+  "notifications": {
+    "title": "Notification Settings",
+    "subtitle": "Control how and when you receive notifications",
+    "channels": {
+      "title": "Notification Channels",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "sms": "SMS Notifications",
+      "inApp": "In-App Notifications"
+    },
+    "types": {
+      "title": "Notification Types",
+      "requests": "Service Requests",
+      "tasks": "Tasks & Assignments",
+      "system": "System Updates",
+      "security": "Security Alerts",
+      "reports": "Reports",
+      "reminders": "Reminders"
+    },
+    "frequency": {
+      "title": "Frequency",
+      "immediate": "Immediately",
+      "hourly": "Hourly Digest",
+      "daily": "Daily Digest",
+      "weekly": "Weekly Digest",
+      "never": "Never"
+    },
+    "quietHours": {
+      "title": "Quiet Hours",
+      "description": "Don't send notifications during these hours",
+      "enabled": "Enable Quiet Hours",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "timezone": "Timezone"
+    }
+  },
+  "privacy": {
+    "title": "Privacy Settings",
+    "subtitle": "Control your data and privacy preferences",
+    "dataCollection": {
+      "title": "Data Collection",
+      "analytics": "Usage Analytics",
+      "crashReports": "Crash Reports",
+      "performanceData": "Performance Data",
+      "locationData": "Location Data"
+    },
+    "visibility": {
+      "title": "Profile Visibility",
+      "publicProfile": "Public Profile",
+      "showEmail": "Show Email Address",
+      "showPhone": "Show Phone Number",
+      "showDepartment": "Show Department",
+      "onlineStatus": "Show Online Status"
+    },
+    "dataRights": {
+      "title": "Data Rights",
+      "downloadData": "Download My Data",
+      "deleteData": "Request Data Deletion",
+      "portData": "Port Data to Another System",
+      "viewAccess": "View Who Has Access"
+    }
+  },
+  "appearance": {
+    "title": "Appearance Settings",
+    "subtitle": "Customize how the application looks",
+    "theme": {
+      "title": "Theme",
+      "light": "Light Theme",
+      "dark": "Dark Theme",
+      "auto": "Auto (System Default)"
+    },
+    "colors": {
+      "title": "Color Scheme",
+      "blue": "Blue",
+      "green": "Green",
+      "purple": "Purple",
+      "orange": "Orange",
+      "red": "Red",
+      "custom": "Custom"
+    },
+    "layout": {
+      "title": "Layout",
+      "compact": "Compact",
+      "comfortable": "Comfortable",
+      "spacious": "Spacious"
+    },
+    "sidebar": {
+      "title": "Sidebar",
+      "expanded": "Always Expanded",
+      "collapsed": "Always Collapsed",
+      "auto": "Auto-collapse"
+    },
+    "density": {
+      "title": "Information Density",
+      "low": "Low Density",
+      "medium": "Medium Density",
+      "high": "High Density"
+    }
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect with external services and applications",
+    "connected": "Connected Services",
+    "available": "Available Integrations",
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Connection Error",
+      "pending": "Pending Authorization"
+    },
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "configure": "Configure",
+      "testConnection": "Test Connection",
+      "viewLogs": "View Logs"
+    }
+  },
+  "advanced": {
+    "title": "Advanced Settings",
+    "subtitle": "Advanced configuration options",
+    "developer": {
+      "title": "Developer Options",
+      "debugMode": "Debug Mode",
+      "showApiRequests": "Show API Requests",
+      "mockData": "Use Mock Data",
+      "featureFlags": "Feature Flags"
+    },
+    "performance": {
+      "title": "Performance",
+      "lazyLoading": "Lazy Loading",
+      "cacheSize": "Cache Size",
+      "prefetchData": "Prefetch Data",
+      "compressionLevel": "Compression Level"
+    },
+    "experimental": {
+      "title": "Experimental Features",
+      "warning": "These features are experimental and may not work as expected",
+      "betaFeatures": "Beta Features",
+      "labsFeatures": "Labs Features"
+    }
+  },
+  "about": {
+    "title": "About",
+    "subtitle": "Information about the application",
+    "version": "Version {{version}}",
+    "buildDate": "Build Date: {{date}}",
+    "lastUpdate": "Last Update: {{date}}",
+    "support": {
+      "title": "Support",
+      "documentation": "Documentation",
+      "helpCenter": "Help Center",
+      "contactSupport": "Contact Support",
+      "reportBug": "Report a Bug",
+      "featureRequest": "Feature Request"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "licenses": "Open Source Licenses",
+      "cookies": "Cookie Policy"
+    },
+    "system": {
+      "title": "System Information",
+      "browser": "Browser",
+      "os": "Operating System",
+      "screenResolution": "Screen Resolution",
+      "userAgent": "User Agent"
+    }
+  },
+  "actions": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "reset": "Reset to Default",
+    "apply": "Apply",
+    "test": "Test",
+    "export": "Export Settings",
+    "import": "Import Settings",
+    "backup": "Backup Settings",
+    "restore": "Restore Settings"
+  },
+  "messages": {
+    "saveSuccess": "Settings saved successfully",
+    "saveError": "Failed to save settings",
+    "resetSuccess": "Settings reset to default",
+    "resetError": "Failed to reset settings",
+    "testSuccess": "Test completed successfully",
+    "testError": "Test failed",
+    "exportSuccess": "Settings exported successfully",
+    "importSuccess": "Settings imported successfully",
+    "importError": "Failed to import settings"
+  },
+  "confirmations": {
+    "resetSettings": "Are you sure you want to reset all settings to default? This action cannot be undone.",
+    "deleteAccount": "Are you sure you want to delete your account? This action is permanent and cannot be undone.",
+    "disconnectService": "Are you sure you want to disconnect from {{service}}?",
+    "terminateSession": "Are you sure you want to terminate this session?",
+    "terminateAllSessions": "Are you sure you want to terminate all other sessions?",
+    "enableTwoFactor": "Are you sure you want to enable two-factor authentication?",
+    "disableTwoFactor": "Are you sure you want to disable two-factor authentication? This will make your account less secure."
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "phone": "Please enter a valid phone number",
+    "passwordMismatch": "Passwords do not match",
+    "weakPassword": "Password is too weak",
+    "invalidFormat": "Invalid format",
+    "tooLong": "Value is too long",
+    "tooShort": "Value is too short"
+  },
+  "help": {
+    "general": "Configure basic application settings like language, timezone, and default views.",
+    "account": "Manage your personal information and contact preferences.",
+    "security": "Protect your account with strong passwords and two-factor authentication.",
+    "notifications": "Control how and when you receive notifications from the system.",
+    "privacy": "Manage your data privacy and profile visibility settings.",
+    "appearance": "Customize the look and feel of the application.",
+    "integrations": "Connect with external services to enhance functionality.",
+    "advanced": "Advanced settings for developers and power users."
+  }
+}

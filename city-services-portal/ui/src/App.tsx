@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import './i18n/config'; // Initialize i18n
 import AppLayout from './components/AppLayout';
 import DashboardRedirect from './components/DashboardRedirect';
 import ErrorBoundary from './components/ErrorBoundary';

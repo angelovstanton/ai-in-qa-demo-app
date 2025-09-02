@@ -17,6 +17,7 @@ import {
   FormHelperText,
 } from '@mui/material';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
 
 interface ValidationFeedbackProps {
@@ -53,10 +54,12 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   categories,
   categoryLabels,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Box data-testid="cs-new-request-step-1">
       <Typography variant="h6" gutterBottom>
-        Basic Information
+        {t('requests:form.step1', 'Basic Information')}
       </Typography>
       
       <Controller
@@ -67,7 +70,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
             <TextField
               {...field}
               fullWidth
-              label="Request Title"
+              label={t('requests:form.titleLabel', 'Request Title')}
               margin="normal"
               error={!!errors.title}
               required
@@ -103,7 +106,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
             <TextField
               {...field}
               fullWidth
-              label="Detailed Description"
+              label={t('requests:form.descriptionLabel', 'Detailed Description')}
               multiline
               rows={4}
               margin="normal"
@@ -130,7 +133,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
               securityCheck
             />
             <FormHelperText>
-              Please provide at least 10 words describing the issue in detail
+              {t('requests:form.descriptionPlaceholder', 'Please provide at least 10 words describing the issue in detail')}
             </FormHelperText>
           </Box>
         )}
@@ -145,7 +148,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
               {...field}
               fullWidth
               type="date"
-              label="Date of Request"
+              label={t('requests:form.dateOfRequest', 'Date of Request')}
               margin="normal"
               error={!!errors.dateOfRequest}
               required
@@ -182,7 +185,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                 'aria-describedby': errors.dateOfRequest ? FormValidationTestIds.FIELD_ERROR('new-request', 'dateOfRequest') : undefined,
               }}
               data-testid="cs-new-request-date"
-              helperText={errors.dateOfRequest?.message || "Select the date when the issue occurred (cannot be more than 1 month ago)"}
+              helperText={errors.dateOfRequest?.message || t('requests:form.dateHelperText', 'Select the date when the issue occurred (cannot be more than 1 month ago)')}
               InputLabelProps={{
                 shrink: true,
               }}
@@ -204,10 +207,10 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
             control={control}
             render={({ field }) => (
               <FormControl fullWidth margin="normal" error={!!errors.category} required>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>{t('requests:form.categoryLabel', 'Category')}</InputLabel>
                 <Select
                   {...field}
-                  label="Category"
+                  label={t('requests:form.categoryLabel', 'Category')}
                   data-testid="cs-new-request-category"
                   aria-describedby={errors.category ? FormValidationTestIds.FIELD_ERROR('new-request', 'category') : undefined}
                 >
@@ -234,17 +237,17 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
             control={control}
             render={({ field }) => (
               <FormControl margin="normal" error={!!errors.priority} required>
-                <FormLabel component="legend">Priority</FormLabel>
+                <FormLabel component="legend">{t('requests:form.priorityLabel', 'Priority')}</FormLabel>
                 <RadioGroup
                   {...field}
                   row
                   data-testid="cs-new-request-priority"
                   aria-describedby={errors.priority ? FormValidationTestIds.FIELD_ERROR('new-request', 'priority') : undefined}
                 >
-                  <FormControlLabel value="LOW" control={<Radio />} label="Low" />
-                  <FormControlLabel value="MEDIUM" control={<Radio />} label="Medium" />
-                  <FormControlLabel value="HIGH" control={<Radio />} label="High" />
-                  <FormControlLabel value="URGENT" control={<Radio />} label="Urgent" />
+                  <FormControlLabel value="LOW" control={<Radio />} label={t('requests:priorities.LOW', 'Low')} />
+                  <FormControlLabel value="MEDIUM" control={<Radio />} label={t('requests:priorities.MEDIUM', 'Medium')} />
+                  <FormControlLabel value="HIGH" control={<Radio />} label={t('requests:priorities.HIGH', 'High')} />
+                  <FormControlLabel value="URGENT" control={<Radio />} label={t('requests:priorities.URGENT', 'Urgent')} />
                 </RadioGroup>
                 <ValidationFeedback
                   field={field}
@@ -272,7 +275,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                 aria-label="Is this an emergency"
               />
             }
-            label="Is this an emergency?"
+            label={t('requests:form.isEmergency', 'Is this an emergency?')}
           />
         )}
       />
@@ -281,7 +284,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         <Box>
           <Alert severity="warning" sx={{ mt: 2 }}>
             <Typography variant="body2">
-              Emergency requests require alternate contact information and will be prioritized accordingly.
+              {t('requests:form.emergencyHelperText', 'Emergency requests require alternate contact information and will be prioritized accordingly.')}
             </Typography>
           </Alert>
         </Box>

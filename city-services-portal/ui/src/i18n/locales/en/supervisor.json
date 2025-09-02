@@ -1,0 +1,265 @@
+{
+  "title": "Supervisor Dashboard",
+  "subtitle": "Manage staff performance and quality oversight",
+  "navigation": {
+    "dashboard": "Supervisor Dashboard",
+    "staffPerformance": "Staff Performance",
+    "qualityReview": "Quality Review",
+    "departmentMetrics": "Department Metrics",
+    "teamManagement": "Team Management",
+    "reports": "Reports"
+  },
+  "metrics": {
+    "totalRequests": "Total Requests",
+    "pendingRequests": "Pending Requests",
+    "resolutionRate": "Resolution Rate",
+    "avgQualityScore": "Avg Quality Score"
+  },
+  "alerts": {
+    "actionRequired": "Action Required",
+    "overdueGoals": "{{count}} overdue goals require attention",
+    "upcomingDeadlines": "{{count}} upcoming deadlines",
+    "lowQualityAlerts": "{{count}} low quality alerts"
+  },
+  "tabs": {
+    "teamPerformance": "Team Performance",
+    "performanceGoals": "Performance Goals",
+    "recentActivity": "Recent Activity"
+  },
+  "charts": {
+    "teamPerformanceTrends": "Team Performance Trends",
+    "weeklyRequestVolume": "Weekly Request Volume",
+    "goalProgressOverview": "Goal Progress Overview",
+    "requestCategoryDistribution": "Request Category Distribution",
+    "legends": {
+      "qualityScore": "Quality Score",
+      "satisfaction": "Customer Satisfaction",
+      "productivity": "Productivity Score",
+      "submitted": "Submitted",
+      "resolved": "Resolved",
+      "pending": "Pending"
+    }
+  },
+  "sections": {
+    "recentPerformanceScores": "Recent Performance Scores",
+    "topPerformers": "Top Performers",
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity to display"
+  },
+  "goals": {
+    "activeGoals": "Active Goals",
+    "activeGoalsDescription": "Currently active performance goals",
+    "overdueGoals": "Overdue Goals",
+    "overdueGoalsDescription": "Goals that have passed their deadline",
+    "upcomingDeadlines": "Upcoming Deadlines",
+    "upcomingDeadlinesDescription": "Goals with approaching deadlines"
+  },
+  "labels": {
+    "performanceScoreDetails": "Quality Score: {{qualityScore}}, Period: {{period}}",
+    "performerDetails": "Quality: {{quality}}, Satisfaction: {{satisfaction}}",
+    "activityItem": "Activity Item {{index}}",
+    "recentActivityItem": "Recent activity item"
+  },
+  "actions": {
+    "viewAllPerformanceData": "View All Performance Data",
+    "viewTeamLeaderboard": "View Team Leaderboard"
+  },
+  "dashboard": {
+    "title": "Supervisor Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "welcomeMessage": "Welcome, Supervisor",
+    "overviewTitle": "Team Overview",
+    "performanceSummary": "Performance Summary",
+    "qualityMetrics": "Quality Metrics",
+    "teamStats": "Team Statistics",
+    "pendingReviews": "Pending Reviews",
+    "alerts": "Staff Alerts",
+    "workloadBalance": "Workload Balance",
+    "refreshTooltip": "Refresh dashboard data",
+    "noDataAvailable": "No data available for this dashboard",
+    "tabsAriaLabel": "Dashboard tabs navigation"
+  },
+  "staffPerformance": {
+    "title": "Staff Performance",
+    "subtitle": "Monitor and evaluate team member performance",
+    "tableHeaders": {
+      "staffMember": "Staff Member",
+      "role": "Role",
+      "tasksCompleted": "Tasks Completed",
+      "averageResponseTime": "Avg Response Time",
+      "qualityScore": "Quality Score",
+      "efficiency": "Efficiency",
+      "customerSatisfaction": "Customer Satisfaction",
+      "lastActive": "Last Active",
+      "status": "Status"
+    },
+    "metrics": {
+      "totalTasks": "Total Tasks",
+      "completedTasks": "Completed Tasks",
+      "averageTime": "Average Time",
+      "qualityRating": "Quality Rating",
+      "productivityScore": "Productivity Score",
+      "improvementAreas": "Areas for Improvement"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "generateReport": "Generate Report",
+      "scheduleReview": "Schedule Review",
+      "sendFeedback": "Send Feedback",
+      "assignTraining": "Assign Training"
+    },
+    "filters": {
+      "allStaff": "All Staff",
+      "topPerformers": "Top Performers",
+      "needsImprovement": "Needs Improvement",
+      "newEmployees": "New Employees",
+      "activeCases": "Active Cases"
+    },
+    "statusLabels": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "average": "Average",
+      "belowAverage": "Below Average",
+      "needsAttention": "Needs Attention"
+    }
+  },
+  "qualityReview": {
+    "title": "Quality Review",
+    "subtitle": "Review and assess work quality",
+    "reviewForm": {
+      "requestDetails": "Request Details",
+      "qualityCriteria": "Quality Criteria",
+      "overallRating": "Overall Rating",
+      "specificFeedback": "Specific Feedback",
+      "improvementSuggestions": "Improvement Suggestions",
+      "reviewNotes": "Review Notes"
+    },
+    "criteria": {
+      "accuracy": "Accuracy",
+      "completeness": "Completeness",
+      "timeliness": "Timeliness",
+      "communication": "Communication",
+      "professionalism": "Professionalism",
+      "customerService": "Customer Service",
+      "followUp": "Follow-up",
+      "documentation": "Documentation"
+    },
+    "ratings": {
+      "excellent": "Excellent (5)",
+      "good": "Good (4)",
+      "satisfactory": "Satisfactory (3)",
+      "needsImprovement": "Needs Improvement (2)",
+      "poor": "Poor (1)"
+    },
+    "actions": {
+      "submitReview": "Submit Review",
+      "saveDraft": "Save Draft",
+      "scheduleFollowUp": "Schedule Follow-up",
+      "flagForTraining": "Flag for Training",
+      "approveWork": "Approve Work",
+      "requestRevision": "Request Revision"
+    },
+    "status": {
+      "pending": "Pending Review",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "flagged": "Flagged",
+      "approved": "Approved"
+    }
+  },
+  "departmentMetrics": {
+    "title": "Department Metrics",
+    "subtitle": "Department-wide performance indicators",
+    "kpis": {
+      "requestVolume": "Request Volume",
+      "responseTime": "Response Time",
+      "completionRate": "Completion Rate",
+      "customerSatisfaction": "Customer Satisfaction",
+      "backlogSize": "Backlog Size",
+      "staffUtilization": "Staff Utilization",
+      "qualityScore": "Quality Score",
+      "escalationRate": "Escalation Rate"
+    },
+    "trends": {
+      "increasing": "Increasing",
+      "decreasing": "Decreasing",
+      "stable": "Stable",
+      "improving": "Improving",
+      "declining": "Declining"
+    },
+    "timeframes": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    },
+    "comparisons": {
+      "vsLastPeriod": "vs Last Period",
+      "vsTarget": "vs Target",
+      "vsBenchmark": "vs Benchmark",
+      "yearOverYear": "Year over Year"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "types": {
+      "performanceReport": "Performance Report",
+      "qualityReport": "Quality Report",
+      "productivityReport": "Productivity Report",
+      "teamSummary": "Team Summary",
+      "monthlyOverview": "Monthly Overview",
+      "customReport": "Custom Report"
+    },
+    "schedules": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "onDemand": "On Demand"
+    },
+    "formats": {
+      "pdf": "PDF",
+      "excel": "Excel",
+      "csv": "CSV",
+      "email": "Email Summary"
+    }
+  },
+  "teamManagement": {
+    "title": "Team Management",
+    "workloadDistribution": "Workload Distribution",
+    "taskAssignment": "Task Assignment",
+    "scheduleManagement": "Schedule Management",
+    "availabilityStatus": "Availability Status",
+    "shiftPlanning": "Shift Planning"
+  },
+  "notifications": {
+    "qualityReviewDue": "Quality review due",
+    "performanceAlert": "Performance alert for {{staffName}}",
+    "reportGenerated": "{{reportType}} report generated",
+    "newStaffAssigned": "New staff member assigned",
+    "trainingCompleted": "{{staffName}} completed training",
+    "escalationAlert": "High priority escalation alert"
+  },
+  "empty": {
+    "noStaff": "No staff members assigned",
+    "noPendingReviews": "No pending reviews",
+    "noReports": "No reports available",
+    "noData": "No data available for selected period",
+    "noAlerts": "No alerts at this time"
+  },
+  "loading": {
+    "loadingStaffData": "Loading staff data...",
+    "generatingReport": "Generating report...",
+    "processingReview": "Processing review...",
+    "calculatingMetrics": "Calculating metrics...",
+    "updatingDashboard": "Updating dashboard..."
+  },
+  "errors": {
+    "failedToLoadStaff": "Failed to load staff data",
+    "reviewSubmissionFailed": "Review submission failed",
+    "reportGenerationFailed": "Report generation failed",
+    "metricsUnavailable": "Metrics temporarily unavailable",
+    "assignmentFailed": "Task assignment failed"
+  }
+}

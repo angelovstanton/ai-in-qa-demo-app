@@ -28,11 +28,13 @@ import {
 import { Refresh as RefreshIcon, FilterAlt as FilterIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useServiceRequests } from '../../hooks/useServiceRequests';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 import LocationDisplayMap from '../../components/LocationDisplayMap';
 import AuthenticatedImage from '../../components/request-detail/AuthenticatedImage';
 
 const ClerkInboxPage: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [selectedRequestDetails, setSelectedRequestDetails] = useState<any>(null);
   const [loadingRequestDetails, setLoadingRequestDetails] = useState(false);
@@ -271,7 +273,7 @@ const ClerkInboxPage: React.FC = () => {
       <Box data-testid="cs-clerk-inbox-page" sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Clerk Inbox
+          {t('navigation:inbox', 'Clerk Inbox')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton onClick={refetch} disabled={loading} data-testid="cs-inbox-refresh">
@@ -293,7 +295,7 @@ const ClerkInboxPage: React.FC = () => {
             <CardContent sx={{ pb: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
-                  Service Requests
+                  {t('requests:title', 'Service Requests')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {allRequests.length}{totalCount > 0 ? ` of ${totalCount}` : ''}
@@ -305,14 +307,14 @@ const ClerkInboxPage: React.FC = () => {
                 <Grid container spacing={1}>
                   <Grid item xs={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Status</InputLabel>
+                      <InputLabel>{t('common:status', 'Status')}</InputLabel>
                       <Select
                         value={statusFilter}
-                        label="Status"
+                        label={t('common:status', 'Status')}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         data-testid="cs-inbox-status-filter"
                       >
-                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="">{t('requests:allStatuses', 'All')}</MenuItem>
                         <MenuItem value="SUBMITTED">Submitted</MenuItem>
                         <MenuItem value="TRIAGED">Triaged</MenuItem>
                         <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
@@ -325,14 +327,14 @@ const ClerkInboxPage: React.FC = () => {
                   </Grid>
                   <Grid item xs={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Priority</InputLabel>
+                      <InputLabel>{t('requests:priority', 'Priority')}</InputLabel>
                       <Select
                         value={priorityFilter}
-                        label="Priority"
+                        label={t('requests:priority', 'Priority')}
                         onChange={(e) => setPriorityFilter(e.target.value)}
                         data-testid="cs-inbox-priority-filter"
                       >
-                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="">{t('requests:allStatuses', 'All')}</MenuItem>
                         <MenuItem value="URGENT">Urgent</MenuItem>
                         <MenuItem value="HIGH">High</MenuItem>
                         <MenuItem value="MEDIUM">Medium</MenuItem>

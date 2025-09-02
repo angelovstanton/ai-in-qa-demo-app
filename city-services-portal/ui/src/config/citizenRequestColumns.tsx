@@ -2,6 +2,7 @@ import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Chip, Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { Visibility as ViewIcon, ThumbUp as ThumbUpIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
+import { TFunction } from 'i18next';
 
 // Helper functions for consistent styling
 export const getPriorityColor = (priority: string) => {
@@ -28,12 +29,29 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-export const categoryLabels: Record<string, string> = {
-  'roads-and-infrastructure': 'Roads & Infrastructure',
-  'water-and-utilities': 'Water & Utilities',
-  'parks-and-recreation': 'Parks & Recreation',
-  'public-safety': 'Public Safety',
-  'waste-management': 'Waste Management',
+export const getCategoryLabel = (category: string, t?: TFunction): string => {
+  if (!t) {
+    // Fallback to English labels if no translation function
+    const labels: Record<string, string> = {
+      'roads-and-infrastructure': 'Roads & Infrastructure',
+      'water-and-utilities': 'Water & Utilities',
+      'parks-and-recreation': 'Parks & Recreation',
+      'public-safety': 'Public Safety',
+      'waste-management': 'Waste Management',
+    };
+    return labels[category] || category?.replace(/-/g, ' ') || 'N/A';
+  }
+  
+  // Use translation keys
+  const categoryKey = category?.replace(/-and-/g, '-').replace(/-/g, '');
+  switch(category) {
+    case 'roads-and-infrastructure': return t('requests:categories.roads');
+    case 'water-and-utilities': return t('requests:categories.water');
+    case 'parks-and-recreation': return t('requests:categories.parks');
+    case 'public-safety': return t('requests:categories.safety');
+    case 'waste-management': return t('requests:categories.waste');
+    default: return category?.replace(/-/g, ' ') || 'N/A';
+  }
 };
 
 interface CreateColumnsParams {
@@ -41,35 +59,37 @@ interface CreateColumnsParams {
   userId?: string;
   onViewRequest: (requestId: string) => void;
   onUpvote?: (requestId: string) => void;
+  t?: TFunction;
 }
 
 export const createCitizenRequestColumns = ({
   isMyRequests = false,
   userId,
   onViewRequest,
-  onUpvote
+  onUpvote,
+  t
 }: CreateColumnsParams): GridColDef[] => {
   const columns: GridColDef[] = [
     {
       field: 'code',
-      headerName: 'Request ID',
+      headerName: t ? t('requests:requestId') : 'Request ID',
       width: 130,
       filterable: true,
     },
     {
       field: 'title',
-      headerName: 'Title',
+      headerName: t ? t('requests:requestTitle') : 'Title',
       flex: 1,
       minWidth: 200,
       filterable: true,
     },
     {
       field: 'category',
-      headerName: 'Category',
+      headerName: t ? t('requests:category') : 'Category',
       width: 160,
       filterable: true,
       renderCell: (params: GridRenderCellParams) => {
-        const label = categoryLabels[params.value] || params.value?.replace(/-/g, ' ') || 'N/A';
+        const label = getCategoryLabel(params.value, t);
         return (
           <Chip 
             label={label} 
@@ -82,36 +102,42 @@ export const createCitizenRequestColumns = ({
     },
     {
       field: 'priority',
-      headerName: 'Priority',
+      headerName: t ? t('requests:priority') : 'Priority',
       width: 100,
       filterable: true,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value || 'N/A'}
-          color={getPriorityColor(params.value) as any}
-          size="small"
-          data-testid={`cs-requests-priority-${params.row.id}`}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams) => {
+        const label = t ? t(`requests:priorities.${params.value}`, params.value || 'N/A') : params.value || 'N/A';
+        return (
+          <Chip
+            label={label}
+            color={getPriorityColor(params.value) as any}
+            size="small"
+            data-testid={`cs-requests-priority-${params.row.id}`}
+          />
+        );
+      },
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t ? t('requests:status') : 'Status',
       width: 130,
       filterable: true,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value ? params.value.replace(/_/g, ' ') : 'N/A'}
-          color={getStatusColor(params.value) as any}
-          size="small"
-          variant="outlined"
-          data-testid={`cs-requests-status-${params.row.id}`}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams) => {
+        const label = t ? t(`requests:statuses.${params.value}`, params.value?.replace(/_/g, ' ') || 'N/A') : params.value?.replace(/_/g, ' ') || 'N/A';
+        return (
+          <Chip
+            label={label}
+            color={getStatusColor(params.value) as any}
+            size="small"
+            variant="outlined"
+            data-testid={`cs-requests-status-${params.row.id}`}
+          />
+        );
+      },
     },
     {
       field: 'createdAt',
-      headerName: 'Created',
+      headerName: t ? t('requests:createdDate') : 'Created',
       width: 120,
       filterable: true,
       valueFormatter: (params) => {
@@ -128,12 +154,12 @@ export const createCitizenRequestColumns = ({
   if (!isMyRequests) {
     columns.push({
       field: 'creator',
-      headerName: 'Submitted By',
+      headerName: t ? t('requests:submittedBy') : 'Submitted By',
       width: 150,
       filterable: false,
       renderCell: (params: GridRenderCellParams) => {
         const creator = params.row.creator;
-        return creator ? creator.name : 'Unknown';
+        return creator ? creator.name : t ? t('common:unknown') : 'Unknown';
       },
     });
   }
@@ -141,7 +167,7 @@ export const createCitizenRequestColumns = ({
   // Add upvotes column
   columns.push({
     field: 'upvotes',
-    headerName: 'Upvotes',
+    headerName: t ? t('requests:upvotes') : 'Upvotes',
     width: 80,
     filterable: false,
     renderCell: (params: GridRenderCellParams) => (
@@ -154,15 +180,15 @@ export const createCitizenRequestColumns = ({
   // Add updatedAt column (hidden by default)
   columns.push({
     field: 'updatedAt',
-    headerName: 'Last Updated',
+    headerName: t ? t('requests:lastUpdated') : 'Last Updated',
     width: 120,
     filterable: true,
     hide: true,
     valueFormatter: (params) => {
       try {
-        return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : 'N/A';
+        return params.value ? format(new Date(params.value), 'MMM dd, yyyy') : t ? t('common:notAvailable') : 'N/A';
       } catch {
-        return 'Invalid Date';
+        return t ? t('common:invalidDate') : 'Invalid Date';
       }
     },
   });
@@ -170,13 +196,13 @@ export const createCitizenRequestColumns = ({
   // Add actions column
   columns.push({
     field: 'actions',
-    headerName: 'Actions',
+    headerName: t ? t('common:actions') : 'Actions',
     width: 120,
     filterable: false,
     sortable: false,
     renderCell: (params: GridRenderCellParams) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
-        <Tooltip title="View Details">
+        <Tooltip title={t ? t('requests:actions.view') : 'View Details'}>
           <IconButton
             size="small"
             onClick={(e) => {
@@ -189,7 +215,7 @@ export const createCitizenRequestColumns = ({
           </IconButton>
         </Tooltip>
         {!isMyRequests && onUpvote && params.row.creator?.id !== userId && (
-          <Tooltip title="Upvote Request">
+          <Tooltip title={t ? t('requests:actions.upvote') : 'Upvote Request'}>
             <IconButton
               size="small"
               onClick={(e) => {

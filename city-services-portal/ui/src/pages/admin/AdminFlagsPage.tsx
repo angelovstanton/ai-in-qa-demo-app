@@ -31,6 +31,7 @@ import {
   BuildCircle as SeedIcon,
 } from '@mui/icons-material';
 import { useFeatureFlags, useAdminActions } from '../../hooks/useAdmin';
+import { useTranslation } from 'react-i18next';
 
 // Feature flag definitions with descriptions
 const FEATURE_FLAG_CONFIG = {
@@ -67,6 +68,7 @@ const FEATURE_FLAG_CONFIG = {
 };
 
 const AdminFlagsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { flags, loading, error, updateFlag, refetch } = useFeatureFlags();
   const { seedDatabase, resetDatabase, loading: adminLoading, error: adminError } = useAdminActions();
   
@@ -137,7 +139,7 @@ const AdminFlagsPage: React.FC = () => {
     <Box data-testid="cs-admin-flags-page">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Feature Flags Administration
+          {t('navigation:admin-flags', 'Feature Flags Administration')}
         </Typography>
         <Button
           startIcon={<RefreshIcon />}
@@ -145,7 +147,7 @@ const AdminFlagsPage: React.FC = () => {
           disabled={loading}
           data-testid="cs-admin-refresh"
         >
-          Refresh
+          {t('common:refresh', 'Refresh')}
         </Button>
       </Box>
 
@@ -167,21 +169,21 @@ const AdminFlagsPage: React.FC = () => {
           <Card data-testid="cs-admin-feature-flags">
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Bug Mode Feature Flags
+                {t('admin:featureFlags', 'Bug Mode Feature Flags')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Toggle these flags to simulate various bugs and issues for testing purposes.
+                {t('admin:featureFlagsDescription', 'Toggle these flags to simulate various bugs and issues for testing purposes.')}
               </Typography>
 
               <TableContainer component={Paper} variant="outlined">
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Flag</TableCell>
-                      <TableCell>Category</TableCell>
-                      <TableCell>Impact</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Action</TableCell>
+                      <TableCell>{t('admin:flag', 'Flag')}</TableCell>
+                      <TableCell>{t('admin:category', 'Category')}</TableCell>
+                      <TableCell>{t('admin:impact', 'Impact')}</TableCell>
+                      <TableCell>{t('common:status', 'Status')}</TableCell>
+                      <TableCell>{t('common:actions', 'Action')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -214,7 +216,7 @@ const AdminFlagsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={isEnabled ? 'Enabled' : 'Disabled'}
+                              label={isEnabled ? t('admin:enabled', 'Enabled') : t('admin:disabled', 'Disabled')}
                               color={isEnabled ? 'success' : 'default'}
                               size="small"
                               variant={isEnabled ? 'filled' : 'outlined'}
@@ -250,11 +252,11 @@ const AdminFlagsPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <DatabaseIcon />
                 <Typography variant="h6">
-                  Database Management
+                  {t('admin:databaseManagement', 'Database Management')}
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Manage the database state for testing and development.
+                {t('admin:databaseManagementDescription', 'Manage the database state for testing and development.')}
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -266,7 +268,7 @@ const AdminFlagsPage: React.FC = () => {
                   fullWidth
                   data-testid="cs-admin-seed-button"
                 >
-                  {adminLoading ? 'Seeding...' : 'Seed Database'}
+                  {adminLoading ? t('admin:seeding', 'Seeding...') : t('admin:seedDatabase', 'Seed Database')}
                 </Button>
 
                 <Button
@@ -278,19 +280,19 @@ const AdminFlagsPage: React.FC = () => {
                   fullWidth
                   data-testid="cs-admin-reset-button"
                 >
-                  Reset Database
+                  {t('admin:resetDatabase', 'Reset Database')}
                 </Button>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="subtitle2" gutterBottom>
-                Database Operations
+                {t('admin:databaseOperations', 'Database Operations')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Seed:</strong> Adds fresh test data to the database.
+                <strong>{t('admin:seed', 'Seed')}:</strong> {t('admin:seedDescription', 'Adds fresh test data to the database.')}
                 <br />
-                <strong>Reset:</strong> Clears all data and reinitializes the database.
+                <strong>{t('admin:reset', 'Reset')}:</strong> {t('admin:resetDescription', 'Clears all data and reinitializes the database.')}
               </Typography>
             </CardContent>
           </Card>
@@ -299,7 +301,7 @@ const AdminFlagsPage: React.FC = () => {
           <Card sx={{ mt: 3 }} data-testid="cs-admin-summary">
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Active Flags Summary
+                {t('admin:activeFlagsSummary', 'Active Flags Summary')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {Object.entries(flags).map(([key, value]) => (
@@ -315,7 +317,7 @@ const AdminFlagsPage: React.FC = () => {
                 ))}
                 {Object.keys(flags).length === 0 && !loading && (
                   <Typography variant="body2" color="text.secondary">
-                    No feature flags configured
+                    {t('admin:noFeatureFlags', 'No feature flags configured')}
                   </Typography>
                 )}
               </Box>
@@ -330,11 +332,10 @@ const AdminFlagsPage: React.FC = () => {
         onClose={() => setResetDialogOpen(false)}
         data-testid="cs-admin-reset-dialog"
       >
-        <DialogTitle>Confirm Database Reset</DialogTitle>
+        <DialogTitle>{t('admin:confirmDatabaseReset', 'Confirm Database Reset')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to reset the database? This will permanently delete all data 
-            including service requests, users, and configuration. This action cannot be undone.
+            {t('admin:resetDatabaseConfirmMessage', 'Are you sure you want to reset the database? This will permanently delete all data including service requests, users, and configuration. This action cannot be undone.')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -342,7 +343,7 @@ const AdminFlagsPage: React.FC = () => {
             onClick={() => setResetDialogOpen(false)}
             data-testid="cs-admin-reset-cancel"
           >
-            Cancel
+            {t('common:cancel', 'Cancel')}
           </Button>
           <Button 
             onClick={handleResetDatabase}
@@ -351,7 +352,7 @@ const AdminFlagsPage: React.FC = () => {
             disabled={adminLoading}
             data-testid="cs-admin-reset-confirm"
           >
-            {adminLoading ? 'Resetting...' : 'Reset Database'}
+            {adminLoading ? t('admin:resetting', 'Resetting...') : t('admin:resetDatabase', 'Reset Database')}
           </Button>
         </DialogActions>
       </Dialog>

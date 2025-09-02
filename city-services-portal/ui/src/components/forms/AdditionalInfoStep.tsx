@@ -7,6 +7,7 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ServiceRequestFormData } from '../../schemas/formSchemas';
 
 interface ValidationFeedbackProps {
@@ -39,19 +40,21 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
   handleFileRemove,
   ValidationFeedback,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Box data-testid="cs-new-request-step-4">
       <Typography variant="h6" gutterBottom>
-        Additional Information
+        {t('requests:form.step4', 'Additional Details')}
       </Typography>
 
       {/* Image Upload */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
-          Attach Photo (Optional)
+          {t('requests:form.attachmentsLabel', 'Attach Photo (Optional)')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Upload a photo to help illustrate the issue. Supported formats: JPG, PNG, GIF (max 1MB)
+          {t('requests:form.attachmentDescription', 'Upload a photo to help illustrate the issue. Supported formats: JPG, PNG, GIF (max 1MB)')}
         </Typography>
         <Box
           sx={{
@@ -87,10 +90,10 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
                     ??
                   </Typography>
                   <Typography variant="body1">
-                    Click to upload an image
+                    {t('common:uploadFile', 'Click to upload an image')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    or drag and drop here
+                    {t('common:dragDropFiles', 'or drag and drop here')}
                   </Typography>
                 </Box>
               </label>
@@ -113,7 +116,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
               )}
               <Box sx={{ flex: 1 }}>
                 <Typography variant="body2" color="success.dark">
-                  ? {uploadedFile.name}
+                  ✓ {uploadedFile.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB ({uploadedFile.size.toLocaleString()} bytes)
@@ -126,7 +129,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
                 onClick={handleFileRemove}
                 data-testid="cs-remove-image"
               >
-                Remove
+                {t('common:delete', 'Remove')}
               </Button>
             </Box>
           )}
@@ -149,7 +152,7 @@ const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
                   aria-label="Agree to terms and conditions"
                 />
               }
-              label="I agree to the terms and conditions and confirm that the information provided is accurate"
+              label={t('requests:form.termsAcceptance', 'I agree to the terms and conditions and confirm that the information provided is accurate')}
             />
             <ValidationFeedback
               field={field}

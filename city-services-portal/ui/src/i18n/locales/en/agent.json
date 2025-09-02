@@ -1,0 +1,350 @@
+{
+  "title": "Field Agent Portal",
+  "subtitle": "Manage field tasks and service requests",
+  "navigation": {
+    "dashboard": "Agent Dashboard",
+    "tasks": "Field Tasks",
+    "taskDetail": "Task Details",
+    "map": "Map View",
+    "schedule": "Schedule",
+    "reports": "Field Reports",
+    "equipment": "Equipment"
+  },
+  "dashboard": {
+    "title": "Field Agent Dashboard",
+    "welcomeMessage": "Welcome, {{agentName}}",
+    "todaysTasks": "Today's Tasks",
+    "urgentTasks": "Urgent Tasks",
+    "inProgressTasks": "In Progress",
+    "completedToday": "Completed Today",
+    "weeklyProgress": "Weekly Progress",
+    "taskCount": "{{count}} tasks",
+    "priorityHigh": "High Priority",
+    "priorityMedium": "Medium Priority",
+    "priorityLow": "Low Priority",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "upcomingDeadlines": "Upcoming Deadlines"
+  },
+  "tasks": {
+    "title": "Field Tasks",
+    "subtitle": "Manage your assigned field tasks",
+    "tableHeaders": {
+      "taskId": "Task ID",
+      "requestType": "Request Type",
+      "location": "Location",
+      "priority": "Priority",
+      "status": "Status",
+      "assignedDate": "Assigned Date",
+      "dueDate": "Due Date",
+      "estimatedTime": "Est. Time",
+      "customer": "Customer",
+      "actions": "Actions"
+    },
+    "statusLabels": {
+      "assigned": "Assigned",
+      "inProgress": "In Progress",
+      "onHold": "On Hold",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "needsReview": "Needs Review"
+    },
+    "priorityLabels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "actions": {
+      "startTask": "Start Task",
+      "pauseTask": "Pause Task",
+      "completeTask": "Complete Task",
+      "viewDetails": "View Details",
+      "updateStatus": "Update Status",
+      "addNotes": "Add Notes",
+      "takePhoto": "Take Photo",
+      "callCustomer": "Call Customer"
+    },
+    "filters": {
+      "allTasks": "All Tasks",
+      "todayTasks": "Today's Tasks",
+      "overdue": "Overdue",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "highPriority": "High Priority",
+      "nearLocation": "Near My Location"
+    },
+    "sorting": {
+      "priority": "By Priority",
+      "dueDate": "By Due Date",
+      "location": "By Location",
+      "status": "By Status",
+      "assignedDate": "By Assignment Date"
+    }
+  },
+  "taskDetail": {
+    "title": "Task Details",
+    "sections": {
+      "basicInfo": "Basic Information",
+      "customerInfo": "Customer Information",
+      "locationInfo": "Location Details",
+      "taskDescription": "Task Description",
+      "requirements": "Requirements",
+      "progress": "Progress",
+      "photos": "Photos & Documentation",
+      "notes": "Notes & Comments",
+      "history": "Task History"
+    },
+    "fields": {
+      "taskId": "Task ID",
+      "requestType": "Request Type",
+      "category": "Category",
+      "priority": "Priority",
+      "status": "Status",
+      "assignedDate": "Assigned Date",
+      "dueDate": "Due Date",
+      "estimatedDuration": "Estimated Duration",
+      "actualDuration": "Actual Duration",
+      "customerName": "Customer Name",
+      "customerPhone": "Customer Phone",
+      "customerEmail": "Customer Email",
+      "address": "Address",
+      "coordinates": "Coordinates",
+      "description": "Description",
+      "specialInstructions": "Special Instructions",
+      "equipmentNeeded": "Equipment Needed",
+      "skillsRequired": "Skills Required"
+    },
+    "progressSteps": {
+      "notStarted": "Not Started",
+      "enRoute": "En Route",
+      "onSite": "On Site",
+      "workInProgress": "Work in Progress",
+      "awaitingApproval": "Awaiting Approval",
+      "completed": "Completed"
+    },
+    "completion": {
+      "markComplete": "Mark as Complete",
+      "workPerformed": "Work Performed",
+      "timeSpent": "Time Spent",
+      "materialsUsed": "Materials Used",
+      "followUpRequired": "Follow-up Required",
+      "customerSatisfaction": "Customer Satisfaction",
+      "additionalNotes": "Additional Notes"
+    }
+  },
+  "map": {
+    "title": "Map View",
+    "subtitle": "Task locations and routing",
+    "controls": {
+      "myLocation": "My Location",
+      "centerMap": "Center Map",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "toggleTraffic": "Toggle Traffic",
+      "toggleSatellite": "Toggle Satellite",
+      "fullScreen": "Full Screen"
+    },
+    "taskPins": {
+      "highPriority": "High Priority Task",
+      "mediumPriority": "Medium Priority Task",
+      "lowPriority": "Low Priority Task",
+      "completed": "Completed Task",
+      "inProgress": "In Progress Task",
+      "myLocation": "My Location"
+    },
+    "routing": {
+      "getDirections": "Get Directions",
+      "optimizeRoute": "Optimize Route",
+      "estimatedTime": "Estimated Time",
+      "distance": "Distance",
+      "traffic": "Traffic",
+      "routeOptions": "Route Options",
+      "avoid": "Avoid",
+      "tolls": "Tolls",
+      "highways": "Highways",
+      "ferries": "Ferries"
+    },
+    "filters": {
+      "showAll": "Show All Tasks",
+      "todayOnly": "Today Only",
+      "highPriority": "High Priority",
+      "nearMe": "Near Me",
+      "inProgress": "In Progress",
+      "pending": "Pending"
+    }
+  },
+  "photos": {
+    "title": "Task Photos",
+    "actions": {
+      "takePhoto": "Take Photo",
+      "uploadPhoto": "Upload Photo",
+      "deletePhoto": "Delete Photo",
+      "viewFullSize": "View Full Size",
+      "addCaption": "Add Caption",
+      "markAsBefore": "Mark as Before",
+      "markAsAfter": "Mark as After",
+      "markAsEvidence": "Mark as Evidence"
+    },
+    "categories": {
+      "before": "Before Photos",
+      "during": "Work in Progress",
+      "after": "After Photos",
+      "evidence": "Evidence/Issues",
+      "equipment": "Equipment Used",
+      "damage": "Damage Assessment",
+      "completion": "Completion Photos"
+    },
+    "requirements": {
+      "maxSize": "Maximum file size: {{size}}MB",
+      "allowedFormats": "Allowed formats: JPG, PNG, HEIC",
+      "gpsRequired": "GPS location required",
+      "timestampRequired": "Timestamp required"
+    }
+  },
+  "equipment": {
+    "title": "Equipment & Tools",
+    "sections": {
+      "assigned": "Assigned Equipment",
+      "checkedOut": "Checked Out",
+      "maintenance": "Needs Maintenance",
+      "request": "Request Equipment"
+    },
+    "status": {
+      "available": "Available",
+      "checkedOut": "Checked Out",
+      "maintenance": "Maintenance",
+      "repair": "Repair",
+      "lost": "Lost/Missing"
+    },
+    "actions": {
+      "checkOut": "Check Out",
+      "checkIn": "Check In",
+      "reportIssue": "Report Issue",
+      "requestMaintenance": "Request Maintenance",
+      "markLost": "Mark as Lost"
+    }
+  },
+  "schedule": {
+    "title": "Schedule",
+    "views": {
+      "day": "Day View",
+      "week": "Week View",
+      "month": "Month View",
+      "agenda": "Agenda View"
+    },
+    "timeSlots": {
+      "morning": "Morning (8:00 - 12:00)",
+      "afternoon": "Afternoon (12:00 - 17:00)",
+      "evening": "Evening (17:00 - 20:00)",
+      "emergency": "Emergency (Any Time)"
+    },
+    "availability": {
+      "available": "Available",
+      "busy": "Busy",
+      "break": "Break",
+      "travel": "Travel Time",
+      "meeting": "Meeting",
+      "training": "Training"
+    }
+  },
+  "notifications": {
+    "newTaskAssigned": "New task assigned: {{taskId}}",
+    "taskDueSoon": "Task due soon: {{taskId}}",
+    "taskOverdue": "Task overdue: {{taskId}}",
+    "urgentTaskAssigned": "Urgent task assigned: {{taskId}}",
+    "customerCalled": "Customer called regarding task {{taskId}}",
+    "equipmentReady": "Equipment ready for pickup",
+    "scheduleChanged": "Your schedule has been updated",
+    "weatherAlert": "Weather alert for your area"
+  },
+  "reports": {
+    "title": "Field Reports",
+    "types": {
+      "dailyReport": "Daily Report",
+      "taskSummary": "Task Summary",
+      "timeSheet": "Time Sheet",
+      "expenseReport": "Expense Report",
+      "incidentReport": "Incident Report"
+    },
+    "submit": "Submit Report",
+    "review": "Review & Submit"
+  },
+  "empty": {
+    "noTasks": "No tasks assigned",
+    "noTasksToday": "No tasks scheduled for today",
+    "noInProgress": "No tasks in progress",
+    "noPhotos": "No photos uploaded",
+    "noEquipment": "No equipment assigned",
+    "noSchedule": "No schedule available"
+  },
+  "loading": {
+    "loadingTasks": "Loading tasks...",
+    "loadingMap": "Loading map...",
+    "loadingSchedule": "Loading schedule...",
+    "uploadingPhoto": "Uploading photo...",
+    "savingProgress": "Saving progress...",
+    "gettingLocation": "Getting location..."
+  },
+  "errors": {
+    "failedToLoadTasks": "Failed to load tasks",
+    "locationNotFound": "Location not found",
+    "photoUploadFailed": "Photo upload failed",
+    "gpsUnavailable": "GPS location unavailable",
+    "networkError": "Network connection error",
+    "updateFailed": "Update failed",
+    "permissionDenied": "Permission denied",
+    "failedToLoadDashboard": "Failed to load dashboard data",
+    "failedToUpdateStatus": "Failed to update status",
+    "failedToCheckIn": "Failed to check in",
+    "failedToCheckOut": "Failed to check out"
+  },
+  "fieldAgentDashboard": {
+    "title": "Field Agent Dashboard",
+    "welcomeBack": "Welcome back, {{name}}",
+    "statusToggle": {
+      "available": "Available",
+      "busy": "Busy",
+      "break": "Break",
+      "offDuty": "Off Duty",
+      "enRoute": "En Route"
+    },
+    "quickStats": {
+      "totalTasks": "Total Tasks",
+      "completedToday": "Completed Today",
+      "workTimeToday": "Work Time Today",
+      "inProgress": "In Progress"
+    },
+    "workOrders": {
+      "title": "Today's Work Orders",
+      "viewAll": "View All",
+      "noOrdersToday": "No work orders scheduled for today",
+      "category": "Category",
+      "estimatedTime": "Est. {{duration}}"
+    },
+    "timeTracking": {
+      "activeTracking": "Active time tracking: {{timeType}} - Started {{timeAgo}} ago",
+      "viewDetails": "View Details"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "workOrders": "Work Orders",
+      "timeTracking": "Time Tracking",
+      "photos": "Photos",
+      "mapView": "Map View"
+    },
+    "priority": {
+      "emergency": "Emergency",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "workOrderStatus": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "onSite": "On Site",
+      "enRoute": "En Route",
+      "assigned": "Assigned"
+    }
+  }
+}

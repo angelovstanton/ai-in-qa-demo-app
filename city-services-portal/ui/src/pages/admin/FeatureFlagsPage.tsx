@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -20,6 +21,11 @@ import {
   DialogActions,
   Divider,
   CircularProgress,
+  Grid,
+  Card,
+  CardContent,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -35,6 +41,7 @@ import { useFeatureFlags, FeatureFlag } from '../../contexts/FeatureFlagsContext
 import { useAuth } from '../../contexts/AuthContext';
 
 const FeatureFlagsPage: React.FC = () => {
+  const { t } = useTranslation(['admin', 'common']);
   const { user } = useAuth();
   const { 
     allFlags, 
@@ -58,7 +65,7 @@ const FeatureFlagsPage: React.FC = () => {
     return (
       <Box data-testid="cs-feature-flags-unauthorized">
         <Alert severity="error">
-          Access denied. This page is only available to administrators.
+          {t('common:errorMessage')}
         </Alert>
       </Box>
     );
@@ -162,7 +169,7 @@ const FeatureFlagsPage: React.FC = () => {
     <Box data-testid="cs-feature-flags-page">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Feature Flags Administration
+          {t('admin:featureFlags.title')}
         </Typography>
         <Button
           variant="outlined"
@@ -171,7 +178,7 @@ const FeatureFlagsPage: React.FC = () => {
           disabled={refreshing}
           data-testid="cs-feature-flags-refresh"
         >
-          {refreshing ? 'Refreshing...' : 'Refresh'}
+          {refreshing ? t('admin:featureFlags.refreshing') : t('common:refresh')}
         </Button>
       </Box>
 
@@ -190,7 +197,7 @@ const FeatureFlagsPage: React.FC = () => {
                 {enabledCount}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Enabled Flags
+                {t('admin:featureFlags.enabledFlags')}
               </Typography>
             </CardContent>
           </Card>
@@ -203,7 +210,7 @@ const FeatureFlagsPage: React.FC = () => {
                 {totalCount}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total Flags
+                {t('admin:featureFlags.totalFlags')}
               </Typography>
             </CardContent>
           </Card>
@@ -216,7 +223,7 @@ const FeatureFlagsPage: React.FC = () => {
                 {Object.keys(groupedFlags).length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Categories
+                {t('admin:featureFlags.categories')}
               </Typography>
             </CardContent>
           </Card>
@@ -229,7 +236,7 @@ const FeatureFlagsPage: React.FC = () => {
                 {allFlags.filter((f: FeatureFlag) => f.enabled && f.category === 'API').length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Active API Bugs
+                {t('admin:featureFlags.activeApiBugs')}
               </Typography>
             </CardContent>
           </Card>
@@ -243,10 +250,13 @@ const FeatureFlagsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               {getCategoryIcon(category)}
               <Typography variant="h6" sx={{ ml: 1, mr: 2 }}>
-                {category} Features
+                {t(`admin:featureFlags.categoryLabels.${category.toLowerCase()}`, { defaultValue: category })} {t('admin:featureFlags.features')}
               </Typography>
               <Chip
-                label={`${flags.filter((f: FeatureFlag) => f.enabled).length}/${flags.length} enabled`}
+                label={t('admin:featureFlags.enabledCount', { 
+                  enabled: flags.filter((f: FeatureFlag) => f.enabled).length,
+                  total: flags.length
+                })}
                 color={getCategoryColor(category) as any}
                 size="small"
               />
@@ -256,11 +266,11 @@ const FeatureFlagsPage: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Feature</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="center">Status</TableCell>
-                    <TableCell align="center">Last Updated</TableCell>
-                    <TableCell align="center">Actions</TableCell>
+                    <TableCell>{t('admin:featureFlags.feature')}</TableCell>
+                    <TableCell>{t('admin:featureFlags.description')}</TableCell>
+                    <TableCell align="center">{t('common:status')}</TableCell>
+                    <TableCell align="center">{t('admin:featureFlags.lastUpdated')}</TableCell>
+                    <TableCell align="center">{t('common:actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -279,7 +289,7 @@ const FeatureFlagsPage: React.FC = () => {
                           </Typography>
                           {flag.enabled && (
                             <Chip 
-                              label="ACTIVE" 
+                              label={t('admin:featureFlags.active')} 
                               color="warning" 
                               size="small" 
                               sx={{ ml: 1 }}
@@ -316,7 +326,7 @@ const FeatureFlagsPage: React.FC = () => {
                       </TableCell>
                       
                       <TableCell align="center">
-                        <Tooltip title="Test Flag Behavior">
+                        <Tooltip title={t('admin:featureFlags.testFlagBehavior')}>
                           <IconButton
                             size="small"
                             onClick={() => handleTestFlag(flag)}
@@ -349,7 +359,7 @@ const FeatureFlagsPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {getCategoryIcon(selectedFlag.category)}
                 <Typography variant="h6" sx={{ ml: 1 }}>
-                  Test Flag: {selectedFlag.name}
+                  {t('admin:featureFlags.testFlag')}: {selectedFlag.name}
                 </Typography>
               </Box>
             </DialogTitle>
@@ -357,15 +367,15 @@ const FeatureFlagsPage: React.FC = () => {
             <DialogContent>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body1" gutterBottom>
-                  <strong>Description:</strong> {selectedFlag.description}
+                  <strong>{t('admin:featureFlags.description')}:</strong> {selectedFlag.description}
                 </Typography>
                 
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  <strong>Category:</strong> {selectedFlag.category}
+                  <strong>{t('admin:featureFlags.category')}:</strong> {selectedFlag.category}
                 </Typography>
                 
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Status:</strong> {selectedFlag.enabled ? 'Enabled' : 'Disabled'}
+                  <strong>{t('common:status')}:</strong> {selectedFlag.enabled ? t('admin:featureFlags.enabled') : t('admin:featureFlags.disabled')}
                 </Typography>
               </Box>
               
@@ -377,17 +387,16 @@ const FeatureFlagsPage: React.FC = () => {
                   sx={{ mb: 2 }}
                 >
                   <Typography variant="body2">
-                    <strong>Test Result:</strong> {testResults[selectedFlag.name].description}
+                    <strong>{t('admin:featureFlags.testResult')}:</strong> {testResults[selectedFlag.name].description}
                   </Typography>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Tested at: {format(new Date(testResults[selectedFlag.name].testedAt), 'PPpp')}
+                    {t('admin:featureFlags.testedAt')}: {format(new Date(testResults[selectedFlag.name].testedAt), 'PPpp')}
                   </Typography>
                 </Alert>
               )}
               
               <Typography variant="body2" color="text.secondary">
-                Use this feature flag to simulate bugs and test scenarios in your QA automation. 
-                When enabled, this flag will modify the application behavior as described above.
+                {t('admin:featureFlags.usageDescription')}
               </Typography>
             </DialogContent>
             
@@ -401,14 +410,14 @@ const FeatureFlagsPage: React.FC = () => {
                 }}
                 data-testid="cs-feature-flag-dialog-toggle"
               >
-                {selectedFlag.enabled ? 'Disable Flag' : 'Enable Flag'}
+                {selectedFlag.enabled ? t('admin:featureFlags.disableFlag') : t('admin:featureFlags.enableFlag')}
               </Button>
               
               <Button 
                 onClick={() => setDialogOpen(false)}
                 data-testid="cs-feature-flag-dialog-close"
               >
-                Close
+                {t('common:close')}
               </Button>
             </DialogActions>
           </>

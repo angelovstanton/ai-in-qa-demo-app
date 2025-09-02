@@ -21,6 +21,7 @@ import {
   Delete,
   Close,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 interface UploadedImage {
   id: string;
@@ -47,6 +48,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'],
   displaySize = { width: 200, height: 150 },
 }) => {
+  const { t } = useTranslation();
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<UploadedImage | null>(null);
@@ -57,23 +59,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const validateImage = (file: File): string | null => {
     // File size validation
     if (file.size > maxSizePerImage) {
-      return `File size must be less than ${Math.round(maxSizePerImage / (1024 * 1024))}MB`;
+      return t('validation:file.tooLarge', `File size must be less than ${Math.round(maxSizePerImage / (1024 * 1024))}MB`, { max: Math.round(maxSizePerImage / (1024 * 1024)) });
     }
 
     // File type validation
     if (!allowedTypes.includes(file.type.toLowerCase())) {
-      return `Only ${allowedTypes.join(', ').replace(/image\//g, '').toUpperCase()} files are allowed`;
+      return t('validation:file.invalidType', `Only ${allowedTypes.join(', ').replace(/image\//g, '').toUpperCase()} files are allowed`);
     }
 
     // File name validation
     if (!file.name || file.name.trim().length === 0) {
-      return 'File must have a valid name';
+      return t('upload:fileValidName', 'File must have a valid name');
     }
 
     // Check for potentially dangerous file names
     const dangerousPatterns = [/\.exe$/i, /\.bat$/i, /\.php$/i, /\.js$/i, /\.html$/i];
     if (dangerousPatterns.some(pattern => pattern.test(file.name))) {
-      return 'File type not allowed for security reasons';
+      return t('upload:fileNotAllowedSecurity', 'File type not allowed for security reasons');
     }
 
     return null;
@@ -112,7 +114,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     } catch (error) {
       setImages(prev => prev.map(img => 
         img.id === image.id 
-          ? { ...img, status: 'error' as const, error: 'Upload failed' }
+          ? { ...img, status: 'error' as const, error: t('validation:file.uploadFailed', 'Upload failed') }
           : img
       ));
     }
@@ -123,7 +125,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     // Check if adding these files would exceed the maximum
     if (images.length + files.length > maxImages) {
-      setError(`Maximum ${maxImages} images allowed`);
+      setError(t('validation:file.tooMany', `Maximum ${maxImages} images allowed`, { max: maxImages }));
       return;
     }
 
@@ -203,7 +205,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <Box data-testid="cs-image-upload">
       <Typography variant="h6" gutterBottom>
-        Image Upload
+        {t('upload:imageUpload', 'Image Upload')}
       </Typography>
 
       {error && (
@@ -245,13 +247,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         />
         <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
         <Typography variant="h6" gutterBottom>
-          {isDragOver ? 'Drop images here' : 'Drag & drop images or click to browse'}
+          {isDragOver ? t('upload:dropImagesHere', 'Drop images here') : t('common:dragDropFiles', 'Drag & drop images or click to browse')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Supports JPEG and PNG files up to {Math.round(maxSizePerImage / (1024 * 1024))}MB each
+          {t('upload:supportsFiles', 'Supports JPEG and PNG files up to {{size}}MB each', { size: Math.round(maxSizePerImage / (1024 * 1024)) })}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Maximum {maxImages} images allowed
+          {t('upload:maximumImages', 'Maximum {{max}} images allowed', { max: maxImages })}
         </Typography>
       </Paper>
 
@@ -259,7 +261,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {images.length > 0 && (
         <Box>
           <Typography variant="subtitle1" gutterBottom>
-            Uploaded Images ({images.length}/{maxImages})
+            {t('upload:uploadedImages', 'Uploaded Images ({{current}}/{{max}})', { current: images.length, max: maxImages })}
           </Typography>
           
           <Grid container spacing={2} data-testid="cs-image-upload-grid">
@@ -402,9 +404,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 />
                 
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Size: {Math.round(selectedImage.file.size / 1024)}KB | 
-                  Type: {selectedImage.file.type} |
-                  Status: {selectedImage.status}
+                  {t('upload:size', 'Size')}: {Math.round(selectedImage.file.size / 1024)}KB | 
+                  {t('upload:type', 'Type')}: {selectedImage.file.type} |
+                  {t('common:status', 'Status')}: {selectedImage.status}
                 </Typography>
               </Box>
             </DialogContent>
@@ -419,11 +421,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 }}
                 data-testid="cs-image-preview-delete"
               >
-                Delete Image
+                {t('upload:deleteImage', 'Delete Image')}
               </Button>
               
               <Button onClick={() => setSelectedImage(null)}>
-                Close
+                {t('common:close', 'Close')}
               </Button>
             </DialogActions>
           </>

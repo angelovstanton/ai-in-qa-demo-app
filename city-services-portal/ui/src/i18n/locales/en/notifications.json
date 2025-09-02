@@ -1,0 +1,262 @@
+{
+  "title": "Notifications",
+  "subtitle": "System notifications and alerts",
+  "center": {
+    "title": "Notification Center",
+    "subtitle": "All your notifications in one place",
+    "markAllRead": "Mark All as Read",
+    "clearAll": "Clear All",
+    "settings": "Notification Settings",
+    "empty": "No notifications",
+    "loading": "Loading notifications...",
+    "error": "Failed to load notifications"
+  },
+  "types": {
+    "info": "Information",
+    "success": "Success",
+    "warning": "Warning",
+    "error": "Error",
+    "alert": "Alert",
+    "reminder": "Reminder",
+    "update": "Update",
+    "system": "System",
+    "security": "Security",
+    "maintenance": "Maintenance"
+  },
+  "actions": {
+    "markAsRead": "Mark as Read",
+    "markAsUnread": "Mark as Unread",
+    "delete": "Delete",
+    "view": "View Details",
+    "dismiss": "Dismiss",
+    "snooze": "Snooze",
+    "archive": "Archive",
+    "reply": "Reply",
+    "forward": "Forward",
+    "report": "Report Issue"
+  },
+  "timeAgo": {
+    "justNow": "Just now",
+    "minuteAgo": "{{count}} minute ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "hourAgo": "{{count}} hour ago",
+    "hoursAgo": "{{count}} hours ago",
+    "dayAgo": "{{count}} day ago",
+    "daysAgo": "{{count}} days ago",
+    "weekAgo": "{{count}} week ago",
+    "weeksAgo": "{{count}} weeks ago",
+    "monthAgo": "{{count}} month ago",
+    "monthsAgo": "{{count}} months ago",
+    "yearAgo": "{{count}} year ago",
+    "yearsAgo": "{{count}} years ago"
+  },
+  "requests": {
+    "newRequest": "New service request submitted",
+    "requestApproved": "Your request has been approved",
+    "requestRejected": "Your request has been rejected",
+    "requestAssigned": "Request assigned to {{department}}",
+    "requestInProgress": "Work has started on your request",
+    "requestCompleted": "Your request has been completed",
+    "requestOnHold": "Your request has been put on hold",
+    "requestCancelled": "Your request has been cancelled",
+    "requestReopened": "Your request has been reopened",
+    "additionalInfoRequired": "Additional information required for your request",
+    "statusUpdate": "Status update for request #{{requestId}}",
+    "priorityChanged": "Request priority changed to {{priority}}",
+    "assignmentChanged": "Request reassigned to {{assignee}}",
+    "deadlineApproaching": "Request deadline approaching",
+    "requestOverdue": "Request is overdue",
+    "customerResponse": "Customer has responded to your message",
+    "feedbackReceived": "Customer feedback received",
+    "reviewRequired": "Request requires quality review",
+    "escalationAlert": "Request has been escalated"
+  },
+  "system": {
+    "maintenanceScheduled": "Scheduled maintenance on {{date}}",
+    "maintenanceStarted": "System maintenance in progress",
+    "maintenanceCompleted": "System maintenance completed",
+    "systemUpdate": "System has been updated to version {{version}}",
+    "performanceIssue": "System performance degradation detected",
+    "securityAlert": "Security alert: {{description}}",
+    "backupCompleted": "System backup completed successfully",
+    "backupFailed": "System backup failed",
+    "dataSync": "Data synchronization completed",
+    "integrationError": "Integration error with {{service}}",
+    "licenseExpiring": "Software license expiring soon",
+    "storageWarning": "Storage space running low"
+  },
+  "user": {
+    "loginSuccess": "Successfully logged in",
+    "loginFailure": "Login attempt failed",
+    "passwordChanged": "Password has been changed",
+    "profileUpdated": "Profile has been updated",
+    "accountLocked": "Account has been locked",
+    "accountUnlocked": "Account has been unlocked",
+    "roleChanged": "Your role has been changed to {{role}}",
+    "permissionsUpdated": "Your permissions have been updated",
+    "sessionExpiring": "Your session is about to expire",
+    "sessionExpired": "Your session has expired",
+    "newDevice": "New device login detected",
+    "suspiciousActivity": "Suspicious activity detected on your account",
+    "twoFactorEnabled": "Two-factor authentication enabled",
+    "twoFactorDisabled": "Two-factor authentication disabled"
+  },
+  "tasks": {
+    "newTaskAssigned": "New task assigned: {{taskName}}",
+    "taskCompleted": "Task completed: {{taskName}}",
+    "taskOverdue": "Task is overdue: {{taskName}}",
+    "taskRescheduled": "Task has been rescheduled: {{taskName}}",
+    "taskCancelled": "Task has been cancelled: {{taskName}}",
+    "deadlineReminder": "Task deadline reminder: {{taskName}}",
+    "taskPriorityChanged": "Task priority changed: {{taskName}}",
+    "taskCommentAdded": "New comment added to task: {{taskName}}",
+    "taskStatusChanged": "Task status changed: {{taskName}}",
+    "taskReassigned": "Task reassigned to you: {{taskName}}",
+    "batchTasksCompleted": "{{count}} tasks completed in batch operation",
+    "workflowStarted": "Workflow started: {{workflowName}}",
+    "workflowCompleted": "Workflow completed: {{workflowName}}"
+  },
+  "reports": {
+    "reportGenerated": "Report has been generated: {{reportName}}",
+    "reportFailed": "Report generation failed: {{reportName}}",
+    "reportScheduled": "Report has been scheduled: {{reportName}}",
+    "reportShared": "Report has been shared with you: {{reportName}}",
+    "reportExpiring": "Report access expiring soon: {{reportName}}",
+    "dataExportReady": "Data export is ready for download",
+    "dataExportFailed": "Data export failed",
+    "scheduledReportDelivery": "Scheduled report delivered: {{reportName}}"
+  },
+  "meetings": {
+    "meetingScheduled": "Meeting scheduled: {{meetingTitle}}",
+    "meetingCancelled": "Meeting cancelled: {{meetingTitle}}",
+    "meetingRescheduled": "Meeting rescheduled: {{meetingTitle}}",
+    "meetingReminder": "Meeting reminder: {{meetingTitle}} in {{time}}",
+    "meetingStarted": "Meeting has started: {{meetingTitle}}",
+    "meetingEnded": "Meeting has ended: {{meetingTitle}}",
+    "meetingInvitation": "Meeting invitation: {{meetingTitle}}",
+    "meetingUpdated": "Meeting details updated: {{meetingTitle}}"
+  },
+  "comments": {
+    "newComment": "New comment on {{itemType}}: {{itemName}}",
+    "commentReply": "Reply to your comment on {{itemName}}",
+    "commentMention": "You were mentioned in a comment on {{itemName}}",
+    "commentLiked": "Your comment was liked by {{userName}}",
+    "commentEdited": "Comment has been edited on {{itemName}}",
+    "commentDeleted": "Comment has been deleted on {{itemName}}"
+  },
+  "teams": {
+    "memberAdded": "{{userName}} has been added to your team",
+    "memberRemoved": "{{userName}} has been removed from your team",
+    "roleUpdated": "{{userName}}'s role updated to {{role}}",
+    "teamCreated": "New team created: {{teamName}}",
+    "teamDeleted": "Team deleted: {{teamName}}",
+    "teamInvitation": "You've been invited to join {{teamName}}",
+    "teamMeeting": "Team meeting scheduled: {{meetingTitle}}"
+  },
+  "approval": {
+    "approvalRequired": "Your approval is required for {{itemName}}",
+    "approvalGranted": "Approval granted for {{itemName}}",
+    "approvalDenied": "Approval denied for {{itemName}}",
+    "approvalRevoked": "Approval revoked for {{itemName}}",
+    "approvalExpiring": "Approval expiring soon for {{itemName}}",
+    "approvalOverdue": "Approval is overdue for {{itemName}}",
+    "multiLevelApproval": "Multi-level approval required for {{itemName}}"
+  },
+  "integration": {
+    "connectionEstablished": "Connection established with {{serviceName}}",
+    "connectionLost": "Connection lost with {{serviceName}}",
+    "syncCompleted": "Data sync completed with {{serviceName}}",
+    "syncFailed": "Data sync failed with {{serviceName}}",
+    "apiLimitReached": "API limit reached for {{serviceName}}",
+    "webhookReceived": "Webhook received from {{serviceName}}",
+    "integrationError": "Integration error with {{serviceName}}: {{error}}"
+  },
+  "settings": {
+    "title": "Notification Settings",
+    "subtitle": "Manage your notification preferences",
+    "channels": {
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "sms": "SMS Notifications",
+      "inApp": "In-App Notifications",
+      "desktop": "Desktop Notifications",
+      "mobile": "Mobile Notifications"
+    },
+    "frequency": {
+      "immediately": "Immediately",
+      "hourly": "Hourly Digest",
+      "daily": "Daily Digest",
+      "weekly": "Weekly Digest",
+      "never": "Never"
+    },
+    "categories": {
+      "requests": "Service Requests",
+      "tasks": "Tasks & Assignments",
+      "system": "System Updates",
+      "security": "Security Alerts",
+      "reports": "Reports",
+      "meetings": "Meetings",
+      "comments": "Comments & Mentions",
+      "approvals": "Approvals",
+      "teams": "Team Updates"
+    },
+    "preferences": {
+      "soundEnabled": "Enable notification sounds",
+      "vibrationEnabled": "Enable vibration",
+      "showPreview": "Show notification preview",
+      "groupSimilar": "Group similar notifications",
+      "quietHours": "Quiet hours",
+      "priorityOnly": "Priority notifications only",
+      "summaryMode": "Summary mode"
+    },
+    "actions": {
+      "save": "Save Preferences",
+      "reset": "Reset to Default",
+      "testNotification": "Send Test Notification",
+      "exportSettings": "Export Settings",
+      "importSettings": "Import Settings"
+    }
+  },
+  "filters": {
+    "all": "All Notifications",
+    "unread": "Unread",
+    "read": "Read",
+    "starred": "Starred",
+    "archived": "Archived",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "byType": "By Type",
+    "byPriority": "By Priority",
+    "bySource": "By Source"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "info": "Information"
+  },
+  "status": {
+    "delivered": "Delivered",
+    "failed": "Failed",
+    "pending": "Pending",
+    "scheduled": "Scheduled",
+    "cancelled": "Cancelled"
+  },
+  "errors": {
+    "loadFailed": "Failed to load notifications",
+    "markReadFailed": "Failed to mark as read",
+    "deleteFailed": "Failed to delete notification",
+    "settingsSaveFailed": "Failed to save notification settings",
+    "testNotificationFailed": "Failed to send test notification",
+    "permissionDenied": "Notification permission denied"
+  },
+  "confirmations": {
+    "deleteAll": "Are you sure you want to delete all notifications?",
+    "markAllRead": "Mark all notifications as read?",
+    "clearHistory": "Clear notification history?",
+    "resetSettings": "Reset notification settings to default?",
+    "disableNotifications": "Disable all notifications?"
+  }
+}

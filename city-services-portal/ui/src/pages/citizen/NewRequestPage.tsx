@@ -11,6 +11,7 @@ import {
 import { Warning as WarningIcon } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 import StepperWizard, { StepperStep } from '../../components/StepperWizard';
 import { useCreateServiceRequest } from '../../hooks/useServiceRequests';
 import { serviceRequestSchema, ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
@@ -71,6 +72,7 @@ const CharacterCount: React.FC<{
   fieldName: string;
   formName: string;
 }> = ({ current, max, fieldName, formName }) => {
+  const { t } = useTranslation();
   const percentage = (current / max) * 100;
   const isWarning = percentage > 80;
   const isError = percentage > 100;
@@ -82,7 +84,7 @@ const CharacterCount: React.FC<{
         color={isError ? 'error' : isWarning ? 'warning.main' : 'text.secondary'}
         data-testid={FormValidationTestIds.CHAR_COUNT(formName, fieldName)}
       >
-        {current}/{max} characters
+        {current}/{max} {t('common:characters', 'characters')}
       </Typography>
       <LinearProgress
         variant="determinate"
@@ -105,6 +107,7 @@ const ValidationFeedback: React.FC<{
   showCharCount?: boolean;
   securityCheck?: boolean;
 }> = ({ field, error, fieldName, formName, isValidating, maxLength, showCharCount, securityCheck }) => {
+  const { t } = useTranslation();
   const value = field.value || '';
   const hasXSS = securityCheck && value && /<script|javascript:|on\w+=/i.test(value);
   
@@ -118,7 +121,7 @@ const ValidationFeedback: React.FC<{
             color="text.secondary"
             data-testid={FormValidationTestIds.VALIDATION_LOADING(formName, fieldName)}
           >
-            Validating...
+            {t('common:validating', 'Validating...')}
           </Typography>
         </Box>
       )}
@@ -164,15 +167,20 @@ const categories = [
   'public-safety'
 ];
 
-const categoryLabels: Record<string, string> = {
-  'roads-and-infrastructure': 'Roads & Infrastructure',
-  'waste-management': 'Waste Management',
-  'water-and-utilities': 'Water & Utilities',
-  'parks-and-recreation': 'Parks & Recreation',
-  'public-safety': 'Public Safety'
+// Helper function to get translated category labels
+const getCategoryLabelLocal = (category: string, t: any): string => {
+  switch(category) {
+    case 'roads-and-infrastructure': return t('requests:categories.roads');
+    case 'water-and-utilities': return t('requests:categories.water');
+    case 'parks-and-recreation': return t('requests:categories.parks');
+    case 'public-safety': return t('requests:categories.safety');
+    case 'waste-management': return t('requests:categories.waste');
+    default: return category?.replace(/-/g, ' ') || 'N/A';
+  }
 };
 
 const NewRequestPage: React.FC = () => {
+  const { t } = useTranslation();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isAsyncValidating, setIsAsyncValidating] = useState<Record<string, boolean>>({});
@@ -832,7 +840,7 @@ const NewRequestPage: React.FC = () => {
 
   const steps: StepperStep[] = [
     {
-      label: 'Basic Information',
+      label: t('requests:form.step1', 'Basic Information'),
       component: safeStepWrapper(
         <BasicInfoStep
           control={control}
@@ -843,13 +851,13 @@ const NewRequestPage: React.FC = () => {
           handleEmergencyChange={handleEmergencyChange}
           ValidationFeedback={ValidationFeedback}
           categories={categories}
-          categoryLabels={categoryLabels}
+          categoryLabels={categories.reduce((acc, cat) => ({ ...acc, [cat]: getCategoryLabelLocal(cat, t) }), {})}
         />,
         'Basic Information'
       ),
     },
     {
-      label: 'Location',
+      label: t('requests:form.step2', 'Location Details'),
       component: safeStepWrapper(
         <LocationStep
           control={control}
@@ -863,7 +871,7 @@ const NewRequestPage: React.FC = () => {
       ),
     },
     {
-      label: 'Contact & Services',
+      label: t('requests:form.step3', 'Contact Information'),
       component: safeStepWrapper(
         <ContactServicesStep
           control={control}
@@ -877,7 +885,7 @@ const NewRequestPage: React.FC = () => {
       ),
     },
     {
-      label: 'Additional Details',
+      label: t('requests:form.step4', 'Additional Details'),
       component: safeStepWrapper(
         <AdditionalInfoStep
           control={control}
@@ -892,11 +900,11 @@ const NewRequestPage: React.FC = () => {
       ),
     },
     {
-      label: 'Review',
+      label: t('requests:form.step5', 'Review & Submit'),
       component: safeStepWrapper(
         <ReviewStep
           watchedValues={watchedValues}
-          categoryLabels={categoryLabels}
+          categoryLabels={categories.reduce((acc, cat) => ({ ...acc, [cat]: getCategoryLabelLocal(cat, t) }), {})}
           uploadedFile={uploadedFile}
           imagePreview={imagePreview}
           submitError={submitError}
@@ -911,14 +919,14 @@ const NewRequestPage: React.FC = () => {
   return (
     <Box data-testid="cs-new-request-page">
       <Typography variant="h4" component="h1" gutterBottom>
-        Submit New Service Request
+        {t('requests:newRequestPage.title', 'Submit New Service Request')}
       </Typography>
 
       {isValidating && (
         <Box sx={{ mb: 2 }}>
           <LinearProgress />
           <Typography variant="caption" color="text.secondary">
-            Validating form...
+            {t('requests:newRequestPage.validatingForm', 'Validating form...')}
           </Typography>
         </Box>
       )}
@@ -937,7 +945,7 @@ const NewRequestPage: React.FC = () => {
 
       {/* Temporary debug button - remove in production */}
       <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-        <Typography variant="subtitle2" gutterBottom>Debug Info:</Typography>
+        <Typography variant="subtitle2" gutterBottom>{t('requests:newRequestPage.debugInfo', 'Debug Info:')}:</Typography>
         <Button 
           size="small" 
           onClick={() => {
@@ -948,7 +956,7 @@ const NewRequestPage: React.FC = () => {
             console.log('=================');
           }}
         >
-          Log Form State
+          {t('requests:newRequestPage.logFormState', 'Log Form State')}
         </Button>
       </Box>
 
@@ -957,7 +965,7 @@ const NewRequestPage: React.FC = () => {
         onSubmit={handleFormSubmit}
         onCancel={handleCancel}
         isSubmitting={isSubmitting || isBlocked}
-        submitLabel="Submit Request"
+        submitLabel={t('requests:form.submitRequest', 'Submit Request')}
         testId="cs-new-request-wizard"
         onStepValidation={validateStep}
         onStepChange={handleStepChange}
