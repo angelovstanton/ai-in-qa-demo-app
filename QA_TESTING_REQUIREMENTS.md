@@ -85,10 +85,153 @@ Municipal service request management system for citizens to report issues and ci
 - ✅ Can access all departments
 - ✅ Can toggle feature flags
 - ✅ Can reset database
+- ✅ Can create and manage staff accounts
+- ✅ Can assign and modify user roles
+- ✅ Can edit role permissions
 
 ---
 
-## 3. Authentication Requirements
+## 3. Staff & Role Management
+
+### Staff Account Management
+
+#### Create Staff Account
+| Field | Validation | Required | Error Messages |
+|-------|-----------|----------|----------------|
+| **Email** | Valid email format, unique | Yes | "Email already exists" |
+| **First Name** | 1-50 characters | Yes | "First name is required" |
+| **Last Name** | 1-50 characters | Yes | "Last name is required" |
+| **Role** | CLERK, FIELD_AGENT, SUPERVISOR, ADMIN | Yes | "Invalid role" |
+| **Department** | Valid department ID | Conditional* | "Department required for this role" |
+| **Employee ID** | Alphanumeric, unique | No | "Employee ID already exists" |
+| **Phone** | Valid phone format | No | "Invalid phone number" |
+
+*Department is required for CLERK, FIELD_AGENT, and SUPERVISOR roles
+
+#### Staff Account Features
+- **Temporary Password**: Auto-generated 12-character password
+- **Invitation Email**: Optional email with login credentials
+- **Password Reset Required**: New staff must reset password on first login
+- **Bulk Creation**: Upload CSV or create multiple accounts at once
+
+### Role Management System
+
+#### System Roles
+| Role | Hierarchy | Permissions | Editable |
+|------|-----------|-------------|----------|
+| **CITIZEN** | 1 | Basic permissions (view own, create requests) | No |
+| **CLERK** | 2 | Department-scoped request management | Yes |
+| **FIELD_AGENT** | 2 | Assigned task management | Yes |
+| **SUPERVISOR** | 3 | Department management, reports | Yes |
+| **ADMIN** | 4 | Full system access | No |
+
+#### Permission Structure
+| Resource | Actions | Scopes |
+|----------|---------|--------|
+| **service_requests** | view, create, edit, delete, assign, resolve | own, department, assigned, all |
+| **users** | view, create, edit, delete, manage | own, department, all |
+| **departments** | view, create, edit, delete, manage | own, all |
+| **reports** | view, create, export | department, all |
+| **system** | manage, audit | all |
+
+#### Role Assignment Rules
+1. **Hierarchy Enforcement**: Users can only assign roles at or below their hierarchy level
+2. **Department Requirement**: Non-citizen roles require department assignment
+3. **Audit Trail**: All role changes are logged with performer, reason, and timestamp
+4. **Immediate Effect**: Role changes take effect immediately
+5. **Session Update**: Active sessions reflect new permissions after refresh
+
+### Permission Management
+
+#### Permission Matrix Features
+- **Visual Grid**: Checkbox grid showing role vs permission mapping
+- **Edit Mode**: Toggle editing to modify permissions
+- **Protected Roles**: ADMIN and CITIZEN permissions cannot be modified
+- **Batch Updates**: Update all permissions for a role at once
+- **Individual Toggle**: Toggle single permissions in real-time
+
+#### Permission Validation
+- **Resource Access**: Check user has permission for resource + action + scope
+- **Scope Hierarchy**: 'all' scope includes 'department' and 'own'
+- **Role Inheritance**: Higher hierarchy roles inherit lower role permissions
+- **Override Support**: User-specific permission overrides (future feature)
+
+### Testing Scenarios
+
+#### Staff Account Creation
+1. **Valid Creation**
+   - Create account with all required fields
+   - Verify temporary password generation
+   - Check email uniqueness validation
+   - Confirm role assignment
+
+2. **Bulk Creation**
+   - Upload 10+ accounts
+   - Verify success/failure reporting
+   - Check duplicate email handling
+   - Validate role distribution
+
+3. **Edge Cases**
+   - Create account with existing email (should fail)
+   - Create without required department (should fail)
+   - Create with invalid role (should fail)
+   - Create with special characters in name
+
+#### Role Management
+1. **Role Assignment**
+   - Assign role to existing user
+   - Change user from CITIZEN to CLERK
+   - Bulk assign roles to multiple users
+   - Verify department requirement
+
+2. **Permission Editing**
+   - Enable/disable permissions for CLERK
+   - Modify SUPERVISOR permissions
+   - Attempt to edit ADMIN permissions (should fail)
+   - Save and verify persistence
+
+3. **Audit Trail**
+   - View role change history
+   - Verify all changes logged
+   - Check performer identification
+   - Validate reason capture
+
+#### API Testing
+```bash
+# Create Staff Account
+curl -X POST http://localhost:3001/api/v1/admin/staff \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newstaff@city.gov",
+    "firstName": "John",
+    "lastName": "Staff",
+    "role": "CLERK",
+    "departmentId": "dept-id"
+  }'
+
+# Assign Role
+curl -X PATCH http://localhost:3001/api/v1/admin/users/USER_ID/role \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "SUPERVISOR",
+    "reason": "Promotion"
+  }'
+
+# Toggle Permission
+curl -X POST http://localhost:3001/api/v1/admin/roles/ROLE_ID/permission \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "permissionId": "PERM_ID",
+    "granted": true
+  }'
+```
+
+---
+
+## 4. Authentication Requirements
 
 ### User Registration
 

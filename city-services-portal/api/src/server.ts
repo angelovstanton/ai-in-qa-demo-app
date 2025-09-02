@@ -17,6 +17,7 @@ import requestRoutes from './routes/requests';
 import searchRoutes from './routes/search';
 import attachmentRoutes from './routes/attachments';
 import adminRoutes from './routes/admin';
+import staffRoutes from './routes/staff';
 import rankingRoutes from './routes/rankings';
 import departmentRoutes from './routes/departments';
 import supervisorRoutes from './routes/supervisor';
@@ -87,6 +88,7 @@ app.use('/api/v1', searchRoutes); // Search endpoints
 app.use('/api/v1/requests', attachmentRoutes); // For request-specific attachment endpoints
 app.use('/api/v1/attachments', attachmentRoutes); // For standalone attachment endpoints (image serving)
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/admin', staffRoutes); // Staff management endpoints
 app.use('/api/v1/rankings', rankingRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/supervisor', supervisorRoutes);

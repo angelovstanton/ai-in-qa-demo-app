@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { SnackbarProvider } from './hooks/useSnackbar';
 import './i18n/config'; // Initialize i18n
 import AppLayout from './components/AppLayout';
 import DashboardRedirect from './components/DashboardRedirect';
@@ -37,6 +38,7 @@ import TimeTrackingPage from './pages/agent/TimeTrackingPage';
 import PhotosPage from './pages/agent/PhotosPage';
 import MapViewPage from './pages/agent/MapViewPage';
 import AdminFlagsPage from './pages/admin/AdminFlagsPage';
+import StaffManagementPage from './pages/admin/StaffManagementPage';
 import EditProfilePage from './pages/EditProfilePage';
 
 // Protected Route component
@@ -395,6 +397,16 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/admin/staff" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AppLayout>
+                <StaffManagementPage />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -408,9 +420,11 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LanguageProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <SnackbarProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </SnackbarProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

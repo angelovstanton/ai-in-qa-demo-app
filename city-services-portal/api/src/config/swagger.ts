@@ -14,6 +14,16 @@ const options = {
         description: 'Development server',
       },
     ],
+    tags: [
+      { name: 'Authentication', description: 'User authentication and registration' },
+      { name: 'Service Requests', description: 'Service request management' },
+      { name: 'Staff Management', description: 'Staff account creation and management' },
+      { name: 'Role Management', description: 'User role assignment and management' },
+      { name: 'Permission Management', description: 'Role permissions and access control' },
+      { name: 'Admin', description: 'Administrative operations' },
+      { name: 'Supervisor', description: 'Supervisor functionality' },
+      { name: 'Field Agent', description: 'Field agent operations' },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {

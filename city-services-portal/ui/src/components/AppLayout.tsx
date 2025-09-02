@@ -96,8 +96,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const getNavigationItems = () => {
     if (!user) return [];
 
-    // For supervisors, don't show the general base items, they have their own dashboard
-    const baseItems = user.role === 'SUPERVISOR' ? [] : [
+    // For supervisors and admin, don't show the general base items
+    const baseItems = (user.role === 'SUPERVISOR' || user.role === 'ADMIN') ? [] : [
       { 
         label: t('navigation:dashboard'), 
         href: '/', 
@@ -200,6 +200,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         break;
       case 'ADMIN':
         roleSpecificItems.push(
+          { 
+            label: t('navigation:dashboard'), 
+            href: '/', 
+            icon: <DashboardIcon />,
+            testId: 'cs-nav-dashboard'
+          },
+          { 
+            label: t('navigation:staff-management'), 
+            href: '/admin/staff', 
+            icon: <PersonIcon />,
+            testId: 'cs-nav-staff-management'
+          },
           { 
             label: t('navigation:admin-flags'), 
             href: '/admin/flags', 
