@@ -15,7 +15,13 @@
       "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\api\\prisma\\update-demo-profiles.ts\")",
       "Bash(git checkout:*)",
       "Bash(git push:*)",
-      "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\ui\\src\\pages\\admin\\AdminFlagsPage.tsx\")"
+      "Bash(del \"C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal\\ui\\src\\pages\\admin\\AdminFlagsPage.tsx\")",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\city-services-portal/**)",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation/**)",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)"
     ],
     "deny": [],
     "ask": []

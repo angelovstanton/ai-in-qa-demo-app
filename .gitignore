@@ -291,3 +291,6 @@ flamegraph.html
 # Security scanning results
 security-scan-*
 vulnerability-report-*
+
+# Workshop documentation context
+workshop-documentation/context/
