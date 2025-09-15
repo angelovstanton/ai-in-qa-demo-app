@@ -4,6 +4,14 @@ echo Starting AI in QA Demo App...
 echo =====================================
 echo.
 
+:: Check if we're in the right directory
+if not exist "city-services-portal" (
+    echo [ERROR] Cannot find city-services-portal directory
+    echo Please run this script from the root of the ai-in-qa-demo-app repository
+    pause
+    exit /b 1
+)
+
 :: Check if node_modules exist
 if not exist "city-services-portal\api\node_modules" (
     echo [WARNING] API dependencies not installed. Run install-and-run.bat first!

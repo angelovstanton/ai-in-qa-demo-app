@@ -31,11 +31,24 @@ echo [✓] npm found:
 npm --version
 echo.
 
+:: Check if we're in the right directory
+if not exist "city-services-portal" (
+    echo [ERROR] Cannot find city-services-portal directory
+    echo Please run this script from the root of the ai-in-qa-demo-app repository
+    pause
+    exit /b 1
+)
+
 :: Navigate to API directory
 echo =====================================
 echo Setting up Backend API...
 echo =====================================
 cd city-services-portal\api
+if %errorlevel% neq 0 (
+    echo [ERROR] Cannot navigate to city-services-portal\api directory
+    pause
+    exit /b 1
+)
 
 :: Install API dependencies
 echo Installing API dependencies...

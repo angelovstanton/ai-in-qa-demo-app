@@ -11,6 +11,13 @@ echo "Starting AI in QA Demo App..."
 echo "====================================="
 echo
 
+# Check if we're in the right directory
+if [ ! -d "city-services-portal" ]; then
+    echo -e "${RED}[ERROR] Cannot find city-services-portal directory${NC}"
+    echo "Please run this script from the root of the ai-in-qa-demo-app repository"
+    exit 1
+fi
+
 # Check if node_modules exist
 if [ ! -d "city-services-portal/api/node_modules" ]; then
     echo -e "${RED}[WARNING] API dependencies not installed. Run ./install-and-run.sh first!${NC}"
