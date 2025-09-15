@@ -17,7 +17,32 @@ This application serves as a **comprehensive testing playground** for demonstrat
 - Node.js 18+ and npm
 - Git for version control
 
-### **Installation Steps**
+### **Option 1: Automated Setup (Recommended)**
+
+#### **Windows**
+```bash
+# Clone and run the installation script
+git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
+cd ai-in-qa-demo-app
+install-and-run.bat
+```
+
+#### **Mac/Linux**
+```bash
+# Clone and run the installation script
+git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
+cd ai-in-qa-demo-app
+chmod +x install-and-run.sh
+./install-and-run.sh
+```
+
+The script will automatically:
+- Install all dependencies
+- Setup the database
+- Start both API and UI servers
+- Open two terminal windows (Windows) or run in background (Mac/Linux)
+
+### **Option 2: Manual Installation**
 ```bash
 # 1. Clone the repository
 git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
@@ -53,6 +78,13 @@ npm run dev           # Start UI server on port 5173
 - The repository includes `.env.example` with default configuration
 - Your local `.env` file (created from the template) is gitignored for security
 - No additional configuration needed for local development
+
+### **Available Scripts**
+
+| Script | Windows | Mac/Linux | Description |
+|--------|---------|-----------|-------------|
+| **Full Install & Run** | `install-and-run.bat` | `./install-and-run.sh` | First time setup: installs dependencies, configures database, starts servers |
+| **Quick Start** | `start.bat` | `./start.sh` | Starts both servers (requires previous installation) |
 
 ## 🏗️ **Architecture Overview**
 

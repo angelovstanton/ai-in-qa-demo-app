@@ -22,7 +22,8 @@
       "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
       "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
       "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
-      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)"
+      "Read(/C:\\SourceCode\\ai-in-qa-demo-app\\workshop-documentation\\context/**)",
+      "Bash(git update-index:*)"
     ],
     "deny": [],
     "ask": []
