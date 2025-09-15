@@ -31,7 +31,8 @@ npm run preview      # Preview production build
 # Terminal 1 - API
 cd city-services-portal/api
 npm install
-cp .env.example .env  # Create environment file
+copy .env.example .env  # Windows: Create environment file
+# cp .env.example .env  # Mac/Linux
 npm run db:generate
 npm run db:push
 npm run db:seed

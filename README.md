@@ -12,27 +12,47 @@
 This application serves as a **comprehensive testing playground** for demonstrating AI-powered Quality Assurance tools and automated testing frameworks. It features a realistic municipal service request management system with complex workflows, multiple user roles, and extensive form interactions.
 
 ## 🚀 **Quick Start**
+
+### **Prerequisites**
+- Node.js 18+ and npm
+- Git for version control
+
+### **Installation Steps**
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
 cd ai-in-qa-demo-app
 
-# Start API
+# 2. Setup Backend API (Terminal 1)
 cd city-services-portal/api
 npm install
-cp .env.example .env  # Create environment file
-npm run db:generate
-npm run db:push
-npm run db:seed
-npm run dev
 
-# Start UI (new terminal)
+# Create local environment file from template
+# Windows:
+copy .env.example .env
+# Mac/Linux:
+# cp .env.example .env
+
+npm run db:generate   # Generate Prisma client
+npm run db:push       # Create database schema
+npm run db:seed       # Seed with test data
+npm run dev           # Start API server on port 3001
+
+# 3. Setup Frontend UI (Terminal 2)
 cd city-services-portal/ui
 npm install
-npm run dev
+npm run dev           # Start UI server on port 5173
 ```
 
-**🌐 Access**: http://localhost:5173
+### **Access the Application**
+- **🌐 Frontend**: http://localhost:5173
+- **📚 API Docs**: http://localhost:3001/api-docs
+- **🔍 Database Studio**: Run `npm run db:studio` in the API directory
+
+### **Note on Environment Files**
+- The repository includes `.env.example` with default configuration
+- Your local `.env` file (created from the template) is gitignored for security
+- No additional configuration needed for local development
 
 ## 🏗️ **Architecture Overview**
 
@@ -239,25 +259,7 @@ Administration
 
 ## 🛠️ **Development**
 
-### **Prerequisites**
-- Node.js 18+ and npm
-- Git for version control
-
-### **Environment Setup**
-```bash
-# Clone and setup
-git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
-cd ai-in-qa-demo-app/city-services-portal
-
-# Copy environment file for API
-cp api/.env.example api/.env
-
-# Install dependencies
-cd api && npm install
-cd ../ui && npm install
-```
-
-### **Database Management**
+### **Database Management Commands**
 ```bash
 cd city-services-portal/api
 
@@ -272,6 +274,31 @@ npm run db:seed
 
 # View database in browser
 npm run db:studio
+
+# Reset database (caution: deletes all data)
+npm run db:reset
+```
+
+### **Development Scripts**
+
+#### **Backend (API)**
+```bash
+cd city-services-portal/api
+npm run dev          # Development server with hot reload
+npm run build        # TypeScript compilation
+npm run start        # Production server
+npm run test         # Run tests
+npm run lint         # Code linting
+```
+
+#### **Frontend (UI)**
+```bash
+cd city-services-portal/ui
+npm run dev          # Development server with hot reload
+npm run build        # Production build
+npm run preview      # Preview production build
+npm run lint         # Code linting
+npm run test         # Run tests
 ```
 
 ## 📊 **Testing Data**
