@@ -68,13 +68,35 @@ UI_PID=$!
 
 cd ../..
 
+# Wait a bit more for servers to be ready
+sleep 3
+
+# Try to open browser (works on Mac and most Linux distros)
+echo "Opening application in browser..."
+if command -v open &> /dev/null; then
+    # macOS
+    open "http://localhost:5173"
+    sleep 2
+    open "http://localhost:3001/api-docs"
+elif command -v xdg-open &> /dev/null; then
+    # Linux
+    xdg-open "http://localhost:5173"
+    sleep 2
+    xdg-open "http://localhost:3001/api-docs"
+fi
+
 echo
 echo "====================================="
 echo -e "${GREEN}Application Started!${NC}"
 echo "====================================="
 echo
+echo -e "${GREEN}[OPENED IN BROWSER]${NC}"
 echo -e "${YELLOW}Frontend:${NC} http://localhost:5173"
-echo -e "${YELLOW}API Docs:${NC} http://localhost:3001/api-docs"
+echo -e "${YELLOW}Swagger API Docs:${NC} http://localhost:3001/api-docs"
+echo
+echo -e "${GREEN}[RUNNING SERVERS]${NC}"
+echo "- API Server: Port 3001 (PID: $API_PID)"
+echo "- UI Server: Port 5173 (PID: $UI_PID)"
 echo
 echo -e "${YELLOW}Press Ctrl+C to stop both servers${NC}"
 echo

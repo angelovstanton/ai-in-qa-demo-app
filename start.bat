@@ -50,13 +50,27 @@ start "UI Server - Port 5173" cmd /k npm run dev
 
 cd ..\..
 
+:: Wait a bit more for servers to be ready
+timeout /t 3 /nobreak >nul
+
+:: Open browser windows
+echo Opening application in browser...
+start "" "http://localhost:5173"
+timeout /t 2 /nobreak >nul
+start "" "http://localhost:3001/api-docs"
+
 echo.
 echo =====================================
 echo Application Started!
 echo =====================================
 echo.
-echo Frontend: http://localhost:5173
-echo API Docs: http://localhost:3001/api-docs
+echo [OPENED IN BROWSER]
+echo - Frontend: http://localhost:5173
+echo - Swagger API Docs: http://localhost:3001/api-docs
+echo.
+echo [RUNNING SERVERS]
+echo - API Server: Port 3001 (see "API Server" window)
+echo - UI Server: Port 5173 (see "UI Server" window)
 echo.
 echo To stop the servers, close the windows or press Ctrl+C in each window
 echo.
