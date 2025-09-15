@@ -44,7 +44,7 @@ import {
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface AppLayoutProps {
@@ -53,7 +53,7 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -96,23 +96,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const getNavigationItems = () => {
     if (!user) return [];
 
-    // For supervisors, don't show the general base items, they have their own dashboard
-    const baseItems = user.role === 'SUPERVISOR' ? [] : [
+    // For supervisors and admin, don't show the general base items
+    const baseItems = (user.role === 'SUPERVISOR' || user.role === 'ADMIN') ? [] : [
       { 
-        label: t('nav.dashboard'), 
+        label: t('navigation:dashboard'), 
         href: '/', 
         icon: <DashboardIcon />,
         testId: 'cs-nav-dashboard'
       },
       { 
-        label: t('nav.resolved-cases'), 
+        label: t('navigation:resolved-cases'), 
         href: '/resolved-cases', 
         icon: <PublicIcon />,
         testId: 'cs-nav-resolved-cases'
       },
       // Hide ranklist from Clerk and Field Agent roles
       ...(user.role !== 'CLERK' && user.role !== 'FIELD_AGENT' ? [{
-        label: t('nav.ranklist'), 
+        label: t('navigation:ranklist'), 
         href: '/ranklist', 
         icon: <PublicIcon />,
         testId: 'cs-nav-ranklist'
@@ -125,13 +125,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'CITIZEN':
         roleSpecificItems.push(
           { 
-            label: t('nav.requests'), 
+            label: t('navigation:requests'), 
             href: '/citizen/requests', 
             icon: <RequestsIcon />,
             testId: 'cs-nav-my-requests'
           },
           { 
-            label: t('nav.new-request'), 
+            label: t('navigation:new-request'), 
             href: '/citizen/requests/new', 
             icon: <AddIcon />,
             testId: 'cs-nav-new-request'
@@ -141,7 +141,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'CLERK':
         roleSpecificItems.push(
           { 
-            label: t('nav.inbox') || 'Inbox', 
+            label: t('navigation:inbox'), 
             href: '/clerk/inbox', 
             icon: <InboxIcon />,
             testId: 'cs-nav-inbox'
@@ -151,37 +151,37 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'SUPERVISOR':
         roleSpecificItems.push(
           { 
-            label: 'Dashboard', 
+            label: t('navigation:dashboard'), 
             href: '/supervisor/dashboard', 
             icon: <DashboardIcon />,
             testId: 'cs-nav-supervisor-dashboard'
           },
           { 
-            label: 'Staff Performance', 
+            label: t('navigation:staff-performance'), 
             href: '/supervisor/staff-performance', 
             icon: <TrendingUpIcon />,
             testId: 'cs-nav-staff-performance'
           },
           { 
-            label: 'Department Metrics', 
+            label: t('navigation:metrics'), 
             href: '/supervisor/metrics', 
             icon: <AnalyticsIcon />,
             testId: 'cs-nav-department-metrics'
           },
           { 
-            label: 'Quality Reviews', 
+            label: t('navigation:quality-reviews'), 
             href: '/supervisor/quality-reviews', 
             icon: <StarIcon />,
             testId: 'cs-nav-quality-reviews'
           },
           { 
-            label: 'Performance Goals', 
+            label: t('navigation:performance-goals'), 
             href: '/supervisor/performance-goals', 
             icon: <FlagIcon />,
             testId: 'cs-nav-performance-goals'
           },
           { 
-            label: 'Assign Tasks', 
+            label: t('navigation:assign-tasks'), 
             href: '/supervisor/assign', 
             icon: <AssignIcon />,
             testId: 'cs-nav-assign-tasks'
@@ -191,7 +191,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'FIELD_AGENT':
         roleSpecificItems.push(
           { 
-            label: t('nav.my-tasks') || 'My Tasks', 
+            label: t('navigation:my-tasks'), 
             href: '/agent/my-tasks', 
             icon: <TasksIcon />,
             testId: 'cs-nav-my-tasks'
@@ -201,10 +201,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'ADMIN':
         roleSpecificItems.push(
           { 
-            label: t('nav.admin-flags') || 'Feature Flags', 
-            href: '/admin/flags', 
+            label: t('navigation:dashboard'), 
+            href: '/', 
+            icon: <DashboardIcon />,
+            testId: 'cs-nav-dashboard'
+          },
+          { 
+            label: t('navigation:staff-management'), 
+            href: '/admin/staff', 
+            icon: <PersonIcon />,
+            testId: 'cs-nav-staff-management'
+          },
+          { 
+            label: 'Database Management', 
+            href: '/admin/database', 
             icon: <SettingsIcon />,
-            testId: 'cs-nav-feature-flags'
+            testId: 'cs-nav-database-management'
+          },
+          { 
+            label: 'Testing Flags', 
+            href: '/admin/testing-flags', 
+            icon: <SettingsIcon />,
+            testId: 'cs-nav-testing-flags'
           }
         );
         break;
@@ -234,7 +252,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     >
       <Box sx={{ p: 2 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          {t('nav.menu') || 'Menu'}
+          {t('navigation:menu.main', 'Menu')}
         </Typography>
         <Divider />
       </Box>
@@ -307,7 +325,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <ListItemIcon>
             <PersonIcon />
           </ListItemIcon>
-          <ListItemText primary={t('nav.profile') || 'Profile'} />
+          <ListItemText primary={t('navigation:profile', 'Profile')} />
           {mobileSubMenuOpen === 'profile' ? <ExpandLess /> : <ExpandMore />}
         </ListItemButton>
 
@@ -321,7 +339,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
-              <ListItemText primary={t('profile.title') || 'Edit Profile'} />
+              <ListItemText primary={t('auth:profile.title', 'Edit Profile')} />
             </ListItemButton>
           </List>
         </Collapse>
@@ -350,7 +368,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <ListItemIcon sx={{ color: 'inherit' }}>
             <LogoutIcon />
           </ListItemIcon>
-          <ListItemText primary={t('nav.logout') || 'Logout'} />
+          <ListItemText primary={t('navigation:logout', 'Logout')} />
         </ListItemButton>
       </List>
     </Drawer>
@@ -462,7 +480,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                       <ListItemIcon>
                         <PersonIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText>{t('profile.title') || 'Edit Profile'}</ListItemText>
+                      <ListItemText>{t('auth:profile.title', 'Edit Profile')}</ListItemText>
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
@@ -475,7 +493,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                       <ListItemIcon sx={{ color: 'inherit' }}>
                         <LogoutIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText>{t('nav.logout') || 'Logout'}</ListItemText>
+                      <ListItemText>{t('navigation:logout', 'Logout')}</ListItemText>
                     </MenuItem>
                   </Menu>
                 </>

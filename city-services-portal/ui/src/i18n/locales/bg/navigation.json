@@ -1,0 +1,135 @@
+{
+  "dashboard": "Табло",
+  "requests": "Моите заявки",
+  "new-request": "Нова заявка",
+  "resolved-cases": "Решени случаи",
+  "ranklist": "Класация на общността",
+  "inbox": "Входящи",
+  "assign-tasks": "Възлагане на задачи",
+  "my-tasks": "Моите задачи",
+  "admin-flags": "Функционални флагове",
+  "staff-management": "Управление на персонал и роли",
+  "staff-performance": "Представяне на персонала",
+  "quality-reviews": "Проверки на качеството",
+  "metrics": "Отдел метрики",
+  "performance-goals": "Цели за представяне",
+  "work-orders": "Работни поръчки",
+  "time-tracking": "Отчитане на време",
+  "photos": "Полеви снимки",
+  "map": "Изглед на карта",
+  "profile": "Профил",
+  "logout": "Изход",
+  
+  "home": "Начало",
+  "dashboard_old": "Табло",
+  "requests_old": "Заявки",
+  "reports": "Отчети",
+  "admin": "Администрация",
+  "settings": "Настройки",
+  "profile": "Профил",
+  "help": "Помощ",
+  "logout": "Изход",
+  "menu": {
+    "main": "Главно меню",
+    "user": "Потребителско меню",
+    "admin": "Административно меню",
+    "toggle": "Превключи меню",
+    "collapse": "Свий меню",
+    "expand": "Разшири меню"
+  },
+  "breadcrumb": {
+    "home": "Начало",
+    "requests": "Заявки",
+    "newRequest": "Нова заявка",
+    "requestDetails": "Детайли",
+    "profile": "Профил",
+    "settings": "Настройки",
+    "admin": "Администрация",
+    "reports": "Отчети",
+    "users": "Потребители",
+    "departments": "Отдели",
+    "categories": "Категории",
+    "featureFlags": "Функционални флагове"
+  },
+  "tabs": {
+    "overview": "Преглед",
+    "details": "Детайли",
+    "history": "История",
+    "comments": "Коментари",
+    "attachments": "Прикачени файлове",
+    "activity": "Активност",
+    "analytics": "Анализи",
+    "settings": "Настройки"
+  },
+  "sidebar": {
+    "citizen": {
+      "newRequest": "Нова заявка",
+      "myRequests": "Моите заявки",
+      "trackRequest": "Проследи заявка",
+      "notifications": "Известия",
+      "faq": "Често задавани въпроси"
+    },
+    "clerk": {
+      "inbox": "Входяща поща",
+      "assigned": "Възложени на мен",
+      "pending": "Чакащи",
+      "completed": "Завършени",
+      "search": "Търсене"
+    },
+    "supervisor": {
+      "overview": "Преглед",
+      "teamPerformance": "Представяне на екипа",
+      "qualityReviews": "Проверки на качеството",
+      "escalations": "Ескалации",
+      "reports": "Отчети"
+    },
+    "fieldAgent": {
+      "myTasks": "Моите задачи",
+      "schedule": "График",
+      "map": "Карта",
+      "inventory": "Инвентар",
+      "timeTracking": "Отчитане на време"
+    },
+    "admin": {
+      "users": "Потребители",
+      "roles": "Роли",
+      "departments": "Отдели",
+      "categories": "Категории",
+      "workflows": "Работни процеси",
+      "integrations": "Интеграции",
+      "systemSettings": "Системни настройки",
+      "auditLog": "Одитен журнал",
+      "featureFlags": "Функционални флагове"
+    }
+  },
+  "footer": {
+    "about": "За нас",
+    "contact": "Контакти",
+    "privacy": "Поверителност",
+    "terms": "Условия",
+    "accessibility": "Достъпност",
+    "sitemap": "Карта на сайта",
+    "copyright": "© 2024 Портал за градски услуги"
+  },
+  "accessibility": {
+    "skipToContent": "Към съдържанието",
+    "skipToNavigation": "Към навигацията",
+    "skipToFooter": "Към долния колонтитул",
+    "closeDialog": "Затвори диалога",
+    "openMenu": "Отвори меню",
+    "closeMenu": "Затвори меню",
+    "toggleTheme": "Превключи тема",
+    "toggleLanguage": "Превключи език",
+    "goBack": "Назад",
+    "goForward": "Напред",
+    "refresh": "Опресни"
+  },
+  "quickActions": {
+    "title": "Бързи действия",
+    "newRequest": "Нова заявка",
+    "viewNotifications": "Виж известия",
+    "searchRequests": "Търси заявки",
+    "viewReports": "Виж отчети",
+    "contactSupport": "Свържи се с поддръжката"
+  }
+}

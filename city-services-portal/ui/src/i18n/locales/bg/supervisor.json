@@ -1,0 +1,265 @@
+{
+  "title": "Табло на супервайзъра",
+  "subtitle": "Управление на работните показатели на персонала и качествен надзор",
+  "navigation": {
+    "dashboard": "Табло на супервайзъра",
+    "staffPerformance": "Работни показатели на персонала",
+    "qualityReview": "Преглед на качеството",
+    "departmentMetrics": "Показатели на отдела",
+    "teamManagement": "Управление на екипа",
+    "reports": "Отчети"
+  },
+  "metrics": {
+    "totalRequests": "Общо заявки",
+    "pendingRequests": "Чакащи заявки",
+    "resolutionRate": "Процент решаване",
+    "avgQualityScore": "Средна оценка за качество"
+  },
+  "alerts": {
+    "actionRequired": "Необходимо действие",
+    "overdueGoals": "{{count}} просрочени цели изискват внимание",
+    "upcomingDeadlines": "{{count}} предстоящи срокове",
+    "lowQualityAlerts": "{{count}} предупреждения за ниско качество"
+  },
+  "tabs": {
+    "teamPerformance": "Работни показатели на екипа",
+    "performanceGoals": "Цели за работни показатели",
+    "recentActivity": "Скорошна дейност"
+  },
+  "charts": {
+    "teamPerformanceTrends": "Тенденции в работните показатели на екипа",
+    "weeklyRequestVolume": "Седмичен обем заявки",
+    "goalProgressOverview": "Преглед на напредъка по целите",
+    "requestCategoryDistribution": "Разпределение по категории заявки",
+    "legends": {
+      "qualityScore": "Оценка за качество",
+      "satisfaction": "Удовлетвореност на клиентите",
+      "productivity": "Резултат за продуктивност",
+      "submitted": "Подадени",
+      "resolved": "Решени",
+      "pending": "Чакащи"
+    }
+  },
+  "sections": {
+    "recentPerformanceScores": "Скорошни оценки за работни показатели",
+    "topPerformers": "Най-добри изпълнители",
+    "recentActivity": "Скорошна дейност",
+    "noRecentActivity": "Няма скорошна дейност за показване"
+  },
+  "goals": {
+    "activeGoals": "Активни цели",
+    "activeGoalsDescription": "В момента активни цели за работни показатели",
+    "overdueGoals": "Просрочени цели",
+    "overdueGoalsDescription": "Цели, които са преминали срока си",
+    "upcomingDeadlines": "Предстоящи срокове",
+    "upcomingDeadlinesDescription": "Цели с приближаващи се срокове"
+  },
+  "labels": {
+    "performanceScoreDetails": "Оценка за качество: {{qualityScore}}, Период: {{period}}",
+    "performerDetails": "Качество: {{quality}}, Удовлетвореност: {{satisfaction}}",
+    "activityItem": "Елемент от дейността {{index}}",
+    "recentActivityItem": "Елемент от скорошната дейност"
+  },
+  "actions": {
+    "viewAllPerformanceData": "Виж всички данни за работни показатели",
+    "viewTeamLeaderboard": "Виж класацията на екипа"
+  },
+  "dashboard": {
+    "title": "Табло на супервайзъра",
+    "welcome": "Добре дошли, {{name}}",
+    "welcomeMessage": "Добре дошли, супервайзъре",
+    "overviewTitle": "Преглед на екипа",
+    "performanceSummary": "Резюме на работните показатели",
+    "qualityMetrics": "Показатели за качество",
+    "teamStats": "Статистики на екипа",
+    "pendingReviews": "Чакащи прегледи",
+    "alerts": "Предупреждения за персонала",
+    "workloadBalance": "Баланс на работното натоварване",
+    "refreshTooltip": "Обнови данните на таблото",
+    "noDataAvailable": "Няма налични данни за това табло",
+    "tabsAriaLabel": "Навигация в разделите на таблото"
+  },
+  "staffPerformance": {
+    "title": "Работни показатели на персонала",
+    "subtitle": "Наблюдение и оценка на работните показатели на членовете на екипа",
+    "tableHeaders": {
+      "staffMember": "Член на персонала",
+      "role": "Роля",
+      "tasksCompleted": "Завършени задачи",
+      "averageResponseTime": "Средно време за отговор",
+      "qualityScore": "Оценка за качество",
+      "efficiency": "Ефективност",
+      "customerSatisfaction": "Удовлетвореност на клиентите",
+      "lastActive": "Последна активност",
+      "status": "Статус"
+    },
+    "metrics": {
+      "totalTasks": "Общо задачи",
+      "completedTasks": "Завършени задачи",
+      "averageTime": "Средно време",
+      "qualityRating": "Оценка за качество",
+      "productivityScore": "Резултат за продуктивност",
+      "improvementAreas": "Области за подобрение"
+    },
+    "actions": {
+      "viewDetails": "Виж подробности",
+      "generateReport": "Генерирай отчет",
+      "scheduleReview": "Планирай преглед",
+      "sendFeedback": "Изпрати обратна връзка",
+      "assignTraining": "Назначи обучение"
+    },
+    "filters": {
+      "allStaff": "Целия персонал",
+      "topPerformers": "Най-добри изпълнители",
+      "needsImprovement": "Нуждае се от подобрение",
+      "newEmployees": "Нови служители",
+      "activeCases": "Активни случаи"
+    },
+    "statusLabels": {
+      "excellent": "Отлично",
+      "good": "Добро",
+      "average": "Средно",
+      "belowAverage": "Под средното",
+      "needsAttention": "Нуждае се от внимание"
+    }
+  },
+  "qualityReview": {
+    "title": "Преглед на качеството",
+    "subtitle": "Преглед и оценка на качеството на работата",
+    "reviewForm": {
+      "requestDetails": "Подробности за заявката",
+      "qualityCriteria": "Критерии за качество",
+      "overallRating": "Обща оценка",
+      "specificFeedback": "Специфична обратна връзка",
+      "improvementSuggestions": "Предложения за подобрение",
+      "reviewNotes": "Бележки от прегледа"
+    },
+    "criteria": {
+      "accuracy": "Точност",
+      "completeness": "Пълнота",
+      "timeliness": "Своевременност",
+      "communication": "Комуникация",
+      "professionalism": "Професионализъм",
+      "customerService": "Обслужване на клиенти",
+      "followUp": "Проследяване",
+      "documentation": "Документация"
+    },
+    "ratings": {
+      "excellent": "Отлично (5)",
+      "good": "Добро (4)",
+      "satisfactory": "Задоволително (3)",
+      "needsImprovement": "Нуждае се от подобрение (2)",
+      "poor": "Слабо (1)"
+    },
+    "actions": {
+      "submitReview": "Изпрати преглед",
+      "saveDraft": "Запази чернова",
+      "scheduleFollowUp": "Планирай проследяване",
+      "flagForTraining": "Маркирай за обучение",
+      "approveWork": "Одобри работата",
+      "requestRevision": "Заяви ревизия"
+    },
+    "status": {
+      "pending": "Чака преглед",
+      "inProgress": "В процес",
+      "completed": "Завършен",
+      "flagged": "Маркиран",
+      "approved": "Одобрен"
+    }
+  },
+  "departmentMetrics": {
+    "title": "Показатели на отдела",
+    "subtitle": "Показатели за производителност в целия отдел",
+    "kpis": {
+      "requestVolume": "Обем заявки",
+      "responseTime": "Време за отговор",
+      "completionRate": "Процент завършване",
+      "customerSatisfaction": "Удовлетвореност на клиентите",
+      "backlogSize": "Размер на просрочените",
+      "staffUtilization": "Използване на персонала",
+      "qualityScore": "Резултат за качество",
+      "escalationRate": "Процент ескалация"
+    },
+    "trends": {
+      "increasing": "Нарастващо",
+      "decreasing": "Намаляващо",
+      "stable": "Стабилно",
+      "improving": "Подобряващо се",
+      "declining": "Влошаващо се"
+    },
+    "timeframes": {
+      "daily": "Дневно",
+      "weekly": "Седмично",
+      "monthly": "Месечно",
+      "quarterly": "Тримесечно",
+      "yearly": "Годишно"
+    },
+    "comparisons": {
+      "vsLastPeriod": "спрямо миналия период",
+      "vsTarget": "спрямо целта",
+      "vsBenchmark": "спрямо бенчмарка",
+      "yearOverYear": "година срещу година"
+    }
+  },
+  "reports": {
+    "title": "Отчети",
+    "types": {
+      "performanceReport": "Отчет за работни показатели",
+      "qualityReport": "Отчет за качество",
+      "productivityReport": "Отчет за продуктивност",
+      "teamSummary": "Резюме на екипа",
+      "monthlyOverview": "Месечен преглед",
+      "customReport": "Персонализиран отчет"
+    },
+    "schedules": {
+      "daily": "Дневно",
+      "weekly": "Седмично",
+      "monthly": "Месечно",
+      "quarterly": "Тримесечно",
+      "onDemand": "По заявка"
+    },
+    "formats": {
+      "pdf": "PDF",
+      "excel": "Excel",
+      "csv": "CSV",
+      "email": "Резюме по имейл"
+    }
+  },
+  "teamManagement": {
+    "title": "Управление на екипа",
+    "workloadDistribution": "Разпределение на работното натоварване",
+    "taskAssignment": "Назначаване на задачи",
+    "scheduleManagement": "Управление на графика",
+    "availabilityStatus": "Статус на наличност",
+    "shiftPlanning": "Планиране на смени"
+  },
+  "notifications": {
+    "qualityReviewDue": "Дължи се преглед на качеството",
+    "performanceAlert": "Предупреждение за работни показатели за {{staffName}}",
+    "reportGenerated": "Отчетът {{reportType}} е генериран",
+    "newStaffAssigned": "Назначен е нов член на персонала",
+    "trainingCompleted": "{{staffName}} завърши обучението",
+    "escalationAlert": "Предупреждение за ескалация с висок приоритет"
+  },
+  "empty": {
+    "noStaff": "Няма назначени членове на персонала",
+    "noPendingReviews": "Няма чакащи прегледи",
+    "noReports": "Няма налични отчети",
+    "noData": "Няма налични данни за избрания период",
+    "noAlerts": "Няма предупреждения в момента"
+  },
+  "loading": {
+    "loadingStaffData": "Зареждане на данни за персонала...",
+    "generatingReport": "Генериране на отчет...",
+    "processingReview": "Обработка на преглед...",
+    "calculatingMetrics": "Изчисляване на показатели...",
+    "updatingDashboard": "Обновяване на таблото..."
+  },
+  "errors": {
+    "failedToLoadStaff": "Неуспешно зареждане на данни за персонала",
+    "reviewSubmissionFailed": "Изпращането на прегледа не успя",
+    "reportGenerationFailed": "Генерирането на отчета не успя",
+    "metricsUnavailable": "Показателите временно не са налични",
+    "assignmentFailed": "Назначаването на задача не успя"
+  }
+}

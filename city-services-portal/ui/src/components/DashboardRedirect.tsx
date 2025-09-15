@@ -20,7 +20,7 @@ const DashboardRedirect: React.FC = () => {
     case 'FIELD_AGENT':
       return <Navigate to="/agent/my-tasks" replace />;
     case 'ADMIN':
-      return <Navigate to="/admin/flags" replace />;
+      return <Navigate to="/admin/database" replace />;
     default:
       // Fallback to public board for unknown roles
       return <Navigate to="/public" replace />;

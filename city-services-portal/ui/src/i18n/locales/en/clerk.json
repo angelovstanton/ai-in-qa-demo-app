@@ -1,0 +1,269 @@
+{
+  "title": "Clerk Portal",
+  "subtitle": "Process and manage service requests",
+  "navigation": {
+    "dashboard": "Clerk Dashboard",
+    "inbox": "Inbox",
+    "processing": "Processing",
+    "completed": "Completed",
+    "reports": "Reports",
+    "tools": "Tools"
+  },
+  "dashboard": {
+    "title": "Clerk Dashboard",
+    "welcomeMessage": "Welcome, {{clerkName}}",
+    "queueStatistics": "Queue Statistics",
+    "pendingRequests": "Pending Requests",
+    "inProcessing": "In Processing",
+    "completedToday": "Completed Today",
+    "averageProcessingTime": "Average Processing Time",
+    "dailyStats": "Daily Statistics",
+    "weeklyStats": "Weekly Statistics",
+    "monthlyStats": "Monthly Statistics",
+    "quickFilters": "Quick Filters",
+    "shortcutsPanel": "Shortcuts Panel",
+    "todaysGoal": "Today's Goal",
+    "performance": "Performance",
+    "efficiency": "Efficiency Rating"
+  },
+  "inbox": {
+    "title": "Request Inbox",
+    "subtitle": "Review and process incoming requests",
+    "tableHeaders": {
+      "requestId": "Request ID",
+      "type": "Type",
+      "category": "Category",
+      "priority": "Priority",
+      "status": "Status",
+      "submittedBy": "Submitted By",
+      "submissionDate": "Submitted Date",
+      "lastUpdated": "Last Updated",
+      "assignedTo": "Assigned To",
+      "actions": "Actions"
+    },
+    "quickActions": {
+      "processNow": "Process Now",
+      "assignDepartment": "Assign Department",
+      "setPriority": "Set Priority",
+      "addNotes": "Add Notes",
+      "requestInfo": "Request Info",
+      "escalate": "Escalate",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "filters": {
+      "allRequests": "All Requests",
+      "newRequests": "New Requests",
+      "inReview": "In Review",
+      "pendingInfo": "Pending Information",
+      "readyForAssignment": "Ready for Assignment",
+      "highPriority": "High Priority",
+      "overdueReview": "Overdue Review"
+    },
+    "sorting": {
+      "submissionDate": "By Submission Date",
+      "priority": "By Priority",
+      "type": "By Request Type",
+      "status": "By Status",
+      "lastActivity": "By Last Activity"
+    },
+    "bulkActions": {
+      "selectAll": "Select All",
+      "bulkAssign": "Bulk Assign",
+      "bulkApprove": "Bulk Approve",
+      "bulkPriority": "Bulk Priority Change",
+      "exportSelected": "Export Selected"
+    }
+  },
+  "processing": {
+    "title": "Request Processing",
+    "subtitle": "Process individual service requests",
+    "sections": {
+      "requestDetails": "Request Details",
+      "customerInfo": "Customer Information",
+      "processingForm": "Processing Form",
+      "attachments": "Attachments",
+      "history": "Processing History",
+      "internalNotes": "Internal Notes"
+    },
+    "form": {
+      "requestType": "Request Type",
+      "category": "Category",
+      "priority": "Priority",
+      "department": "Assign to Department",
+      "assignee": "Assign to Staff Member",
+      "estimatedCompletion": "Estimated Completion",
+      "internalNotes": "Internal Processing Notes",
+      "customerMessage": "Message to Customer",
+      "statusUpdate": "Status Update",
+      "requiresFollowUp": "Requires Follow-up",
+      "flagForReview": "Flag for Supervisor Review"
+    },
+    "departments": {
+      "publicWorks": "Public Works",
+      "utilities": "Utilities",
+      "parks": "Parks & Recreation",
+      "transportation": "Transportation",
+      "housing": "Housing",
+      "environment": "Environmental Services",
+      "permits": "Permits & Licensing",
+      "planning": "Planning & Development"
+    },
+    "statusTransitions": {
+      "approve": "Approve Request",
+      "reject": "Reject Request",
+      "needsInfo": "Request Additional Information",
+      "assign": "Assign to Department",
+      "escalate": "Escalate to Supervisor",
+      "complete": "Mark as Complete",
+      "onHold": "Put on Hold"
+    },
+    "validationWarnings": {
+      "missingInfo": "Missing required information",
+      "invalidData": "Invalid data detected",
+      "duplicateRequest": "Potential duplicate request",
+      "highPriorityOverride": "High priority override required",
+      "departmentCapacity": "Department at capacity",
+      "budgetExceeded": "Estimated cost exceeds budget limits"
+    }
+  },
+  "requestDetail": {
+    "title": "Request Details",
+    "sections": {
+      "summary": "Summary",
+      "details": "Detailed Information",
+      "location": "Location Details",
+      "timeline": "Timeline",
+      "communications": "Communications",
+      "documents": "Documents & Photos"
+    },
+    "customer": {
+      "name": "Customer Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "address": "Address",
+      "preferredContact": "Preferred Contact Method",
+      "contactHistory": "Contact History"
+    },
+    "request": {
+      "description": "Description",
+      "urgency": "Urgency Level",
+      "impact": "Impact Assessment",
+      "location": "Service Location",
+      "accessibility": "Accessibility Requirements",
+      "specialInstructions": "Special Instructions",
+      "relatedRequests": "Related Requests"
+    }
+  },
+  "communications": {
+    "title": "Customer Communications",
+    "sendMessage": "Send Message",
+    "callCustomer": "Call Customer",
+    "emailCustomer": "Email Customer",
+    "scheduleCallback": "Schedule Callback",
+    "messageTemplates": "Message Templates",
+    "messageHistory": "Message History",
+    "automaticUpdates": "Automatic Updates",
+    "notificationSettings": "Notification Settings"
+  },
+  "tools": {
+    "title": "Clerk Tools",
+    "searchRequests": "Search Requests",
+    "bulkOperations": "Bulk Operations",
+    "reportGenerator": "Report Generator",
+    "dataExport": "Data Export",
+    "taskManager": "Task Manager",
+    "templates": "Templates",
+    "shortcuts": "Keyboard Shortcuts",
+    "helpDesk": "Help Desk"
+  },
+  "reports": {
+    "title": "Clerk Reports",
+    "types": {
+      "dailySummary": "Daily Processing Summary",
+      "weeklyReport": "Weekly Performance Report",
+      "requestAnalysis": "Request Analysis",
+      "processingTimes": "Processing Times Analysis",
+      "departmentWorkload": "Department Workload",
+      "customerSatisfaction": "Customer Satisfaction",
+      "qualityMetrics": "Quality Metrics"
+    },
+    "filters": {
+      "dateRange": "Date Range",
+      "department": "Department",
+      "requestType": "Request Type",
+      "priority": "Priority Level",
+      "status": "Status",
+      "assignee": "Assigned Staff"
+    }
+  },
+  "performance": {
+    "metrics": {
+      "requestsProcessed": "Requests Processed",
+      "averageTime": "Average Processing Time",
+      "qualityScore": "Quality Score",
+      "customerRating": "Customer Rating",
+      "escalationRate": "Escalation Rate",
+      "completionRate": "Completion Rate"
+    },
+    "goals": {
+      "daily": "Daily Goal",
+      "weekly": "Weekly Goal",
+      "monthly": "Monthly Goal",
+      "quality": "Quality Target",
+      "efficiency": "Efficiency Target"
+    }
+  },
+  "notifications": {
+    "newRequest": "New request received: {{requestId}}",
+    "urgentRequest": "Urgent request requires attention: {{requestId}}",
+    "requestUpdated": "Request updated: {{requestId}}",
+    "customerResponse": "Customer responded to: {{requestId}}",
+    "escalationRequired": "Request requires escalation: {{requestId}}",
+    "deadlineApproaching": "Processing deadline approaching: {{requestId}}",
+    "qualityReview": "Request flagged for quality review: {{requestId}}",
+    "assignmentChanged": "Assignment changed for: {{requestId}}"
+  },
+  "templates": {
+    "approvalMessage": "Your request has been approved and assigned to {{department}}. Expected completion: {{date}}.",
+    "rejectionMessage": "Unfortunately, your request cannot be processed due to: {{reason}}. Please contact us for more information.",
+    "infoRequest": "We need additional information to process your request: {{details}}. Please respond at your earliest convenience.",
+    "statusUpdate": "Status update for your request {{requestId}}: {{status}}. {{additionalInfo}}",
+    "completion": "Your request has been completed. Thank you for using our services.",
+    "escalation": "Your request has been escalated to a supervisor for priority handling."
+  },
+  "empty": {
+    "noRequests": "No requests in inbox",
+    "noFiltered": "No requests match current filters",
+    "noHistory": "No processing history available",
+    "noNotes": "No internal notes recorded",
+    "noAttachments": "No attachments uploaded",
+    "noMessages": "No customer messages"
+  },
+  "loading": {
+    "loadingRequests": "Loading requests...",
+    "processing": "Processing request...",
+    "sending": "Sending message...",
+    "saving": "Saving changes...",
+    "generating": "Generating report...",
+    "updating": "Updating status..."
+  },
+  "errors": {
+    "loadFailed": "Failed to load requests",
+    "processingFailed": "Request processing failed",
+    "saveFailed": "Failed to save changes",
+    "sendFailed": "Failed to send message",
+    "assignmentFailed": "Department assignment failed",
+    "validationError": "Please correct validation errors",
+    "permissionDenied": "Insufficient permissions",
+    "networkError": "Network connection error"
+  },
+  "confirmations": {
+    "approveRequest": "Are you sure you want to approve this request?",
+    "rejectRequest": "Are you sure you want to reject this request?",
+    "escalateRequest": "Are you sure you want to escalate this request?",
+    "deleteNotes": "Are you sure you want to delete these notes?",
+    "bulkAction": "Apply action to {{count}} selected requests?",
+    "statusChange": "Change status to {{status}}?"
+  }
+}

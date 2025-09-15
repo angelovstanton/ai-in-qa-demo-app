@@ -1,0 +1,12 @@
+{
+  "imageUpload": "Image Upload",
+  "dropImagesHere": "Drop images here",
+  "supportsFiles": "Supports JPEG and PNG files up to {{size}}MB each",
+  "maximumImages": "Maximum {{max}} images allowed",
+  "uploadedImages": "Uploaded Images ({{current}}/{{max}})",
+  "deleteImage": "Delete Image",
+  "size": "Size",
+  "type": "Type",
+  "fileValidName": "File must have a valid name",
+  "fileNotAllowedSecurity": "File type not allowed for security reasons"
+}

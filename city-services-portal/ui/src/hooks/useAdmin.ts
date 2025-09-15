@@ -86,9 +86,20 @@ export const useAdminActions = () => {
     }
   };
 
+  const getStats = async () => {
+    try {
+      const response = await api.get('/admin/stats');
+      return response.data.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to get database stats';
+      throw new Error(errorMessage);
+    }
+  };
+
   return {
     seedDatabase,
     resetDatabase,
+    getStats,
     loading,
     error,
   };

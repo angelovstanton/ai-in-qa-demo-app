@@ -52,6 +52,11 @@ model User {
   securityQuestion String?
   securityAnswer String?
   
+  // Staff account management
+  isStaffAccount Boolean @default(false)
+  createdById String? // User who created this staff account
+  employeeId String? // Optional employee ID for staff
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -64,6 +69,13 @@ model User {
   assignedTasks    Assignment[]     @relation("AssignedTo")
   upvotes          Upvote[]
 
+  // Role management relations
+  rolePermissions  UserRolePermission[]
+  roleHistory      RoleChangeHistory[] @relation("RoleChangeUser")
+  performedRoleChanges RoleChangeHistory[] @relation("RoleChangePerformer")
+  createdStaffAccounts User[] @relation("StaffAccountCreator")
+  createdByStaff   User? @relation("StaffAccountCreator", fields: [createdById], references: [id])
+  
   // Supervisor role relations
   qualityReviews           QualityReview[]
   staffPerformance         StaffPerformance[]
@@ -266,11 +278,32 @@ model Upvote {
   @@map("upvotes")
 }
 
+// Legacy feature flag model (kept for backward compatibility)
 model FeatureFlag {
   key   String @id
   value String // JSON stored as string
 
   @@map("feature_flags")
+}
+
+// Enhanced feature flag system for testing and bug simulation
+model TestingFeatureFlag {
+  id                 String   @id @default(uuid())
+  key                String   @unique
+  name               String
+  description        String
+  category           String   // Authentication, ServiceRequests, UI/UX, Search, Notifications
+  impactLevel        String   // HIGH, MEDIUM, LOW
+  isEnabled          Boolean  @default(false)
+  isMasterControlled Boolean  @default(true)
+  defaultValue       Boolean  @default(false)
+  metadata           String?  // JSON for additional configuration
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category])
+  @@index([isEnabled])
+  @@map("testing_feature_flags")
 }
 
 // Supervisor Role Extensions
@@ -643,4 +676,111 @@ model CommunityTrend {
   @@unique([category, metric, period, periodStart])
   @@index([category, period])
   @@map("community_trends")
+}
+
+// Role Management Models
+
+model Role {
+  id           String   @id @default(uuid())
+  name         String   @unique // CITIZEN, CLERK, FIELD_AGENT, SUPERVISOR, ADMIN
+  displayName  String
+  description  String?
+  isSystem     Boolean  @default(true) // System roles cannot be deleted
+  isActive     Boolean  @default(true)
+  hierarchy    Int      @default(0) // Higher number = higher authority
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  permissions  RolePermission[]
+  userRoles    UserRolePermission[]
+  
+  @@map("roles")
+}
+
+model Permission {
+  id           String   @id @default(uuid())
+  resource     String   // service_requests, users, departments, reports, system
+  action       String   // view, create, edit, delete, assign, resolve, export, manage
+  scope        String?  // own, department, all
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  
+  roles        RolePermission[]
+  userOverrides UserRolePermission[]
+  
+  @@unique([resource, action, scope])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  granted      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRolePermission {
+  id           String   @id @default(uuid())
+  userId       String
+  roleId       String?
+  permissionId String?
+  granted      Boolean  @default(true) // Can be used to revoke specific permissions
+  expiresAt    DateTime? // For temporary permissions
+  grantedBy    String?
+  reason       String?
+  createdAt    DateTime @default(now())
+  
+  user         User        @relation(fields: [userId], references: [id])
+  role         Role?       @relation(fields: [roleId], references: [id])
+  permission   Permission? @relation(fields: [permissionId], references: [id])
+  
+  @@unique([userId, roleId, permissionId])
+  @@map("user_role_permissions")
+}
+
+model RoleChangeHistory {
+  id           String   @id @default(uuid())
+  userId       String
+  previousRole String?
+  newRole      String
+  changedBy    String
+  reason       String?
+  metadata     String?  // JSON for additional context
+  createdAt    DateTime @default(now())
+  
+  user         User @relation("RoleChangeUser", fields: [userId], references: [id])
+  performer    User @relation("RoleChangePerformer", fields: [changedBy], references: [id])
+  
+  @@index([userId, createdAt])
+  @@map("role_change_history")
+}
+
+model StaffAccount {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  temporaryPassword String
+  role              String
+  departmentId      String?
+  employeeId        String?
+  firstName         String?
+  lastName          String?
+  phone             String?
+  invitationToken   String?  @unique
+  invitationExpires DateTime?
+  accountCreated    Boolean  @default(false)
+  createdBy         String
+  metadata          String?  // JSON for additional data
+  createdAt         DateTime @default(now())
+  activatedAt       DateTime?
+  
+  @@index([invitationToken])
+  @@map("staff_accounts")
 }

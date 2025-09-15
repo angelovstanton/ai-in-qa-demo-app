@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -73,6 +74,7 @@ interface FlaggedContent {
 }
 
 const ContentModerationPage: React.FC = () => {
+  const { t } = useTranslation(['admin', 'common']);
   const { user } = useAuth();
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,7 @@ const ContentModerationPage: React.FC = () => {
     return (
       <Box data-testid="cs-content-moderation-unauthorized">
         <Alert severity="error">
-          Access denied. This page is only available to administrators.
+          {t('common:errorMessage')}
         </Alert>
       </Box>
     );
@@ -107,7 +109,7 @@ const ContentModerationPage: React.FC = () => {
       const response = await api.get('/admin/moderation/flagged-content');
       setFlaggedContent(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to fetch flagged content');
+      setError(err.response?.data?.error?.message || t('admin:contentModeration.fetchError'));
       
       // Mock data for demonstration
       const mockData: FlaggedContent[] = [
@@ -191,7 +193,7 @@ const ContentModerationPage: React.FC = () => {
       setActionReason('');
       setSelectedContent(null);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to perform moderation action');
+      setError(err.response?.data?.error?.message || t('admin:contentModeration.actionError'));
       
       // Optimistic update for demo
       setFlaggedContent(prev => prev.map(item => 
@@ -259,7 +261,7 @@ const ContentModerationPage: React.FC = () => {
     <Box data-testid="cs-content-moderation-page">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Content Moderation
+          {t('admin:contentModeration.title')}
         </Typography>
         <Button
           variant="outlined"
@@ -268,7 +270,7 @@ const ContentModerationPage: React.FC = () => {
           disabled={refreshing}
           data-testid="cs-content-moderation-refresh"
         >
-          {refreshing ? 'Refreshing...' : 'Refresh'}
+          {refreshing ? t('admin:contentModeration.refreshing') : t('common:refresh')}
         </Button>
       </Box>
 
@@ -290,7 +292,7 @@ const ContentModerationPage: React.FC = () => {
                     {pendingCount}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Pending Review
+                    {t('admin:contentModeration.pendingReview')}
                   </Typography>
                 </Box>
               </Box>
@@ -308,7 +310,7 @@ const ContentModerationPage: React.FC = () => {
                     {approvedCount}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Approved
+                    {t('admin:contentModeration.approved')}
                   </Typography>
                 </Box>
               </Box>
@@ -326,7 +328,7 @@ const ContentModerationPage: React.FC = () => {
                     {rejectedCount}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Rejected/Hidden
+                    {t('admin:contentModeration.rejectedHidden')}
                   </Typography>
                 </Box>
               </Box>
@@ -344,7 +346,7 @@ const ContentModerationPage: React.FC = () => {
                     {flaggedContent.filter(item => item.automatedAnalysis.hasSecurityThreat).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Security Threats
+                    {t('admin:contentModeration.securityThreats')}
                   </Typography>
                 </Box>
               </Box>
@@ -363,7 +365,7 @@ const ContentModerationPage: React.FC = () => {
           <Tab 
             label={
               <Badge badgeContent={pendingCount} color="warning">
-                Pending Review
+                {t('admin:contentModeration.pendingReview')}
               </Badge>
             }
             data-testid="cs-tab-pending"
@@ -371,7 +373,7 @@ const ContentModerationPage: React.FC = () => {
           <Tab 
             label={
               <Badge badgeContent={approvedCount} color="success">
-                Approved
+                {t('admin:contentModeration.approved')}
               </Badge>
             }
             data-testid="cs-tab-approved"
@@ -379,7 +381,7 @@ const ContentModerationPage: React.FC = () => {
           <Tab 
             label={
               <Badge badgeContent={rejectedCount} color="error">
-                Rejected/Hidden
+                {t('admin:contentModeration.rejectedHidden')}
               </Badge>
             }
             data-testid="cs-tab-rejected"
@@ -392,14 +394,14 @@ const ContentModerationPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Content</TableCell>
-              <TableCell>User</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell align="center">Risk Score</TableCell>
-              <TableCell align="center">Flags</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Date</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('admin:contentModeration.content')}</TableCell>
+              <TableCell>{t('admin:contentModeration.user')}</TableCell>
+              <TableCell>{t('admin:contentModeration.type')}</TableCell>
+              <TableCell align="center">{t('admin:contentModeration.riskScore')}</TableCell>
+              <TableCell align="center">{t('admin:contentModeration.flags')}</TableCell>
+              <TableCell align="center">{t('common:status')}</TableCell>
+              <TableCell align="center">{t('common:date')}</TableCell>
+              <TableCell align="center">{t('common:actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -492,7 +494,7 @@ const ContentModerationPage: React.FC = () => {
                 </TableCell>
                 
                 <TableCell align="center">
-                  <Tooltip title="View Details">
+                  <Tooltip title={t('common:viewDetails')}>
                     <IconButton
                       size="small"
                       onClick={() => {
@@ -523,7 +525,7 @@ const ContentModerationPage: React.FC = () => {
           <>
             <DialogTitle>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="h6">Content Review</Typography>
+                <Typography variant="h6">{t('admin:contentModeration.contentReview')}</Typography>
                 <Chip
                   label={`Risk Score: ${selectedContent.automatedAnalysis.score}`}
                   color={getSeverityColor(selectedContent.automatedAnalysis.score) as any}
@@ -535,7 +537,7 @@ const ContentModerationPage: React.FC = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Content:
+                    {t('admin:contentModeration.content')}:
                   </Typography>
                   <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                     <Typography variant="body2">
@@ -546,7 +548,7 @@ const ContentModerationPage: React.FC = () => {
                 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle1" gutterBottom>
-                    User Information:
+                    {t('admin:contentModeration.userInformation')}:
                   </Typography>
                   <List dense>
                     <ListItem>
@@ -561,7 +563,7 @@ const ContentModerationPage: React.FC = () => {
                 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Analysis Results:
+                    {t('admin:contentModeration.analysisResults')}:
                   </Typography>
                   <List dense>
                     {selectedContent.automatedAnalysis.flags.map((flag) => (
@@ -575,7 +577,7 @@ const ContentModerationPage: React.FC = () => {
                 
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Recommendations:
+                    {t('admin:contentModeration.recommendations')}:
                   </Typography>
                   <List dense>
                     {selectedContent.automatedAnalysis.recommendations.map((rec, index) => (
@@ -590,12 +592,12 @@ const ContentModerationPage: React.FC = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Reason (optional)"
+                      label={t('admin:contentModeration.reasonOptional')}
                       multiline
                       rows={3}
                       value={actionReason}
                       onChange={(e) => setActionReason(e.target.value)}
-                      placeholder="Provide reason for moderation action..."
+                      placeholder={t('admin:contentModeration.reasonPlaceholder')}
                       data-testid="cs-moderation-reason"
                     />
                   </Grid>
@@ -614,7 +616,7 @@ const ContentModerationPage: React.FC = () => {
                     disabled={pendingAction === selectedContent.id}
                     data-testid="cs-moderation-approve"
                   >
-                    Approve
+                    {t('admin:contentModeration.approve')}
                   </Button>
                   
                   <Button
@@ -625,7 +627,7 @@ const ContentModerationPage: React.FC = () => {
                     disabled={pendingAction === selectedContent.id}
                     data-testid="cs-moderation-hide"
                   >
-                    Hide
+                    {t('admin:contentModeration.hide')}
                   </Button>
                   
                   <Button
@@ -636,7 +638,7 @@ const ContentModerationPage: React.FC = () => {
                     disabled={pendingAction === selectedContent.id}
                     data-testid="cs-moderation-reject"
                   >
-                    Reject
+                    {t('admin:contentModeration.reject')}
                   </Button>
                   
                   <Button
@@ -647,7 +649,7 @@ const ContentModerationPage: React.FC = () => {
                     disabled={pendingAction === selectedContent.id}
                     data-testid="cs-moderation-delete"
                   >
-                    Delete
+                    {t('common:delete')}
                   </Button>
                 </>
               )}
@@ -656,7 +658,7 @@ const ContentModerationPage: React.FC = () => {
                 onClick={() => setDialogOpen(false)}
                 data-testid="cs-moderation-dialog-close"
               >
-                Close
+                {t('common:close')}
               </Button>
             </DialogActions>
           </>

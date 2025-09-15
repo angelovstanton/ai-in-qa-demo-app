@@ -1,0 +1,112 @@
+{
+  "required": "This field is required",
+  "email": {
+    "invalid": "Please enter a valid email address",
+    "required": "Email is required",
+    "tooShort": "Email must be at least 5 characters",
+    "tooLong": "Email cannot exceed 254 characters",
+    "alreadyExists": "An account with this email already exists"
+  },
+  "password": {
+    "required": "Password is required",
+    "tooShort": "Password must be at least 12 characters",
+    "tooLong": "Password cannot exceed 128 characters",
+    "needsUppercase": "Password must contain at least one uppercase letter",
+    "needsLowercase": "Password must contain at least one lowercase letter",
+    "needsNumber": "Password must contain at least one number",
+    "needsSpecial": "Password must contain at least one special character",
+    "tooCommon": "This password is too common. Please choose a stronger password",
+    "consecutive": "Password cannot contain more than 2 consecutive identical characters",
+    "repeated": "Password cannot use the same character more than 3 times",
+    "sequential": "Password cannot contain sequential characters (e.g., abc, 123)",
+    "mismatch": "Passwords do not match",
+    "sameAsOld": "New password must be different from current password"
+  },
+  "name": {
+    "required": "Name is required",
+    "tooShort": "Name must be at least 2 characters",
+    "tooLong": "Name cannot exceed 50 characters",
+    "invalidCharacters": "Name contains invalid characters",
+    "consecutiveSpaces": "Name cannot contain consecutive spaces"
+  },
+  "phone": {
+    "invalid": "Please enter a valid phone number",
+    "invalidFormat": "Invalid phone number format",
+    "tooShort": "Phone number is too short",
+    "tooLong": "Phone number is too long"
+  },
+  "address": {
+    "required": "Address is required",
+    "tooShort": "Address must be at least 5 characters",
+    "tooLong": "Address cannot exceed 200 characters",
+    "invalid": "Please enter a valid address"
+  },
+  "city": {
+    "required": "City is required",
+    "tooShort": "City must be at least 2 characters",
+    "tooLong": "City cannot exceed 100 characters",
+    "invalid": "Please enter a valid city name"
+  },
+  "postalCode": {
+    "required": "Postal code is required",
+    "invalid": "Please enter a valid postal code",
+    "invalidFormat": "Invalid postal code format for selected country"
+  },
+  "text": {
+    "tooShort": "Must be at least {{min}} characters",
+    "tooLong": "Cannot exceed {{max}} characters",
+    "invalidFormat": "Invalid format",
+    "invalidCharacters": "Contains invalid characters"
+  },
+  "number": {
+    "required": "Please enter a number",
+    "invalid": "Please enter a valid number",
+    "min": "Must be at least {{min}}",
+    "max": "Cannot exceed {{max}}",
+    "integer": "Must be a whole number",
+    "positive": "Must be a positive number",
+    "negative": "Must be a negative number"
+  },
+  "date": {
+    "required": "Please select a date",
+    "invalid": "Please enter a valid date",
+    "past": "Date must be in the past",
+    "future": "Date must be in the future",
+    "min": "Date must be after {{min}}",
+    "max": "Date must be before {{max}}"
+  },
+  "file": {
+    "required": "Please select a file",
+    "tooLarge": "File size exceeds {{max}}MB",
+    "invalidType": "File type not supported",
+    "tooMany": "Maximum {{max}} files allowed",
+    "uploadFailed": "File upload failed. Please try again"
+  },
+  "select": {
+    "required": "Please select an option",
+    "invalid": "Please select a valid option"
+  },
+  "checkbox": {
+    "required": "This must be checked",
+    "terms": "You must agree to the terms and conditions"
+  },
+  "request": {
+    "titleRequired": "Request title is required",
+    "titleTooShort": "Title must be at least 5 characters",
+    "titleTooLong": "Title cannot exceed 120 characters",
+    "descriptionRequired": "Description is required",
+    "descriptionTooShort": "Description must be at least 30 characters",
+    "descriptionTooLong": "Description cannot exceed 5000 characters",
+    "categoryRequired": "Please select a category",
+    "locationRequired": "Location description is required"
+  },
+  "comment": {
+    "required": "Comment cannot be empty",
+    "tooShort": "Comment must be at least 10 characters",
+    "tooLong": "Comment cannot exceed 1000 characters"
+  },
+  "search": {
+    "tooShort": "Search query must be at least 2 characters",
+    "invalid": "Invalid search query"
+  }
+}

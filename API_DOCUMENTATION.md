@@ -876,6 +876,183 @@ Validate test data integrity
 - **Auth Required**: Yes (ADMIN)
 - **Response**: `{ data: { isValid: boolean, issues: string[] }, correlationId: string }`
 
+### Staff Management Endpoints
+
+#### POST /api/v1/admin/staff
+Create new staff account
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "email": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "role": "CLERK|FIELD_AGENT|SUPERVISOR|ADMIN",
+    "departmentId": "string (optional)",
+    "employeeId": "string (optional)",
+    "phone": "string (optional)",
+    "sendInvitation": true
+  }
+  ```
+- **Response**: Staff account object with temporary password (if sendInvitation is true)
+
+#### POST /api/v1/admin/staff/bulk-create
+Bulk create multiple staff accounts
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "accounts": [
+      {
+        "email": "string",
+        "firstName": "string",
+        "lastName": "string",
+        "role": "string"
+      }
+    ]
+  }
+  ```
+- **Response**: `{ created: number, failed: number, results: [], errors: [] }`
+
+#### GET /api/v1/admin/staff
+List all staff accounts with pagination
+- **Auth Required**: Yes (ADMIN, SUPERVISOR)
+- **Query Parameters**:
+  - `page`: Page number (default: 1)
+  - `limit`: Items per page (default: 20)
+  - `role`: Filter by role (CLERK|FIELD_AGENT|SUPERVISOR|ADMIN)
+  - `departmentId`: Filter by department
+  - `status`: Filter by status (ACTIVE|INACTIVE|SUSPENDED|ARCHIVED)
+  - `search`: Search by name, email, or employee ID
+- **Response**: Paginated list of staff accounts
+
+#### PUT /api/v1/admin/staff/:id
+Update staff account details
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "role": "string (optional)",
+    "departmentId": "string (optional)",
+    "firstName": "string (optional)",
+    "lastName": "string (optional)",
+    "phone": "string (optional)",
+    "employeeId": "string (optional)",
+    "status": "string (optional)"
+  }
+  ```
+- **Response**: Updated staff account object
+
+#### DELETE /api/v1/admin/staff/:id
+Deactivate staff account (sets status to ARCHIVED)
+- **Auth Required**: Yes (ADMIN)
+- **Response**: Deactivated staff account object
+
+### Role Management Endpoints
+
+#### PATCH /api/v1/admin/users/:id/role
+Assign role to existing user
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "role": "CITIZEN|CLERK|FIELD_AGENT|SUPERVISOR|ADMIN",
+    "reason": "string (optional)",
+    "departmentId": "string (optional)"
+  }
+  ```
+- **Response**: Updated user object with new role
+
+#### POST /api/v1/admin/users/bulk-role-update
+Bulk update roles for multiple users
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "userIds": ["string"],
+    "role": "string",
+    "reason": "string (optional)",
+    "departmentId": "string (optional)"
+  }
+  ```
+- **Response**: `{ updated: number, failed: number, results: [], errors: [] }`
+
+#### GET /api/v1/admin/users/by-role/:roleId
+Get users by role
+- **Auth Required**: Yes (ADMIN, SUPERVISOR)
+- **Query Parameters**:
+  - `page`: Page number
+  - `limit`: Items per page
+  - `departmentId`: Filter by department
+- **Response**: Paginated list of users with specified role
+
+#### GET /api/v1/admin/users/:id/role-history
+Get role change history for a user
+- **Auth Required**: Yes (ADMIN)
+- **Response**: Array of role change history entries
+
+#### GET /api/v1/admin/roles
+Get all system roles with permissions
+- **Auth Required**: Yes (ADMIN)
+- **Response**: Array of role objects with permissions
+
+### Permission Management Endpoints
+
+#### GET /api/v1/admin/permissions/matrix
+Get permission matrix showing all roles and permissions
+- **Auth Required**: Yes (ADMIN)
+- **Response**: 
+  ```json
+  {
+    "roles": [{ "id": "string", "name": "string", "displayName": "string" }],
+    "permissions": [{ 
+      "id": "string",
+      "resource": "string",
+      "action": "string",
+      "scope": "string",
+      "ROLE_NAME": true/false
+    }]
+  }
+  ```
+
+#### POST /api/v1/admin/permissions/initialize
+Initialize default roles and permissions
+- **Auth Required**: Yes (ADMIN)
+- **Response**: `{ message: "Roles and permissions initialized successfully" }`
+
+#### PUT /api/v1/admin/roles/:roleId/permissions
+Update all permissions for a role
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "permissions": [
+      {
+        "permissionId": "string",
+        "granted": true/false
+      }
+    ]
+  }
+  ```
+- **Response**: Success message with updated count
+
+#### POST /api/v1/admin/roles/:roleId/permission
+Toggle a single permission for a role
+- **Auth Required**: Yes (ADMIN)
+- **Request Body**:
+  ```json
+  {
+    "permissionId": "string",
+    "granted": true/false
+  }
+  ```
+- **Response**: Success message with permission status
+
+#### GET /api/v1/admin/users/:id/permissions
+Get all permissions for a specific user
+- **Auth Required**: Yes (ADMIN)
+- **Response**: Array of user permissions including role-based and overrides
+
 ---
 
 ## Status Codes

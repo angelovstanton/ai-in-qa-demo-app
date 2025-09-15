@@ -1,0 +1,88 @@
+{
+	"servers": {
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"@playwright/mcp@latest"
+			],
+			"type": "stdio"
+		},
+		"atlassian": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"CONFLUENCE_URL",
+				"-e",
+				"CONFLUENCE_USERNAME",
+				"-e",
+				"CONFLUENCE_API_TOKEN",
+				"-e",
+				"JIRA_URL",
+				"-e",
+				"JIRA_USERNAME",
+				"-e",
+				"JIRA_API_TOKEN",
+				"-e",
+				"MCP_VERBOSE=true",
+				"-e",
+				"JIRA_VERIFY_SSL=False",
+				"-e",
+				"CONFLUENCE_VERIFY_SSL=False",
+				"ghcr.io/sooperset/mcp-atlassian:latest",
+				"--verbose",
+				"--transport",
+				"stdio"
+			]
+		},
+		"slack": {
+			"command": "docker",
+			"args": [
+				"run",
+				"--rm",
+				"-i",
+				"-e",
+				"SLACK_MCP_XOXP_TOKEN",
+				"-e",
+				"SLACK_MCP_XOXB_TOKEN",
+				"-e",
+				"SLACK_MCP_ADD_MESSAGE_TOOL=space-qa",
+				"ghcr.io/korotovsky/slack-mcp-server:latest",
+				"mcp-server",
+				"--transport",
+				"stdio"
+			],
+			"type": "stdio"
+		},
+		"jira-zephyr": {
+			"command": "docker",
+			"args": [
+				"run",
+				"--rm",
+				"-i",
+				"-e",
+				"JIRA_BASE_URL",
+				"-e",
+				"JIRA_USERNAME",
+				"-e",
+				"JIRA_API_TOKEN",
+				"-e",
+				"ZEPHYR_API_TOKEN",
+				"jira-zephyr-mcp:latest"
+			],
+			"type": "stdio"
+		},	
+		"testimize-mcp-server": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+			"run", "--rm", "-i",
+			"testimize-mcp-server:1.0.0", "--mcp"
+			]
+		}
+	},
+	"inputs": []
+}

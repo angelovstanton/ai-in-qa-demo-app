@@ -1,0 +1,12 @@
+{
+  "imageUpload": "Качване на изображения",
+  "dropImagesHere": "Пуснете изображенията тук",
+  "supportsFiles": "Поддържа JPEG и PNG файлове до {{size}}MB всеки",
+  "maximumImages": "Максимум {{max}} изображения разрешени",
+  "uploadedImages": "Качени изображения ({{current}}/{{max}})",
+  "deleteImage": "Изтрий изображение",
+  "size": "Размер",
+  "type": "Тип",
+  "fileValidName": "Файлът трябва да има валидно име",
+  "fileNotAllowedSecurity": "Типът файл не е разрешен от съображения за сигурност"
+}

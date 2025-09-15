@@ -1,0 +1,262 @@
+{
+  "title": "Известия",
+  "subtitle": "Системни известия и предупреждения",
+  "center": {
+    "title": "Център за известия",
+    "subtitle": "Всичките ви известия на едно място",
+    "markAllRead": "Маркирай всички като прочетени",
+    "clearAll": "Изчисти всички",
+    "settings": "Настройки за известия",
+    "empty": "Няма известия",
+    "loading": "Зареждане на известия...",
+    "error": "Неуспешно зареждане на известия"
+  },
+  "types": {
+    "info": "Информация",
+    "success": "Успех",
+    "warning": "Предупреждение",
+    "error": "Грешка",
+    "alert": "Сигнал",
+    "reminder": "Напомняне",
+    "update": "Обновление",
+    "system": "Система",
+    "security": "Сигурност",
+    "maintenance": "Поддръжка"
+  },
+  "actions": {
+    "markAsRead": "Маркирай като прочетено",
+    "markAsUnread": "Маркирай като непрочетено",
+    "delete": "Изтрий",
+    "view": "Виж подробности",
+    "dismiss": "Отхвърли",
+    "snooze": "Отложи",
+    "archive": "Архивирай",
+    "reply": "Отговори",
+    "forward": "Препрати",
+    "report": "Докладвай проблем"
+  },
+  "timeAgo": {
+    "justNow": "Току-що",
+    "minuteAgo": "преди {{count}} минута",
+    "minutesAgo": "преди {{count}} минути",
+    "hourAgo": "преди {{count}} час",
+    "hoursAgo": "преди {{count}} часа",
+    "dayAgo": "преди {{count}} ден",
+    "daysAgo": "преди {{count}} дни",
+    "weekAgo": "преди {{count}} седмица",
+    "weeksAgo": "преди {{count}} седмици",
+    "monthAgo": "преди {{count}} месец",
+    "monthsAgo": "преди {{count}} месеца",
+    "yearAgo": "преди {{count}} година",
+    "yearsAgo": "преди {{count}} години"
+  },
+  "requests": {
+    "newRequest": "Подадена нова заявка за услуга",
+    "requestApproved": "Вашата заявка е одобрена",
+    "requestRejected": "Вашата заявка е отхвърлена",
+    "requestAssigned": "Заявката е назначена на {{department}}",
+    "requestInProgress": "Започна работа по вашата заявка",
+    "requestCompleted": "Вашата заявка е завършена",
+    "requestOnHold": "Вашата заявка е поставена в изчакване",
+    "requestCancelled": "Вашата заявка е отменена",
+    "requestReopened": "Вашата заявка е възобновена",
+    "additionalInfoRequired": "Необходима допълнителна информация за вашата заявка",
+    "statusUpdate": "Обновяване на статуса за заявка №{{requestId}}",
+    "priorityChanged": "Приоритетът на заявката е променен на {{priority}}",
+    "assignmentChanged": "Заявката е преназначена на {{assignee}}",
+    "deadlineApproaching": "Приближава крайният срок на заявката",
+    "requestOverdue": "Заявката е просрочена",
+    "customerResponse": "Клиентът отговори на вашето съобщение",
+    "feedbackReceived": "Получена обратна връзка от клиента",
+    "reviewRequired": "Заявката изисква преглед на качеството",
+    "escalationAlert": "Заявката е ескалирана"
+  },
+  "system": {
+    "maintenanceScheduled": "Планирана поддръжка на {{date}}",
+    "maintenanceStarted": "В ход е поддръжка на системата",
+    "maintenanceCompleted": "Поддръжката на системата е завършена",
+    "systemUpdate": "Системата е обновена до версия {{version}}",
+    "performanceIssue": "Открито влошаване на производителността на системата",
+    "securityAlert": "Сигурностно предупреждение: {{description}}",
+    "backupCompleted": "Резервното копие на системата е завършено успешно",
+    "backupFailed": "Резервното копие на системата не успя",
+    "dataSync": "Синхронизирането на данните е завършено",
+    "integrationError": "Грешка в интеграцията с {{service}}",
+    "licenseExpiring": "Лицензът за софтуера скоро изтича",
+    "storageWarning": "Мястото за съхранение е на изчерпване"
+  },
+  "user": {
+    "loginSuccess": "Успешно влизане в системата",
+    "loginFailure": "Неуспешен опит за влизане",
+    "passwordChanged": "Паролата е променена",
+    "profileUpdated": "Профилът е обновен",
+    "accountLocked": "Профилът е заключен",
+    "accountUnlocked": "Профилът е отключен",
+    "roleChanged": "Вашата роля е променена на {{role}}",
+    "permissionsUpdated": "Вашите разрешения са обновени",
+    "sessionExpiring": "Сесията ви скоро ще изтече",
+    "sessionExpired": "Сесията ви е изтекла",
+    "newDevice": "Открито влизане от ново устройство",
+    "suspiciousActivity": "Открита подозрителна активност в профила ви",
+    "twoFactorEnabled": "Двуфакторната аутентификация е активирана",
+    "twoFactorDisabled": "Двуфакторната аутентификация е деактивирана"
+  },
+  "tasks": {
+    "newTaskAssigned": "Назначена нова задача: {{taskName}}",
+    "taskCompleted": "Задачата е завършена: {{taskName}}",
+    "taskOverdue": "Задачата е просрочена: {{taskName}}",
+    "taskRescheduled": "Задачата е препланирана: {{taskName}}",
+    "taskCancelled": "Задачата е отменена: {{taskName}}",
+    "deadlineReminder": "Напомняне за краен срок: {{taskName}}",
+    "taskPriorityChanged": "Приоритетът на задачата е променен: {{taskName}}",
+    "taskCommentAdded": "Добавен нов коментар към задача: {{taskName}}",
+    "taskStatusChanged": "Статусът на задачата е променен: {{taskName}}",
+    "taskReassigned": "Задачата е преназначена на вас: {{taskName}}",
+    "batchTasksCompleted": "{{count}} задачи са завършени в групова операция",
+    "workflowStarted": "Започнат работен поток: {{workflowName}}",
+    "workflowCompleted": "Завършен работен поток: {{workflowName}}"
+  },
+  "reports": {
+    "reportGenerated": "Отчетът е генериран: {{reportName}}",
+    "reportFailed": "Генерирането на отчета не успя: {{reportName}}",
+    "reportScheduled": "Отчетът е планиран: {{reportName}}",
+    "reportShared": "Отчетът е споделен с вас: {{reportName}}",
+    "reportExpiring": "Достъпът до отчета скоро изтича: {{reportName}}",
+    "dataExportReady": "Експортът на данни е готов за изтегляне",
+    "dataExportFailed": "Експортът на данни не успя",
+    "scheduledReportDelivery": "Доставен планиран отчет: {{reportName}}"
+  },
+  "meetings": {
+    "meetingScheduled": "Планирана среща: {{meetingTitle}}",
+    "meetingCancelled": "Отменена среща: {{meetingTitle}}",
+    "meetingRescheduled": "Препланирана среща: {{meetingTitle}}",
+    "meetingReminder": "Напомняне за среща: {{meetingTitle}} след {{time}}",
+    "meetingStarted": "Започна среща: {{meetingTitle}}",
+    "meetingEnded": "Приключи среща: {{meetingTitle}}",
+    "meetingInvitation": "Покана за среща: {{meetingTitle}}",
+    "meetingUpdated": "Обновени детайли за среща: {{meetingTitle}}"
+  },
+  "comments": {
+    "newComment": "Нов коментар в {{itemType}}: {{itemName}}",
+    "commentReply": "Отговор на вашия коментар в {{itemName}}",
+    "commentMention": "Споменати сте в коментар в {{itemName}}",
+    "commentLiked": "Вашият коментар беше харесан от {{userName}}",
+    "commentEdited": "Коментарът е редактиран в {{itemName}}",
+    "commentDeleted": "Коментарът е изтрит в {{itemName}}"
+  },
+  "teams": {
+    "memberAdded": "{{userName}} е добавен към вашия екип",
+    "memberRemoved": "{{userName}} е премахнат от вашия екип",
+    "roleUpdated": "Ролята на {{userName}} е обновена на {{role}}",
+    "teamCreated": "Създаден нов екип: {{teamName}}",
+    "teamDeleted": "Изтрит екип: {{teamName}}",
+    "teamInvitation": "Поканени сте да се присъедините към {{teamName}}",
+    "teamMeeting": "Планирана екипна среща: {{meetingTitle}}"
+  },
+  "approval": {
+    "approvalRequired": "Необходимо е вашето одобрение за {{itemName}}",
+    "approvalGranted": "Одобрение предоставено за {{itemName}}",
+    "approvalDenied": "Одобрение отказано за {{itemName}}",
+    "approvalRevoked": "Одобрение отменено за {{itemName}}",
+    "approvalExpiring": "Одобрението скоро изтича за {{itemName}}",
+    "approvalOverdue": "Одобрението е просрочено за {{itemName}}",
+    "multiLevelApproval": "Необходимо многостепенно одобрение за {{itemName}}"
+  },
+  "integration": {
+    "connectionEstablished": "Установена връзка с {{serviceName}}",
+    "connectionLost": "Загубена връзка с {{serviceName}}",
+    "syncCompleted": "Синхронизирането на данни с {{serviceName}} е завършено",
+    "syncFailed": "Синхронизирането на данни с {{serviceName}} не успя",
+    "apiLimitReached": "Достигнат лимит на API за {{serviceName}}",
+    "webhookReceived": "Получен webhook от {{serviceName}}",
+    "integrationError": "Грешка в интеграцията с {{serviceName}}: {{error}}"
+  },
+  "settings": {
+    "title": "Настройки за известия",
+    "subtitle": "Управлявайте предпочитанията си за известия",
+    "channels": {
+      "email": "Известия по имейл",
+      "push": "Push известия",
+      "sms": "SMS известия",
+      "inApp": "Известия в приложението",
+      "desktop": "Десктоп известия",
+      "mobile": "Мобилни известия"
+    },
+    "frequency": {
+      "immediately": "Незабавно",
+      "hourly": "Часов дайджест",
+      "daily": "Дневен дайджест",
+      "weekly": "Седмичен дайджест",
+      "never": "Никога"
+    },
+    "categories": {
+      "requests": "Заявки за услуги",
+      "tasks": "Задачи и назначения",
+      "system": "Системни обновления",
+      "security": "Сигурностни предупреждения",
+      "reports": "Отчети",
+      "meetings": "Срещи",
+      "comments": "Коментари и споменавания",
+      "approvals": "Одобрения",
+      "teams": "Обновления на екипа"
+    },
+    "preferences": {
+      "soundEnabled": "Активирай звуци за известия",
+      "vibrationEnabled": "Активирай вибрация",
+      "showPreview": "Покажи преглед на известието",
+      "groupSimilar": "Групирай подобни известия",
+      "quietHours": "Тихи часове",
+      "priorityOnly": "Само приоритетни известия",
+      "summaryMode": "Режим на резюме"
+    },
+    "actions": {
+      "save": "Запази предпочитания",
+      "reset": "Възстанови по подразбиране",
+      "testNotification": "Изпрати тестово известие",
+      "exportSettings": "Експорт на настройки",
+      "importSettings": "Импорт на настройки"
+    }
+  },
+  "filters": {
+    "all": "Всички известия",
+    "unread": "Непрочетени",
+    "read": "Прочетени",
+    "starred": "Отбелязани със звездичка",
+    "archived": "Архивирани",
+    "today": "Днес",
+    "thisWeek": "Тази седмица",
+    "thisMonth": "Този месец",
+    "byType": "По тип",
+    "byPriority": "По приоритет",
+    "bySource": "По източник"
+  },
+  "priority": {
+    "critical": "Критичен",
+    "high": "Висок",
+    "medium": "Среден",
+    "low": "Нисък",
+    "info": "Информация"
+  },
+  "status": {
+    "delivered": "Доставено",
+    "failed": "Неуспешно",
+    "pending": "В очакване",
+    "scheduled": "Планирано",
+    "cancelled": "Отменено"
+  },
+  "errors": {
+    "loadFailed": "Неуспешно зареждане на известия",
+    "markReadFailed": "Неуспешно маркиране като прочетено",
+    "deleteFailed": "Неуспешно изтриване на известие",
+    "settingsSaveFailed": "Неуспешно запазване на настройките за известия",
+    "testNotificationFailed": "Неуспешно изпращане на тестово известие",
+    "permissionDenied": "Отказано разрешение за известия"
+  },
+  "confirmations": {
+    "deleteAll": "Сигурни ли сте, че искате да изтриете всички известия?",
+    "markAllRead": "Маркирай всички известия като прочетени?",
+    "clearHistory": "Изчисти историята на известията?",
+    "resetSettings": "Възстанови настройките за известия по подразбиране?",
+    "disableNotifications": "Деактивирай всички известия?"
+  }
+}

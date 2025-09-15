@@ -1,4 +1,4 @@
-# ?? AI in QA Demo Application
+# 🤖 AI in QA Demo Application
 
 > **A comprehensive municipal service management system designed to showcase AI-powered Quality Assurance testing capabilities**
 
@@ -8,11 +8,11 @@
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-## ?? **Purpose**
+## 🎯 **Purpose**
 
 This application serves as a **comprehensive testing playground** for demonstrating AI-powered Quality Assurance tools and automated testing frameworks. It features a realistic municipal service request management system with complex workflows, multiple user roles, and extensive form interactions.
 
-## ? **Quick Start**
+## 🚀 **Quick Start**
 
 ### **Option 1: Docker (Recommended)**
 ```bash
@@ -41,54 +41,54 @@ npm install
 npm run dev
 ```
 
-**?? Access**: http://localhost:5173
+**🌐 Access**: http://localhost:5173
 
-## ??? **Architecture Overview**
+## 🏗️ **Architecture Overview**
 
 ```
-?? AI in QA Demo App
-??? ?? city-services-portal/          # Main application
-?   ??? ?? api/                       # Node.js + Express + TypeScript backend
-?   ?   ??? prisma/                   # Database schema & seeds
-?   ?   ??? src/                      # Source code
-?   ?   ?   ??? routes/               # API endpoints
-?   ?   ?   ??? middleware/           # Auth, validation, feature flags
-?   ?   ?   ??? services/             # Business logic
-?   ?   ?   ??? utils/                # Utilities & helpers
-?   ?   ??? uploads/                  # File upload storage
-?   ??? ?? ui/                        # React + TypeScript frontend
-?   ?   ??? src/                      # Source code
-?   ?   ?   ??? components/           # Reusable UI components
-?   ?   ?   ??? pages/                # Page components by role
-?   ?   ?   ??? hooks/                # Custom React hooks
-?   ?   ?   ??? contexts/             # React contexts
-?   ?   ?   ??? types/                # TypeScript definitions
-?   ?   ??? public/                   # Static assets
-?   ??? ?? docker/                    # Docker configuration
-??? ?? .github/                       # GitHub workflows & templates
+📦 AI in QA Demo App
+├── 📁 city-services-portal/          # Main application
+│   ├── 📂 api/                       # Node.js + Express + TypeScript backend
+│   │   ├── prisma/                   # Database schema & seeds
+│   │   ├── src/                      # Source code
+│   │   │   ├── routes/               # API endpoints
+│   │   │   ├── middleware/           # Auth, validation, feature flags
+│   │   │   ├── services/             # Business logic
+│   │   │   └── utils/                # Utilities & helpers
+│   │   └── uploads/                  # File upload storage
+│   ├── 📂 ui/                        # React + TypeScript frontend
+│   │   ├── src/                      # Source code
+│   │   │   ├── components/           # Reusable UI components
+│   │   │   ├── pages/                # Page components by role
+│   │   │   ├── hooks/                # Custom React hooks
+│   │   │   ├── contexts/             # React contexts
+│   │   │   └── types/                # TypeScript definitions
+│   │   └── public/                   # Static assets
+│   └── 🐳 docker/                    # Docker configuration
+└── 📁 .github/                       # GitHub workflows & templates
 ```
 
-## ?? **User Roles & Capabilities**
+## 👥 **User Roles & Capabilities**
 
 | Role | Access Level | Primary Functions | Demo Account |
 |------|-------------|-------------------|--------------|
-| ?? **Citizen** | Public | Submit requests, track status, upload attachments | `john@example.com` |
-| ????? **Clerk** | Internal | Triage requests, update status, manage inbox | `mary.clerk@city.gov` |
-| ????? **Supervisor** | Manager | Assign tasks, oversee workflow, approve actions | `supervisor@city.gov` |
-| ?? **Field Agent** | Field | Complete assigned tasks, update progress | `field.agent@city.gov` |
-| ?? **Admin** | System | Manage feature flags, system configuration | `admin@city.gov` |
+| 👤 **Citizen** | Public | Submit requests, track status, upload attachments | `john@example.com` |
+| 👩‍💼 **Clerk** | Internal | Triage requests, update status, manage inbox | `mary.clerk@city.gov` |
+| 👨‍💼 **Supervisor** | Manager | Assign tasks, oversee workflow, approve actions | `supervisor@city.gov` |
+| 🚐 **Field Agent** | Field | Complete assigned tasks, update progress | `field.agent@city.gov` |
+| 🔧 **Admin** | System | Manage feature flags, system configuration | `admin@city.gov` |
 
 **Password for all accounts**: `password123`
 
-## ?? **QA Testing Features**
+## 🧪 **QA Testing Features**
 
-### **??? Feature Flags for Bug Simulation**
+### **🐛 Feature Flags for Bug Simulation**
 - `API_Random500` - Introduces 5% random server errors
 - `UI_WrongDefaultSort` - Wrong default sorting behavior
 - `API_SlowRequests` - Simulates 10% slow API responses  
 - `API_UploadIntermittentFail` - Random upload failures
 
-### **??? Comprehensive Test Selectors**
+### **🎯 Comprehensive Test Selectors**
 All interactive elements include `data-testid` attributes:
 ```typescript
 // Authentication
@@ -105,23 +105,23 @@ All interactive elements include `data-testid` attributes:
 "cs-admin-seed-database"
 ```
 
-### **?? Complex Form Interactions**
+### **📝 Complex Form Interactions**
 - **Multi-step Wizard**: 5-step request submission with validation
 - **Dynamic Fields**: Add/remove contacts, permits, attachments
 - **Conditional Logic**: Fields that appear based on selections
 - **Advanced Validation**: Regex patterns, cross-field validation
 - **File Uploads**: Image attachments with size/type validation
 
-### **?? Workflow State Machine**
+### **🔄 Workflow State Machine**
 ```
-SUBMITTED ? TRIAGED ? IN_PROGRESS ? RESOLVED ? CLOSED
-              ?           ?           ?
-           REJECTED  WAITING_ON_CITIZEN  ?
-                          ?         REOPENED
+SUBMITTED → TRIAGED → IN_PROGRESS → RESOLVED → CLOSED
+              ↓           ↓           ↓
+           REJECTED  WAITING_ON_CITIZEN  ↓
+                          ↑         REOPENED
                       IN_PROGRESS
 ```
 
-## ??? **Technology Stack**
+## 💻 **Technology Stack**
 
 ### **Backend**
 - **Runtime**: Node.js 18+ with TypeScript
@@ -147,22 +147,22 @@ SUBMITTED ? TRIAGED ? IN_PROGRESS ? RESOLVED ? CLOSED
 - **Database**: Automatic migrations and seeding
 - **File Storage**: Local file system with organized structure
 
-## ?? **Key Testing Scenarios**
+## 🎭 **Key Testing Scenarios**
 
-### **?? Authentication & Authorization**
+### **🔐 Authentication & Authorization**
 - User registration with comprehensive validation
 - Login/logout flows with proper session management
 - Role-based access control across all features
 - Token expiration and refresh handling
 
-### **?? Form Interactions**
+### **📋 Form Interactions**
 - Multi-step wizard with conditional fields
 - Dynamic form arrays (add/remove items)
 - File upload with drag-and-drop support
 - Real-time validation with user feedback
 - Auto-save and form recovery
 
-### **?? Search & Filtering**
+### **🔍 Search & Filtering**
 - **Dual Search Endpoints**: GET for simple queries, POST for complex searches
 - **Advanced Filtering**: Geolocation, date ranges, citizen interactions
 - **Real-time Suggestions**: Autocomplete for categories and locations
@@ -172,55 +172,55 @@ SUBMITTED ? TRIAGED ? IN_PROGRESS ? RESOLVED ? CLOSED
 - Sortable columns with server-side sorting
 - Pagination with configurable page sizes
 
-### **?? Data Management**
+### **💾 Data Management**
 - CRUD operations with optimistic locking
 - Bulk operations and selections
 - Export functionality (ready for implementation)
 - Audit trails and change history
 
-### **??? Admin Features**
+### **⚙️ Admin Features**
 - Feature flag toggles with immediate effect
 - Database seeding and reset capabilities
 - System health monitoring
 - User management (ready for extension)
 
-## ?? **API Documentation**
+## 📚 **API Documentation**
 
 Full interactive API documentation available at: **http://localhost:3001/api-docs**
 
 ### **Core Endpoints**
 ```
 Authentication
-??? POST /api/v1/auth/login          # User authentication
-??? POST /api/v1/auth/register       # User registration
-??? GET  /api/v1/auth/me            # Current user profile
+├── POST /api/v1/auth/login          # User authentication
+├── POST /api/v1/auth/register       # User registration
+└── GET  /api/v1/auth/me            # Current user profile
 
 Service Requests
-??? GET    /api/v1/requests          # List with filtering/sorting
-??? POST   /api/v1/requests          # Create new request
-??? GET    /api/v1/requests/:id      # Get specific request
-??? PATCH  /api/v1/requests/:id      # Update request
-??? POST   /api/v1/requests/:id/status # Change request status
+├── GET    /api/v1/requests          # List with filtering/sorting
+├── POST   /api/v1/requests          # Create new request
+├── GET    /api/v1/requests/:id      # Get specific request
+├── PATCH  /api/v1/requests/:id      # Update request
+└── POST   /api/v1/requests/:id/status # Change request status
 
 Search & Export
-??? GET    /api/v1/service-requests/search     # Simple search with query params
-??? POST   /api/v1/service-requests/search     # Complex search with JSON body
-??? GET    /api/v1/service-requests/search/suggestions # Search autocomplete
-??? POST   /api/v1/service-requests/search/export     # Export results (CSV/JSON)
-??? DELETE /api/v1/service-requests/search/cache      # Clear search cache
+├── GET    /api/v1/service-requests/search     # Simple search with query params
+├── POST   /api/v1/service-requests/search     # Complex search with JSON body
+├── GET    /api/v1/service-requests/search/suggestions # Search autocomplete
+├── POST   /api/v1/service-requests/search/export     # Export results (CSV/JSON)
+└── DELETE /api/v1/service-requests/search/cache      # Clear search cache
 
 File Management
-??? POST   /api/v1/requests/:id/attachments # Upload files
-??? GET    /api/v1/attachments/:id         # Download files
+├── POST   /api/v1/requests/:id/attachments # Upload files
+└── GET    /api/v1/attachments/:id         # Download files
 
 Administration
-??? GET    /api/v1/admin/flags       # Feature flags
-??? POST   /api/v1/admin/flags       # Update feature flags
-??? POST   /api/v1/admin/seed        # Seed database
-??? GET    /api/v1/health           # System health check
+├── GET    /api/v1/admin/flags       # Feature flags
+├── POST   /api/v1/admin/flags       # Update feature flags
+├── POST   /api/v1/admin/seed        # Seed database
+└── GET    /api/v1/health           # System health check
 ```
 
-## ?? **Perfect for Testing**
+## ✨ **Perfect for Testing**
 
 ### **Manual Testing**
 - **Complex Workflows**: End-to-end user journeys
@@ -246,7 +246,7 @@ Administration
 - **Input Validation**: Server-side validation for all inputs
 - **File Upload Security**: Type and size restrictions
 
-## ?? **Docker Setup**
+## 🐳 **Docker Setup**
 
 The application includes comprehensive Docker configuration:
 
@@ -260,7 +260,7 @@ The application includes comprehensive Docker configuration:
 - Environment variable management
 ```
 
-## ?? **Development**
+## 🛠️ **Development**
 
 ### **Prerequisites**
 - Node.js 18+ and npm
@@ -299,7 +299,7 @@ npm run db:seed
 npm run db:studio
 ```
 
-## ?? **Testing Data**
+## 📊 **Testing Data**
 
 The application comes pre-seeded with:
 - **5 User Accounts** (one per role)
@@ -308,7 +308,7 @@ The application comes pre-seeded with:
 - **Sample Comments** and status changes
 - **Test Attachments** (placeholder files)
 
-## ?? **Contributing**
+## 🤝 **Contributing**
 
 This project is designed for QA demonstration purposes. For contributions:
 
@@ -324,21 +324,21 @@ This project is designed for QA demonstration purposes. For contributions:
 - Comprehensive error handling
 - Test coverage for new features
 
-## ?? **License**
+## 📄 **License**
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## ????? **Support**
+## 💬 **Support**
 
 For questions, issues, or feature requests:
 - **GitHub Issues**: Use the issue tracker
 - **Documentation**: Check the `/docs` folder
 - **API Docs**: http://localhost:3001/api-docs
 
-## ?? **Acknowledgments**
+## 🙏 **Acknowledgments**
 
 Built with modern web technologies and best practices to provide a realistic testing environment for AI-powered QA tools.
 
 ---
 
-**Made with ?? for the QA Community**
+**Made with ❤️ for the QA Community**

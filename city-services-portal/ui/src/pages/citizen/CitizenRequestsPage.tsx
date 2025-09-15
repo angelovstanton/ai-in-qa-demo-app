@@ -30,15 +30,18 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import DataTable from '../../components/DataTable';
 import { useServiceRequests } from '../../hooks/useServiceRequests';
 import { ServiceRequest } from '../../types';
-import { createCitizenRequestColumns, categoryLabels } from '../../config/citizenRequestColumns';
+import { createCitizenRequestColumns, getCategoryLabel } from '../../config/citizenRequestColumns';
+import { getDataGridLocaleText } from '../../config/dataGridLocale';
 import api from '../../lib/api';
 
 const CitizenRequestsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: 10,
@@ -126,8 +129,9 @@ const CitizenRequestsPage: React.FC = () => {
       isMyRequests: true,
       userId: user?.id,
       onViewRequest: handleViewRequest,
-      onUpvote: handleUpvote
-    }), [user?.id, handleViewRequest, handleUpvote]
+      onUpvote: handleUpvote,
+      t
+    }), [user?.id, handleViewRequest, handleUpvote, t]
   );
 
   // Transform data for DataGrid with error handling
@@ -151,7 +155,7 @@ const CitizenRequestsPage: React.FC = () => {
       <Box sx={{ p: 3 }} data-testid="cs-citizen-requests-page">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            My Service Requests
+            {t('requests:myRequests')}
           </Typography>
           <Button
             variant="contained"
@@ -159,7 +163,7 @@ const CitizenRequestsPage: React.FC = () => {
             onClick={() => navigate('/citizen/requests/new')}
             data-testid="cs-requests-new-button"
           >
-            New Request
+            {t('requests:createNew')}
           </Button>
         </Box>
 
@@ -175,7 +179,7 @@ const CitizenRequestsPage: React.FC = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FilterIcon />
-                Filters
+                {t('requests:filters.title')}
               </Typography>
               {hasActiveFilters && (
                 <Button
@@ -185,7 +189,7 @@ const CitizenRequestsPage: React.FC = () => {
                   onClick={clearAllFilters}
                   data-testid="cs-requests-clear-filters"
                 >
-                  Clear All
+                  {t('requests:filters.clearFilters')}
                 </Button>
               )}
             </Box>
@@ -195,7 +199,8 @@ const CitizenRequestsPage: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="Search requests"
+                  label={t('common:search')}
+                  placeholder={t('requests:filters.searchPlaceholder', 'Search requests')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -211,38 +216,38 @@ const CitizenRequestsPage: React.FC = () => {
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>{t('requests:status')}</InputLabel>
                   <Select
                     value={statusFilter}
-                    label="Status"
+                    label={t('requests:status')}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     data-testid="cs-requests-status-filter"
                   >
-                    <MenuItem value="">All Status</MenuItem>
-                    <MenuItem value="SUBMITTED">Submitted</MenuItem>
-                    <MenuItem value="TRIAGED">Triaged</MenuItem>
-                    <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                    <MenuItem value="WAITING_ON_CITIZEN">Waiting on Citizen</MenuItem>
-                    <MenuItem value="RESOLVED">Resolved</MenuItem>
-                    <MenuItem value="CLOSED">Closed</MenuItem>
-                    <MenuItem value="REJECTED">Rejected</MenuItem>
+                    <MenuItem value="">{t('requests:filters.allStatuses', 'All Statuses')}</MenuItem>
+                    <MenuItem value="SUBMITTED">{t('requests:statuses.SUBMITTED')}</MenuItem>
+                    <MenuItem value="TRIAGED">{t('requests:statuses.TRIAGED')}</MenuItem>
+                    <MenuItem value="IN_PROGRESS">{t('requests:statuses.IN_PROGRESS')}</MenuItem>
+                    <MenuItem value="WAITING_ON_CITIZEN">{t('requests:statuses.WAITING_ON_CITIZEN')}</MenuItem>
+                    <MenuItem value="RESOLVED">{t('requests:statuses.RESOLVED')}</MenuItem>
+                    <MenuItem value="CLOSED">{t('requests:statuses.CLOSED')}</MenuItem>
+                    <MenuItem value="REJECTED">{t('requests:statuses.REJECTED')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>{t('requests:category')}</InputLabel>
                   <Select
                     value={categoryFilter}
-                    label="Category"
+                    label={t('requests:category')}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     data-testid="cs-requests-category-filter"
                   >
-                    <MenuItem value="">All Categories</MenuItem>
+                    <MenuItem value="">{t('requests:filters.allCategories', 'All Categories')}</MenuItem>
                     {categories.map((category) => (
                       <MenuItem key={category} value={category}>
-                        {categoryLabels[category]}
+                        {getCategoryLabel(category, t)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -251,18 +256,18 @@ const CitizenRequestsPage: React.FC = () => {
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Priority</InputLabel>
+                  <InputLabel>{t('requests:priority')}</InputLabel>
                   <Select
                     value={priorityFilter}
-                    label="Priority"
+                    label={t('requests:priority')}
                     onChange={(e) => setPriorityFilter(e.target.value)}
                     data-testid="cs-requests-priority-filter"
                   >
-                    <MenuItem value="">All Priorities</MenuItem>
-                    <MenuItem value="LOW">Low</MenuItem>
-                    <MenuItem value="MEDIUM">Medium</MenuItem>
-                    <MenuItem value="HIGH">High</MenuItem>
-                    <MenuItem value="URGENT">Urgent</MenuItem>
+                    <MenuItem value="">{t('requests:filters.allPriorities', 'All Priorities')}</MenuItem>
+                    <MenuItem value="LOW">{t('requests:priorities.LOW')}</MenuItem>
+                    <MenuItem value="MEDIUM">{t('requests:priorities.MEDIUM')}</MenuItem>
+                    <MenuItem value="HIGH">{t('requests:priorities.HIGH')}</MenuItem>
+                    <MenuItem value="URGENT">{t('requests:priorities.URGENT')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -328,6 +333,7 @@ const CitizenRequestsPage: React.FC = () => {
           onFilterModelChange={setFilterModel}
           onRowClick={handleRowClick}
           testId="cs-citizen-requests-grid"
+          localeText={getDataGridLocaleText(t)}
         />
       </Box>
     </LocalizationProvider>

@@ -29,6 +29,7 @@ import { Link as RouterLink, useSearchParams, useNavigate } from 'react-router-d
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 const resetPasswordSchema = z.object({
@@ -50,6 +51,7 @@ type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 const ResetPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const token = searchParams.get('token');
   
   const [loading, setLoading] = useState(false);
@@ -75,11 +77,11 @@ const ResetPasswordPage: React.FC = () => {
 
   // Password strength indicators
   const passwordRequirements = [
-    { label: 'At least 8 characters', met: newPassword.length >= 8 },
-    { label: 'Contains uppercase letter', met: /[A-Z]/.test(newPassword) },
-    { label: 'Contains lowercase letter', met: /[a-z]/.test(newPassword) },
-    { label: 'Contains number', met: /\d/.test(newPassword) },
-    { label: 'Contains special character', met: /[@$!%*?&]/.test(newPassword) },
+    { label: t('auth:resetPassword.requirement8Chars'), met: newPassword.length >= 8 },
+    { label: t('auth:resetPassword.requirementUppercase'), met: /[A-Z]/.test(newPassword) },
+    { label: t('auth:resetPassword.requirementLowercase'), met: /[a-z]/.test(newPassword) },
+    { label: t('auth:resetPassword.requirementNumber'), met: /\d/.test(newPassword) },
+    { label: t('auth:resetPassword.requirementSpecial'), met: /[@$!%*?&]/.test(newPassword) },
   ];
 
   const passwordStrength = passwordRequirements.filter(req => req.met).length;
@@ -95,9 +97,9 @@ const ResetPasswordPage: React.FC = () => {
 
   useEffect(() => {
     if (!token) {
-      setError('Invalid or missing reset token. Please request a new password reset.');
+      setError(t('auth:resetPassword.invalidToken'));
     }
-  }, [token]);
+  }, [token, t]);
 
   const onSubmit = async (data: ResetPasswordData) => {
     if (!token) {
@@ -159,10 +161,10 @@ const ResetPasswordPage: React.FC = () => {
                 gutterBottom
                 data-testid="cs-reset-password-title"
               >
-                Reset Your Password
+                {t('auth:resetPassword.title')}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Please enter your new password below
+                {t('auth:resetPassword.subtitle')}
               </Typography>
             </Box>
 
@@ -191,7 +193,8 @@ const ResetPasswordPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="New Password"
+                      label={t('auth:resetPassword.passwordLabel')}
+                      placeholder={t('auth:resetPassword.passwordPlaceholder')}
                       type={showNewPassword ? 'text' : 'password'}
                       margin="normal"
                       error={!!errors.newPassword}
@@ -221,7 +224,8 @@ const ResetPasswordPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Confirm New Password"
+                      label={t('auth:resetPassword.confirmPasswordLabel')}
+                      placeholder={t('auth:resetPassword.confirmPasswordPlaceholder')}
                       type={showConfirmPassword ? 'text' : 'password'}
                       margin="normal"
                       error={!!errors.confirmPassword}
@@ -247,7 +251,7 @@ const ResetPasswordPage: React.FC = () => {
                 {newPassword && (
                   <Box sx={{ mt: 2, mb: 2 }}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Password Strength
+                      {t('auth:resetPassword.passwordStrength')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -289,7 +293,7 @@ const ResetPasswordPage: React.FC = () => {
                   sx={{ mt: 3, mb: 2 }}
                   startIcon={<Lock />}
                 >
-                  {loading ? 'Resetting Password...' : 'Reset Password'}
+                  {loading ? t('auth:resetPassword.resetting') : t('auth:resetPassword.submitButton')}
                 </Button>
 
                 <Box sx={{ textAlign: 'center' }}>
@@ -299,7 +303,7 @@ const ResetPasswordPage: React.FC = () => {
                     color="primary"
                     data-testid="cs-reset-password-back-to-login"
                   >
-                    Back to Login
+                    {t('auth:resetPassword.backToLogin')}
                   </Link>
                 </Box>
               </Box>
@@ -308,7 +312,7 @@ const ResetPasswordPage: React.FC = () => {
             {!token && (
               <Box sx={{ textAlign: 'center' }}>
                 <Alert severity="error" sx={{ mb: 3 }}>
-                  Invalid or expired reset link
+                  {t('auth:resetPassword.invalidExpiredLink')}
                 </Alert>
                 <Button
                   variant="contained"
@@ -316,7 +320,7 @@ const ResetPasswordPage: React.FC = () => {
                   to="/forgot-password"
                   data-testid="cs-reset-password-request-new"
                 >
-                  Request New Reset Link
+                  {t('auth:resetPassword.requestNewLink')}
                 </Button>
               </Box>
             )}

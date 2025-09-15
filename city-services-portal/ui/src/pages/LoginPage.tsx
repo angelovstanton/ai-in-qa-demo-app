@@ -20,55 +20,63 @@ import {
 import { Person, Work, AdminPanelSettings, Build, SupervisorAccount } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { useTestingFlag } from '../contexts/TestingFlagsContext';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Testing flags
+  const loginButtonShowsRegister = useTestingFlag('LOGIN_BUTTON_SHOWS_REGISTER');
+  const passwordFieldShowsPlainText = useTestingFlag('PASSWORD_FIELD_SHOWS_PLAIN_TEXT');
+  const loginFormLosesEmailOnError = useTestingFlag('LOGIN_FORM_LOSES_EMAIL_ON_ERROR');
 
   // Demo account credentials - Main accounts
   const mainDemoAccounts = [
     {
-      role: 'Citizen',
+      role: t('auth:roles.CITIZEN'),
       email: 'john@example.com',
       password: 'password123',
       icon: <Person />,
       color: 'primary' as const,
-      description: 'Submit and track service requests'
+      description: t('auth:login.citizenDesc', 'Submit and track service requests')
     },
     {
-      role: 'Clerk',
+      role: t('auth:roles.CLERK'),
       email: 'mary.clerk@city.gov',
       password: 'password123',
       icon: <Work />,
       color: 'secondary' as const,
-      description: 'Process and manage requests'
+      description: t('auth:login.clerkDesc', 'Process and manage requests')
     },
     {
-      role: 'Supervisor',
+      role: t('auth:roles.SUPERVISOR'),
       email: 'supervisor@city.gov',
       password: 'password123',
       icon: <SupervisorAccount />,
       color: 'warning' as const,
-      description: 'Assign tasks and oversee workflow'
+      description: t('auth:login.supervisorDesc', 'Assign tasks and oversee workflow')
     },
     {
-      role: 'Field Agent',
+      role: t('auth:roles.FIELD_AGENT'),
       email: 'field.agent@city.gov',
       password: 'password123',
       icon: <Build />,
       color: 'info' as const,
-      description: 'Complete field work and update status'
+      description: t('auth:login.fieldAgentDesc', 'Complete field work and update status')
     },
     {
-      role: 'Admin',
+      role: t('auth:roles.ADMIN'),
       email: 'admin@city.gov',
       password: 'password123',
       icon: <AdminPanelSettings />,
       color: 'error' as const,
-      description: 'System configuration and feature flags'
+      description: t('auth:login.adminDesc', 'System configuration and feature flags')
     }
   ];
 
@@ -129,6 +137,10 @@ const LoginPage: React.FC = () => {
       window.location.href = '/';
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Login failed');
+      // Apply testing flag: clear email on error
+      if (loginFormLosesEmailOnError) {
+        setEmail('');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +167,7 @@ const LoginPage: React.FC = () => {
               gutterBottom
               data-testid="cs-login-title"
             >
-              City Services Login
+              {t('auth:login.title')}
             </Typography>
 
             {error && (
@@ -172,7 +184,8 @@ const LoginPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label="Email"
+                label={t('auth:login.emailLabel')}
+                placeholder={t('auth:login.emailPlaceholder')}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -184,8 +197,9 @@ const LoginPage: React.FC = () => {
 
               <TextField
                 fullWidth
-                label="Password"
-                type="password"
+                label={t('auth:login.passwordLabel')}
+                placeholder={t('auth:login.passwordPlaceholder')}
+                type={passwordFieldShowsPlainText ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 margin="normal"
@@ -203,20 +217,20 @@ const LoginPage: React.FC = () => {
                 data-testid="cs-login-submit"
                 sx={{ mt: 3, mb: 2 }}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? t('auth:login.signingIn') : (loginButtonShowsRegister ? 'Register Account' : t('auth:login.submitButton'))}
               </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="body2" sx={{ mb: 1 }}>
                 <Link component={RouterLink} to="/forgot-password" color="primary" data-testid="cs-login-forgot-password-link">
-                  Forgot Password?
+                  {t('auth:login.forgotPassword')}
                 </Link>
               </Typography>
               <Typography variant="body2">
-                Don't have an account?{' '}
+                {t('auth:login.noAccount')}{' '}
                 <Link component={RouterLink} to="/register" color="primary" data-testid="cs-login-register-link">
-                  Create Account
+                  {t('auth:login.signUp')}
                 </Link>
               </Typography>
             </Box>
@@ -225,20 +239,20 @@ const LoginPage: React.FC = () => {
 
             <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1 }}>
               <Typography variant="subtitle2" gutterBottom fontWeight="bold" data-testid="cs-demo-accounts-title">
-                Demo Accounts - Click to Prefill:
+                {t('auth:login.demoAccounts', 'Demo Accounts - Click to Prefill:')}
               </Typography>
               
               {/* Dropdown for all demo accounts */}
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Select Demo Account</InputLabel>
+                <InputLabel>{t('auth:login.selectDemoAccount', 'Select Demo Account')}</InputLabel>
                 <Select
                   value={selectedDemoAccount}
-                  label="Select Demo Account"
+                  label={t('auth:login.selectDemoAccount', 'Select Demo Account')}
                   onChange={(e) => handleDemoAccountSelect(e.target.value)}
                   data-testid="cs-demo-account-dropdown"
                 >
                   <MenuItem value="">
-                    <em>Choose an account...</em>
+                    <em>{t('auth:login.chooseAccount', 'Choose an account...')}</em>
                   </MenuItem>
                   {allDemoAccounts.map((account, index) => (
                     <MenuItem key={`${account.role}-${index}`} value={account.email}>

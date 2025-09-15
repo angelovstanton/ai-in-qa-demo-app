@@ -7,6 +7,7 @@ import {
   Grid,
   Alert,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { ServiceRequestFormData } from '../../schemas/formSchemas';
 import LocationDisplayMap from '../LocationDisplayMap';
 
@@ -29,22 +30,24 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   submitSuccess,
   isBlocked,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Box data-testid="cs-new-request-step-5">
       <Typography variant="h6" gutterBottom>
-        Review Your Request
+        {t('requests:form.reviewTitle', 'Review Your Request')}
       </Typography>
       
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Basic Information</Typography>
-              <Typography variant="body2"><strong>Title:</strong> {watchedValues.title}</Typography>
-              <Typography variant="body2"><strong>Category:</strong> {categoryLabels[watchedValues.category] || watchedValues.category}</Typography>
-              <Typography variant="body2"><strong>Priority:</strong> {watchedValues.priority}</Typography>
-              <Typography variant="body2"><strong>Emergency:</strong> {watchedValues.isEmergency ? 'Yes' : 'No'}</Typography>
-              <Typography variant="body2"><strong>Date of Request:</strong> {watchedValues.dateOfRequest ? new Date(watchedValues.dateOfRequest).toLocaleDateString() : 'Not selected'}</Typography>
+              <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.step1', 'Basic Information')}</Typography>
+              <Typography variant="body2"><strong>{t('requests:form.titleLabel', 'Title')}:</strong> {watchedValues.title}</Typography>
+              <Typography variant="body2"><strong>{t('requests:category', 'Category')}:</strong> {categoryLabels[watchedValues.category] || watchedValues.category}</Typography>
+              <Typography variant="body2"><strong>{t('requests:priority', 'Priority')}:</strong> {watchedValues.priority}</Typography>
+              <Typography variant="body2"><strong>{t('requests:form.isEmergency', 'Emergency')}:</strong> {watchedValues.isEmergency ? t('common:yes', 'Yes') : t('common:no', 'No')}</Typography>
+              <Typography variant="body2"><strong>{t('requests:form.dateOfRequest', 'Date of Request')}:</strong> {watchedValues.dateOfRequest ? new Date(watchedValues.dateOfRequest).toLocaleDateString() : t('requests:review.notSelected', 'Not selected')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -52,17 +55,17 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Location</Typography>
+              <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.step2', 'Location')}</Typography>
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="body2"><strong>Address:</strong> {watchedValues.streetAddress || 'Not provided'}</Typography>
-                  <Typography variant="body2"><strong>City:</strong> {watchedValues.city || 'Not provided'}</Typography>
-                  <Typography variant="body2"><strong>Postal Code:</strong> {watchedValues.postalCode || 'Not provided'}</Typography>
-                  <Typography variant="body2"><strong>Location Details:</strong> {watchedValues.locationText || 'Not provided'}</Typography>
-                  {watchedValues.landmark && <Typography variant="body2"><strong>Landmark:</strong> {watchedValues.landmark}</Typography>}
-                  {watchedValues.accessInstructions && <Typography variant="body2"><strong>Access Instructions:</strong> {watchedValues.accessInstructions}</Typography>}
+                  <Typography variant="body2"><strong>{t('common:address', 'Address')}:</strong> {watchedValues.streetAddress || t('requests:review.notProvided', 'Not provided')}</Typography>
+                  <Typography variant="body2"><strong>{t('common:city', 'City')}:</strong> {watchedValues.city || t('requests:review.notProvided', 'Not provided')}</Typography>
+                  <Typography variant="body2"><strong>{t('common:postalCode', 'Postal Code')}:</strong> {watchedValues.postalCode || t('requests:review.notProvided', 'Not provided')}</Typography>
+                  <Typography variant="body2"><strong>{t('requests:form.locationLabel', 'Location Details')}:</strong> {watchedValues.locationText || t('requests:review.notProvided', 'Not provided')}</Typography>
+                  {watchedValues.landmark && <Typography variant="body2"><strong>{t('requests:form.landmarkLabel', 'Landmark')}:</strong> {watchedValues.landmark}</Typography>}
+                  {watchedValues.accessInstructions && <Typography variant="body2"><strong>{t('requests:form.accessInstructionsLabel', 'Access Instructions')}:</strong> {watchedValues.accessInstructions}</Typography>}
                   {watchedValues.latitude && watchedValues.longitude && (
-                    <Typography variant="body2"><strong>Coordinates:</strong> {watchedValues.latitude.toFixed(6)}, {watchedValues.longitude.toFixed(6)}</Typography>
+                    <Typography variant="body2"><strong>{t('requests:form.coordinatesLabel', 'Coordinates')}:</strong> {watchedValues.latitude.toFixed(6)}, {watchedValues.longitude.toFixed(6)}</Typography>
                   )}
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -72,7 +75,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                         latitude={watchedValues.latitude}
                         longitude={watchedValues.longitude}
                         address={[watchedValues.streetAddress, watchedValues.city, watchedValues.postalCode].filter(Boolean).join(', ')}
-                        title="Service Request Location"
+                        title={t('requests:review.serviceRequestLocation', 'Service Request Location')}
                         description={watchedValues.locationText}
                         height="250px"
                         width="100%"
@@ -93,7 +96,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                       borderColor: 'grey.300'
                     }}>
                       <Typography variant="body2" color="text.secondary">
-                        📍 No map coordinates provided
+                        📍 {t('requests:review.noMapCoordinates', 'No map coordinates provided')}
                       </Typography>
                     </Box>
                   )}
@@ -106,7 +109,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Description</Typography>
+              <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.descriptionLabel', 'Description')}</Typography>
               <Typography variant="body1">{watchedValues.description}</Typography>
             </CardContent>
           </Card>
@@ -115,18 +118,18 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Contact Information</Typography>
-              <Typography variant="body2"><strong>Preferred Contact Method:</strong> {watchedValues.contactMethod || 'EMAIL'}</Typography>
-              {watchedValues.email && <Typography variant="body2"><strong>Email:</strong> {watchedValues.email}</Typography>}
-              {watchedValues.phone && <Typography variant="body2"><strong>Phone:</strong> {watchedValues.phone}</Typography>}
-              {watchedValues.alternatePhone && <Typography variant="body2"><strong>Alternate Phone:</strong> {watchedValues.alternatePhone}</Typography>}
-              {watchedValues.bestTimeToContact && <Typography variant="body2"><strong>Best Time to Contact:</strong> {watchedValues.bestTimeToContact}</Typography>}
+              <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.step3', 'Contact Information')}</Typography>
+              <Typography variant="body2"><strong>{t('requests:form.contactMethodLabel', 'Preferred Contact Method')}:</strong> {watchedValues.contactMethod || 'EMAIL'}</Typography>
+              {watchedValues.email && <Typography variant="body2"><strong>{t('common:email', 'Email')}:</strong> {watchedValues.email}</Typography>}
+              {watchedValues.phone && <Typography variant="body2"><strong>{t('common:phone', 'Phone')}:</strong> {watchedValues.phone}</Typography>}
+              {watchedValues.alternatePhone && <Typography variant="body2"><strong>{t('requests:form.alternatePhoneLabel', 'Alternate Phone')}:</strong> {watchedValues.alternatePhone}</Typography>}
+              {watchedValues.bestTimeToContact && <Typography variant="body2"><strong>{t('requests:form.bestTimeLabel', 'Best Time to Contact')}:</strong> {watchedValues.bestTimeToContact}</Typography>}
               {/* Mailing Address (when MAIL is selected) */}
               {watchedValues.contactMethod === 'MAIL' && (
                 <>
-                  {watchedValues.mailingStreetAddress && <Typography variant="body2"><strong>Mailing Address:</strong> {watchedValues.mailingStreetAddress}</Typography>}
-                  {watchedValues.mailingCity && <Typography variant="body2"><strong>Mailing City:</strong> {watchedValues.mailingCity}</Typography>}
-                  {watchedValues.mailingPostalCode && <Typography variant="body2"><strong>Mailing Postal Code:</strong> {watchedValues.mailingPostalCode}</Typography>}
+                  {watchedValues.mailingStreetAddress && <Typography variant="body2"><strong>{t('requests:form.mailingAddressLabel', 'Mailing Address')}:</strong> {watchedValues.mailingStreetAddress}</Typography>}
+                  {watchedValues.mailingCity && <Typography variant="body2"><strong>{t('requests:form.mailingCityLabel', 'Mailing City')}:</strong> {watchedValues.mailingCity}</Typography>}
+                  {watchedValues.mailingPostalCode && <Typography variant="body2"><strong>{t('requests:form.mailingPostalCodeLabel', 'Mailing Postal Code')}:</strong> {watchedValues.mailingPostalCode}</Typography>}
                 </>
               )}
             </CardContent>
@@ -136,11 +139,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>Issue Details</Typography>
-              {watchedValues.issueType && <Typography variant="body2"><strong>Issue Type:</strong> {watchedValues.issueType}</Typography>}
-              {watchedValues.severity && <Typography variant="body2"><strong>Severity:</strong> {watchedValues.severity}/10</Typography>}
-              <Typography variant="body2"><strong>Recurring Issue:</strong> {watchedValues.isRecurring ? 'Yes' : 'No'}</Typography>
-              <Typography variant="body2"><strong>Has Permits:</strong> {watchedValues.hasPermits ? 'Yes' : 'No'}</Typography>
+              <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:review.issueDetails', 'Issue Details')}</Typography>
+              {watchedValues.issueType && <Typography variant="body2"><strong>{t('requests:form.issueTypeLabel', 'Issue Type')}:</strong> {watchedValues.issueType}</Typography>}
+              {watchedValues.severity && <Typography variant="body2"><strong>{t('requests:form.severityLabel', 'Severity')}:</strong> {watchedValues.severity}/10</Typography>}
+              <Typography variant="body2"><strong>{t('requests:form.isRecurring', 'Recurring Issue')}:</strong> {watchedValues.isRecurring ? t('common:yes', 'Yes') : t('common:no', 'No')}</Typography>
+              <Typography variant="body2"><strong>{t('requests:form.hasPermits', 'Has Permits')}:</strong> {watchedValues.hasPermits ? t('common:yes', 'Yes') : t('common:no', 'No')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -149,7 +152,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="primary" gutterBottom>Affected Services</Typography>
+                <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.affectedServicesLabel', 'Affected Services')}</Typography>
                 {watchedValues.affectedServices.map((service, index) => (
                   <Typography key={index} variant="body2">� {service}</Typography>
                 ))}
@@ -162,8 +165,8 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="primary" gutterBottom>Estimated Value</Typography>
-                <Typography variant="body2"><strong>Estimated Impact Value:</strong> ${watchedValues.estimatedValue}</Typography>
+                <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.estimatedValueLabel', 'Estimated Value')}</Typography>
+                <Typography variant="body2"><strong>{t('requests:review.estimatedImpactValue', 'Estimated Impact Value')}:</strong> ${watchedValues.estimatedValue}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -173,9 +176,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="primary" gutterBottom>Scheduling Preferences</Typography>
-                <Typography variant="body2"><strong>Preferred Date:</strong> {new Date(watchedValues.preferredDate).toLocaleDateString()}</Typography>
-                {watchedValues.preferredTime && <Typography variant="body2"><strong>Preferred Time:</strong> {watchedValues.preferredTime}</Typography>}
+                <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:review.schedulingPreferences', 'Scheduling Preferences')}</Typography>
+                <Typography variant="body2"><strong>{t('requests:form.preferredDate', 'Preferred Date')}:</strong> {new Date(watchedValues.preferredDate).toLocaleDateString()}</Typography>
+                {watchedValues.preferredTime && <Typography variant="body2"><strong>{t('requests:form.preferredTime', 'Preferred Time')}:</strong> {watchedValues.preferredTime}</Typography>}
               </CardContent>
             </Card>
           </Grid>
@@ -185,7 +188,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="primary" gutterBottom>Attachments</Typography>
+                <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:form.attachmentsLabel', 'Attachments')}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
                     component="img"
@@ -200,7 +203,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     }}
                   />
                   <Box>
-                    <Typography variant="body2">?? {uploadedFile.name}</Typography>
+                    <Typography variant="body2">✓ {uploadedFile.name}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
                     </Typography>
@@ -215,7 +218,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1" color="primary" gutterBottom>Additional Comments</Typography>
+                <Typography variant="subtitle1" color="primary" gutterBottom>{t('requests:review.additionalComments', 'Additional Comments')}</Typography>
                 <Typography variant="body1">{watchedValues.comments}</Typography>
               </CardContent>
             </Card>
@@ -238,7 +241,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
 
       {isBlocked && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Too many submission attempts. Please wait before trying again.
+          {t('requests:review.tooManyAttempts', 'Too many submission attempts. Please wait before trying again.')}
         </Alert>
       )}
     </Box>

@@ -8,6 +8,7 @@ import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/error';
 import { logger } from './utils/logger';
 import { featureFlagMiddleware } from './middleware/featureFlags';
+import { applyTestingFlags, applyAuthenticationBugs, applyServiceRequestBugs, applySearchBugs } from './middleware/testingFlags';
 import { metricsScheduler } from './services/metricsScheduler';
 
 // Route imports
@@ -17,6 +18,7 @@ import requestRoutes from './routes/requests';
 import searchRoutes from './routes/search';
 import attachmentRoutes from './routes/attachments';
 import adminRoutes from './routes/admin';
+import staffRoutes from './routes/staff';
 import rankingRoutes from './routes/rankings';
 import departmentRoutes from './routes/departments';
 import supervisorRoutes from './routes/supervisor';
@@ -27,6 +29,7 @@ import timeTrackingRoutes from './routes/time-tracking';
 import fieldPhotosRoutes from './routes/field-photos';
 import agentStatusRoutes from './routes/agent-status';
 import communityRoutes from './routes/community';
+import testingFlagsRoutes from './routes/testingFlags';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3001', 10);
@@ -58,6 +61,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Feature flag middleware
 app.use(featureFlagMiddleware);
 
+// Testing flag middleware
+app.use(applyTestingFlags);
+app.use(applyAuthenticationBugs);
+app.use(applyServiceRequestBugs);
+app.use(applySearchBugs);
+
 // Correlation ID middleware
 app.use((req, res, next) => {
   res.locals.correlationId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -87,6 +96,7 @@ app.use('/api/v1', searchRoutes); // Search endpoints
 app.use('/api/v1/requests', attachmentRoutes); // For request-specific attachment endpoints
 app.use('/api/v1/attachments', attachmentRoutes); // For standalone attachment endpoints (image serving)
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/admin', staffRoutes); // Staff management endpoints
 app.use('/api/v1/rankings', rankingRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/supervisor', supervisorRoutes);
@@ -97,6 +107,7 @@ app.use('/api/v1/time-tracking', timeTrackingRoutes);
 app.use('/api/v1/field-photos', fieldPhotosRoutes);
 app.use('/api/v1/agent-status', agentStatusRoutes);
 app.use('/api/v1/community', communityRoutes);
+app.use('/api/v1/testing-flags', testingFlagsRoutes);
 app.use('/api/departments', departmentRoutes); // Alternative path without version
 
 // Root endpoint

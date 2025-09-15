@@ -24,6 +24,7 @@ interface DataTableProps {
   onFilterModelChange?: (model: GridFilterModel) => void;
   onRowClick?: (params: any) => void;
   testId?: string;
+  localeText?: any;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -40,6 +41,7 @@ const DataTable: React.FC<DataTableProps> = ({
   onFilterModelChange,
   onRowClick,
   testId = 'cs-data-grid',
+  localeText,
 }) => {
   const handlePaginationModelChange = (model: GridPaginationModel) => {
     onPaginationModelChange?.(model);
@@ -71,6 +73,7 @@ const DataTable: React.FC<DataTableProps> = ({
         onSortModelChange={handleSortModelChange}
         onFilterModelChange={handleFilterModelChange}
         onRowClick={onRowClick}
+        localeText={localeText}
         slots={{
           toolbar: GridToolbar,
         }}

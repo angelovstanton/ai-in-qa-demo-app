@@ -47,6 +47,7 @@ import { z } from 'zod';
 import api from '../lib/api';
 import { ServiceRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import LocationDisplayMap from '../components/LocationDisplayMap';
 import AuthenticatedImage from '../components/request-detail/AuthenticatedImage';
 
@@ -65,6 +66,7 @@ const commentSchema = z.object({
 type CommentFormData = z.infer<typeof commentSchema>;
 
 const RequestDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -333,7 +335,7 @@ const RequestDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <Typography>Loading request details...</Typography>
+        <Typography>{t('requests:messages.loadingRequests', 'Loading request details...')}</Typography>
       </Box>
     );
   }
@@ -342,14 +344,14 @@ const RequestDetailPage: React.FC = () => {
     return (
       <Box data-testid="cs-request-detail-error">
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error || 'Request not found'}
+          {error || t('requests:messages.errorLoading', 'Request not found')}
         </Alert>
         <Button
           startIcon={<BackIcon />}
           onClick={() => navigate(-1)}
           data-testid="cs-request-detail-back"
         >
-          Go Back
+          {t('common:back', 'Go Back')}
         </Button>
       </Box>
     );
@@ -366,7 +368,7 @@ const RequestDetailPage: React.FC = () => {
           <BackIcon />
         </IconButton>
         <Typography variant="h4" component="h1">
-          Request Details
+          {t('requests:requestDetails', 'Request Details')}
         </Typography>
       </Box>
 
@@ -399,7 +401,7 @@ const RequestDetailPage: React.FC = () => {
                     )}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Request ID: {request.code}
+                    {t('requests:requestId', 'Request ID')}: {request.code}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <Chip

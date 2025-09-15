@@ -1,0 +1,350 @@
+{
+  "title": "Портал на теренния агент",
+  "subtitle": "Управление на терени задачи и заявки за услуги",
+  "navigation": {
+    "dashboard": "Табло на агента",
+    "tasks": "Терени задачи",
+    "taskDetail": "Подробности за задачата",
+    "map": "Изглед на картата",
+    "schedule": "График",
+    "reports": "Терени отчети",
+    "equipment": "Оборудване"
+  },
+  "dashboard": {
+    "title": "Табло на теренния агент",
+    "welcomeMessage": "Добре дошли, {{agentName}}",
+    "todaysTasks": "Днешни задачи",
+    "urgentTasks": "Спешни задачи",
+    "inProgressTasks": "В процес",
+    "completedToday": "Завършени днес",
+    "weeklyProgress": "Седмичен напредък",
+    "taskCount": "{{count}} задачи",
+    "priorityHigh": "Висок приоритет",
+    "priorityMedium": "Среден приоритет",
+    "priorityLow": "Нисък приоритет",
+    "quickActions": "Бързи действия",
+    "recentActivity": "Скорошна дейност",
+    "upcomingDeadlines": "Предстоящи срокове"
+  },
+  "tasks": {
+    "title": "Терени задачи",
+    "subtitle": "Управлявайте назначените ви терени задачи",
+    "tableHeaders": {
+      "taskId": "ИД на задачата",
+      "requestType": "Тип заявка",
+      "location": "Местоположение",
+      "priority": "Приоритет",
+      "status": "Статус",
+      "assignedDate": "Дата на назначаване",
+      "dueDate": "Краен срок",
+      "estimatedTime": "Очаквано време",
+      "customer": "Клиент",
+      "actions": "Действия"
+    },
+    "statusLabels": {
+      "assigned": "Назначена",
+      "inProgress": "В процес",
+      "onHold": "В изчакване",
+      "completed": "Завършена",
+      "cancelled": "Отменена",
+      "needsReview": "Нуждае се от преглед"
+    },
+    "priorityLabels": {
+      "critical": "Критичен",
+      "high": "Висок",
+      "medium": "Среден",
+      "low": "Нисък"
+    },
+    "actions": {
+      "startTask": "Започни задачата",
+      "pauseTask": "Паузирай задачата",
+      "completeTask": "Завърши задачата",
+      "viewDetails": "Виж подробности",
+      "updateStatus": "Обнови статуса",
+      "addNotes": "Добави бележки",
+      "takePhoto": "Направи снимка",
+      "callCustomer": "Обади се на клиента"
+    },
+    "filters": {
+      "allTasks": "Всички задачи",
+      "todayTasks": "Днешни задачи",
+      "overdue": "Просрочени",
+      "inProgress": "В процес",
+      "completed": "Завършени",
+      "highPriority": "Висок приоритет",
+      "nearLocation": "Близо до моето местоположение"
+    },
+    "sorting": {
+      "priority": "По приоритет",
+      "dueDate": "По краен срок",
+      "location": "По местоположение",
+      "status": "По статус",
+      "assignedDate": "По дата на назначаване"
+    }
+  },
+  "taskDetail": {
+    "title": "Подробности за задачата",
+    "sections": {
+      "basicInfo": "Основна информация",
+      "customerInfo": "Информация за клиента",
+      "locationInfo": "Подробности за местоположението",
+      "taskDescription": "Описание на задачата",
+      "requirements": "Изисквания",
+      "progress": "Напредък",
+      "photos": "Снимки и документация",
+      "notes": "Бележки и коментари",
+      "history": "История на задачата"
+    },
+    "fields": {
+      "taskId": "ИД на задачата",
+      "requestType": "Тип заявка",
+      "category": "Категория",
+      "priority": "Приоритет",
+      "status": "Статус",
+      "assignedDate": "Дата на назначаване",
+      "dueDate": "Краен срок",
+      "estimatedDuration": "Очаквана продължителност",
+      "actualDuration": "Действителна продължителност",
+      "customerName": "Име на клиента",
+      "customerPhone": "Телефон на клиента",
+      "customerEmail": "Имейл на клиента",
+      "address": "Адрес",
+      "coordinates": "Координати",
+      "description": "Описание",
+      "specialInstructions": "Специални инструкции",
+      "equipmentNeeded": "Необходимо оборудване",
+      "skillsRequired": "Необходими умения"
+    },
+    "progressSteps": {
+      "notStarted": "Не е започната",
+      "enRoute": "На път",
+      "onSite": "На място",
+      "workInProgress": "Работата е в ход",
+      "awaitingApproval": "Очаква одобрение",
+      "completed": "Завършена"
+    },
+    "completion": {
+      "markComplete": "Маркирай като завършена",
+      "workPerformed": "Извършена работа",
+      "timeSpent": "Прекарано време",
+      "materialsUsed": "Използвани материали",
+      "followUpRequired": "Необходимо проследяване",
+      "customerSatisfaction": "Удовлетвореност на клиента",
+      "additionalNotes": "Допълнителни бележки"
+    }
+  },
+  "map": {
+    "title": "Изглед на картата",
+    "subtitle": "Местоположения на задачи и маршрутизиране",
+    "controls": {
+      "myLocation": "Моето местоположение",
+      "centerMap": "Центрирай картата",
+      "zoomIn": "Увеличи",
+      "zoomOut": "Намали",
+      "toggleTraffic": "Покажи/скрий трафика",
+      "toggleSatellite": "Покажи/скрий сателитния изглед",
+      "fullScreen": "Цял екран"
+    },
+    "taskPins": {
+      "highPriority": "Задача с висок приоритет",
+      "mediumPriority": "Задача със среден приоритет",
+      "lowPriority": "Задача с нисък приоритет",
+      "completed": "Завършена задача",
+      "inProgress": "Задача в процес",
+      "myLocation": "Моето местоположение"
+    },
+    "routing": {
+      "getDirections": "Вземи указания",
+      "optimizeRoute": "Оптимизирай маршрута",
+      "estimatedTime": "Очаквано време",
+      "distance": "Разстояние",
+      "traffic": "Трафик",
+      "routeOptions": "Опции за маршрута",
+      "avoid": "Избягвай",
+      "tolls": "Такси",
+      "highways": "Магистрали",
+      "ferries": "Фериботи"
+    },
+    "filters": {
+      "showAll": "Покажи всички задачи",
+      "todayOnly": "Само днешни",
+      "highPriority": "Висок приоритет",
+      "nearMe": "Близо до мен",
+      "inProgress": "В процес",
+      "pending": "Чакащи"
+    }
+  },
+  "photos": {
+    "title": "Снимки от задачата",
+    "actions": {
+      "takePhoto": "Направи снимка",
+      "uploadPhoto": "Качи снимка",
+      "deletePhoto": "Изтрий снимка",
+      "viewFullSize": "Виж в пълен размер",
+      "addCaption": "Добави заглавие",
+      "markAsBefore": "Маркирай като 'преди'",
+      "markAsAfter": "Маркирай като 'след'",
+      "markAsEvidence": "Маркирай като доказателство"
+    },
+    "categories": {
+      "before": "Снимки преди",
+      "during": "Работа в ход",
+      "after": "Снимки след",
+      "evidence": "Доказателства/Проблеми",
+      "equipment": "Използвано оборудване",
+      "damage": "Оценка на щетите",
+      "completion": "Снимки при завършване"
+    },
+    "requirements": {
+      "maxSize": "Максимален размер на файла: {{size}}МБ",
+      "allowedFormats": "Позволени формати: JPG, PNG, HEIC",
+      "gpsRequired": "Изисква се GPS местоположение",
+      "timestampRequired": "Изисква се времева печат"
+    }
+  },
+  "equipment": {
+    "title": "Оборудване и инструменти",
+    "sections": {
+      "assigned": "Назначено оборудване",
+      "checkedOut": "Взето",
+      "maintenance": "Нуждае се от поддръжка",
+      "request": "Заяви оборудване"
+    },
+    "status": {
+      "available": "Налично",
+      "checkedOut": "Взето",
+      "maintenance": "Поддръжка",
+      "repair": "Ремонт",
+      "lost": "Загубено/Липсващо"
+    },
+    "actions": {
+      "checkOut": "Вземи",
+      "checkIn": "Върни",
+      "reportIssue": "Докладвай проблем",
+      "requestMaintenance": "Заяви поддръжка",
+      "markLost": "Маркирай като загубено"
+    }
+  },
+  "schedule": {
+    "title": "График",
+    "views": {
+      "day": "Дневен изглед",
+      "week": "Седмичен изглед",
+      "month": "Месечен изглед",
+      "agenda": "Изглед по дневен ред"
+    },
+    "timeSlots": {
+      "morning": "Сутрин (8:00 - 12:00)",
+      "afternoon": "Следобед (12:00 - 17:00)",
+      "evening": "Вечер (17:00 - 20:00)",
+      "emergency": "Спешно (всяко време)"
+    },
+    "availability": {
+      "available": "Наличен",
+      "busy": "Зает",
+      "break": "Почивка",
+      "travel": "Време за пътуване",
+      "meeting": "Среща",
+      "training": "Обучение"
+    }
+  },
+  "notifications": {
+    "newTaskAssigned": "Назначена нова задача: {{taskId}}",
+    "taskDueSoon": "Задачата скоро изтича: {{taskId}}",
+    "taskOverdue": "Просрочена задача: {{taskId}}",
+    "urgentTaskAssigned": "Назначена спешна задача: {{taskId}}",
+    "customerCalled": "Клиентът се обади за задача {{taskId}}",
+    "equipmentReady": "Оборудването е готово за вземане",
+    "scheduleChanged": "Графикът ви е обновен",
+    "weatherAlert": "Предупреждение за времето във вашия район"
+  },
+  "reports": {
+    "title": "Терени отчети",
+    "types": {
+      "dailyReport": "Дневен отчет",
+      "taskSummary": "Резюме на задачата",
+      "timeSheet": "Табел за време",
+      "expenseReport": "Отчет за разходи",
+      "incidentReport": "Отчет за инцидент"
+    },
+    "submit": "Изпрати отчет",
+    "review": "Прегледай и изпрати"
+  },
+  "empty": {
+    "noTasks": "Няма назначени задачи",
+    "noTasksToday": "Няма планирани задачи за днес",
+    "noInProgress": "Няма задачи в процес",
+    "noPhotos": "Няма качени снимки",
+    "noEquipment": "Няма назначено оборудване",
+    "noSchedule": "Няма наличен график"
+  },
+  "loading": {
+    "loadingTasks": "Зареждане на задачи...",
+    "loadingMap": "Зареждане на карта...",
+    "loadingSchedule": "Зареждане на график...",
+    "uploadingPhoto": "Качване на снимка...",
+    "savingProgress": "Запазване на напредъка...",
+    "gettingLocation": "Получаване на местоположение..."
+  },
+  "errors": {
+    "failedToLoadTasks": "Неуспешно зареждане на задачи",
+    "locationNotFound": "Местоположението не е намерено",
+    "photoUploadFailed": "Качването на снимката не успя",
+    "gpsUnavailable": "GPS местоположението не е налично",
+    "networkError": "Грешка в мрежовата връзка",
+    "updateFailed": "Обновлението не успя",
+    "permissionDenied": "Отказано разрешение",
+    "failedToLoadDashboard": "Неуспешно зареждане на данните от таблото",
+    "failedToUpdateStatus": "Неуспешно обновяване на статуса",
+    "failedToCheckIn": "Неуспешно регистриране",
+    "failedToCheckOut": "Неуспешно отписване"
+  },
+  "fieldAgentDashboard": {
+    "title": "Табло на теренния агент",
+    "welcomeBack": "Добре дошли отново, {{name}}",
+    "statusToggle": {
+      "available": "Наличен",
+      "busy": "Зает",
+      "break": "Почивка",
+      "offDuty": "Извън служба",
+      "enRoute": "На път"
+    },
+    "quickStats": {
+      "totalTasks": "Общо задачи",
+      "completedToday": "Завършени днес",
+      "workTimeToday": "Работно време днес",
+      "inProgress": "В процес"
+    },
+    "workOrders": {
+      "title": "Днешни работни поръчки",
+      "viewAll": "Виж всички",
+      "noOrdersToday": "Няма планирани работни поръчки за днес",
+      "category": "Категория",
+      "estimatedTime": "Очак. {{duration}}"
+    },
+    "timeTracking": {
+      "activeTracking": "Активно проследяване на времето: {{timeType}} - Започнато преди {{timeAgo}}",
+      "viewDetails": "Виж подробности"
+    },
+    "quickActions": {
+      "title": "Бързи действия",
+      "workOrders": "Работни поръчки",
+      "timeTracking": "Проследяване на време",
+      "photos": "Снимки",
+      "mapView": "Изглед на картата"
+    },
+    "priority": {
+      "emergency": "Спешно",
+      "high": "Висок",
+      "normal": "Нормален",
+      "low": "Нисък"
+    },
+    "workOrderStatus": {
+      "completed": "Завършена",
+      "inProgress": "В процес",
+      "onSite": "На място",
+      "enRoute": "На път",
+      "assigned": "Назначена"
+    }
+  }
+}

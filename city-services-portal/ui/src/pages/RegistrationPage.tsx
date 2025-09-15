@@ -25,6 +25,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { countries } from '../data/countries';
 import RegistrationSuccess from '../components/RegistrationSuccess';
@@ -164,6 +165,7 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -264,10 +266,10 @@ const RegistrationPage: React.FC = () => {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <PersonAdd sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
             <Typography variant="h4" component="h1" gutterBottom>
-              Create Your Account
+              {t('auth:register.title')}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Join our city services portal to submit and track service requests
+              {t('auth:register.subtitle')}
             </Typography>
           </Box>
 
@@ -286,7 +288,7 @@ const RegistrationPage: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             {/* Personal Information */}
             <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-              Personal Information
+              {t('auth:register.personalInfo')}
             </Typography>
             
             <Grid container spacing={2}>
@@ -298,7 +300,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="First Name"
+                      label={t('auth:register.firstNameLabel')}
+                      placeholder={t('auth:register.firstNamePlaceholder')}
                       error={!!errors.firstName}
                       helperText={errors.firstName?.message}
                       data-testid="cs-registration-first-name"
@@ -315,7 +318,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Last Name"
+                      label={t('auth:register.lastNameLabel')}
+                      placeholder={t('auth:register.lastNamePlaceholder')}
                       error={!!errors.lastName}
                       helperText={errors.lastName?.message}
                       data-testid="cs-registration-last-name"
@@ -333,7 +337,8 @@ const RegistrationPage: React.FC = () => {
                 <TextField
                   {...field}
                   fullWidth
-                  label="Email Address"
+                  label={t('auth:register.emailLabel')}
+                  placeholder={t('auth:register.emailPlaceholder')}
                   type="email"
                   margin="normal"
                   error={!!errors.email}
@@ -345,7 +350,7 @@ const RegistrationPage: React.FC = () => {
 
             {/* Password Section */}
             <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-              Password & Security
+              {t('auth:register.passwordSecurity')}
             </Typography>
 
             <Grid container spacing={2}>
@@ -357,7 +362,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Password"
+                      label={t('auth:register.passwordLabel')}
+                      placeholder={t('auth:register.passwordPlaceholder')}
                       type={showPassword ? 'text' : 'password'}
                       error={!!errors.password}
                       helperText={errors.password?.message}
@@ -387,7 +393,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Confirm Password"
+                      label={t('auth:register.confirmPasswordLabel')}
+                      placeholder={t('auth:register.confirmPasswordPlaceholder')}
                       type={showConfirmPassword ? 'text' : 'password'}
                       error={!!errors.confirmPassword}
                       helperText={errors.confirmPassword?.message}
@@ -413,7 +420,7 @@ const RegistrationPage: React.FC = () => {
 
             {/* Contact Information */}
             <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-              Contact Information
+              {t('auth:register.contactInfo')}
             </Typography>
 
             <Controller
@@ -423,7 +430,8 @@ const RegistrationPage: React.FC = () => {
                 <TextField
                   {...field}
                   fullWidth
-                  label="Phone Number"
+                  label={t('auth:register.phoneLabel')}
+                  placeholder={t('auth:register.phonePlaceholder')}
                   margin="normal"
                   error={!!errors.phone}
                   helperText={errors.phone?.message}
@@ -434,7 +442,7 @@ const RegistrationPage: React.FC = () => {
 
             {/* Address Information */}
             <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-              Address Information
+              {t('auth:register.addressInfo')}
             </Typography>
 
             <Controller
@@ -444,7 +452,8 @@ const RegistrationPage: React.FC = () => {
                 <TextField
                   {...field}
                   fullWidth
-                  label="Street Address"
+                  label={t('auth:register.addressLabel')}
+                  placeholder={t('auth:register.addressPlaceholder')}
                   margin="normal"
                   error={!!errors.streetAddress}
                   helperText={errors.streetAddress?.message}
@@ -462,7 +471,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="City"
+                      label={t('auth:register.cityLabel')}
+                      placeholder={t('auth:register.cityPlaceholder')}
                       margin="normal"
                       error={!!errors.city}
                       helperText={errors.city?.message}
@@ -479,7 +489,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="State/Province"
+                      label={t('auth:register.stateLabel')}
+                      placeholder={t('auth:register.statePlaceholder')}
                       margin="normal"
                       error={!!errors.state}
                       helperText={errors.state?.message}
@@ -496,7 +507,8 @@ const RegistrationPage: React.FC = () => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Postal Code"
+                      label={t('auth:register.postalCodeLabel')}
+                      placeholder={t('auth:register.postalCodePlaceholder')}
                       margin="normal"
                       error={!!errors.postalCode}
                       helperText={errors.postalCode?.message}
@@ -518,7 +530,7 @@ const RegistrationPage: React.FC = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Country"
+                      label={t('auth:register.countryLabel')}
                       margin="normal"
                       error={!!errors.country}
                       helperText={errors.country?.message}
@@ -534,7 +546,7 @@ const RegistrationPage: React.FC = () => {
 
             {/* Account Type & Preferences */}
             <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
-              Account & Preferences
+              {t('auth:register.accountPrefs')}
             </Typography>
 
             <Controller
@@ -542,14 +554,14 @@ const RegistrationPage: React.FC = () => {
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth margin="normal">
-                  <InputLabel>Account Type</InputLabel>
+                  <InputLabel>{t('auth:register.accountTypeLabel')}</InputLabel>
                   <Select
                     {...field}
-                    label="Account Type"
+                    label={t('auth:register.accountTypeLabel')}
                     data-testid="cs-registration-account-type"
                   >
-                    <MenuItem value="CITIZEN">Individual Citizen</MenuItem>
-                    <MenuItem value="BUSINESS">Business/Organization</MenuItem>
+                    <MenuItem value="CITIZEN">{t('auth:register.individualCitizen')}</MenuItem>
+                    <MenuItem value="BUSINESS">{t('auth:register.businessOrg')}</MenuItem>
                   </Select>
                 </FormControl>
               )}
@@ -563,7 +575,8 @@ const RegistrationPage: React.FC = () => {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Business Name"
+                    label={t('auth:register.businessNameLabel')}
+                    placeholder={t('auth:register.businessNamePlaceholder')}
                     margin="normal"
                     error={!!errors.businessName}
                     helperText={errors.businessName?.message}
@@ -580,10 +593,10 @@ const RegistrationPage: React.FC = () => {
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth margin="normal">
-                      <InputLabel>Preferred Language</InputLabel>
+                      <InputLabel>{t('auth:register.preferredLanguageLabel')}</InputLabel>
                       <Select
                         {...field}
-                        label="Preferred Language"
+                        label={t('auth:register.preferredLanguageLabel')}
                         data-testid="cs-registration-language"
                       >
                         <MenuItem value="EN">English</MenuItem>
@@ -601,16 +614,16 @@ const RegistrationPage: React.FC = () => {
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth margin="normal">
-                      <InputLabel>Preferred Communication</InputLabel>
+                      <InputLabel>{t('auth:register.communicationLabel')}</InputLabel>
                       <Select
                         {...field}
-                        label="Preferred Communication"
+                        label={t('auth:register.communicationLabel')}
                         data-testid="cs-registration-communication"
                       >
-                        <MenuItem value="EMAIL">Email</MenuItem>
-                        <MenuItem value="PHONE">Phone</MenuItem>
-                        <MenuItem value="SMS">SMS</MenuItem>
-                        <MenuItem value="MAIL">Mail</MenuItem>
+                        <MenuItem value="EMAIL">{t('auth:register.communicationEmail')}</MenuItem>
+                        <MenuItem value="PHONE">{t('auth:register.communicationPhone')}</MenuItem>
+                        <MenuItem value="SMS">{t('auth:register.communicationSms')}</MenuItem>
+                        <MenuItem value="MAIL">{t('auth:register.communicationMail')}</MenuItem>
                       </Select>
                     </FormControl>
                   )}
@@ -632,7 +645,7 @@ const RegistrationPage: React.FC = () => {
                         data-testid="cs-registration-service-updates"
                       />
                     }
-                    label="Receive updates about my service requests"
+                    label={t('auth:register.serviceUpdatesLabel')}
                   />
                 )}
               />
@@ -649,7 +662,7 @@ const RegistrationPage: React.FC = () => {
                         data-testid="cs-registration-marketing-emails"
                       />
                     }
-                    label="Receive newsletters and city announcements"
+                    label={t('auth:register.marketingLabel')}
                   />
                 )}
               />
@@ -674,9 +687,9 @@ const RegistrationPage: React.FC = () => {
                   }
                   label={
                     <Typography variant="body2">
-                      I agree to the{' '}
+                      {t('auth:register.termsLabel')}{' '}
                       <Link href="/terms" target="_blank" color="primary">
-                        Terms and Conditions
+                        {t('common:termsOfService')}
                       </Link>
                     </Typography>
                   }
@@ -705,9 +718,9 @@ const RegistrationPage: React.FC = () => {
                   }
                   label={
                     <Typography variant="body2">
-                      I agree to the{' '}
+                      {t('auth:register.privacyLabel')}{' '}
                       <Link href="/privacy" target="_blank" color="primary">
-                        Privacy Policy
+                        {t('common:privacyPolicy')}
                       </Link>
                     </Typography>
                   }
@@ -730,14 +743,14 @@ const RegistrationPage: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               data-testid="cs-registration-submit"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? t('auth:register.submitting') : t('auth:register.submitButton')}
             </Button>
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2">
-                Already have an account?{' '}
+                {t('auth:register.haveAccount')}{' '}
                 <Link component={RouterLink} to="/login" color="primary">
-                  Sign In
+                  {t('auth:register.signIn')}
                 </Link>
               </Typography>
             </Box>

@@ -7,6 +7,7 @@ import {
   FormHelperText,
 } from '@mui/material';
 import { Controller, Control, FieldErrors, useWatch, UseFormTrigger } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ServiceRequestFormData, FormValidationTestIds } from '../../schemas/formSchemas';
 import LocationMapComponent from '../LocationMapComponent';
 
@@ -38,6 +39,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
   ValidationFeedback,
   trigger,
 }) => {
+  const { t } = useTranslation();
   const [currentAddress, setCurrentAddress] = useState<string>('');
   const [initialLocationSet, setInitialLocationSet] = useState(false);
   
@@ -73,7 +75,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
   return (
     <Box data-testid="cs-new-request-step-2">
       <Typography variant="h6" gutterBottom>
-        Location Information
+        {t('requests:form.step2', 'Location Details')}
       </Typography>
       
       <Grid container spacing={3}>
@@ -86,7 +88,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                 <TextField
                   {...field}
                   fullWidth
-                  label="Street Address"
+                  label={t('requests:form.streetAddressLabel', 'Street Address')}
                   margin="normal"
                   required
                   error={!!errors.streetAddress}
@@ -124,7 +126,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                     <TextField
                       {...field}
                       fullWidth
-                      label="City"
+                      label={t('common:city', 'City')}
                       margin="normal"
                       required
                       error={!!errors.city}
@@ -161,7 +163,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                     <TextField
                       {...field}
                       fullWidth
-                      label="Postal Code"
+                      label={t('common:postalCode', 'Postal Code')}
                       margin="normal"
                       required
                       error={!!errors.postalCode}
@@ -202,7 +204,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                     <TextField
                       {...field}
                       fullWidth
-                      label="Latitude"
+                      label={t('requests:form.coordinatesLabel', 'Latitude')}
                       margin="normal"
                       type="number"
                       value={field.value || ''}
@@ -218,7 +220,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                         field.onChange(value);
                         handleInputChange('latitude', value);
                       }}
-                      helperText="GPS latitude coordinate (updated from map)"
+                      helperText={t('requests:form.latitudeHelperText', 'GPS latitude coordinate (updated from map)')}
                       InputLabelProps={{
                         shrink: !!field.value || field.value === 0
                       }}
@@ -236,7 +238,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                     <TextField
                       {...field}
                       fullWidth
-                      label="Longitude"
+                      label={t('requests:form.longitudeLabel', 'Longitude')}
                       margin="normal"
                       type="number"
                       value={field.value || ''}
@@ -252,7 +254,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                         field.onChange(value);
                         handleInputChange('longitude', value);
                       }}
-                      helperText="GPS longitude coordinate (updated from map)"
+                      helperText={t('requests:form.longitudeHelperText', 'GPS longitude coordinate (updated from map)')}
                       InputLabelProps={{
                         shrink: !!field.value || field.value === 0
                       }}
@@ -271,7 +273,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                 <TextField
                   {...field}
                   fullWidth
-                  label="Additional Location Details"
+                  label={t('requests:form.locationLabel', 'Additional Location Details')}
                   margin="normal"
                   error={!!errors.locationText}
                   required
@@ -286,7 +288,7 @@ const LocationStep: React.FC<LocationStepProps> = ({
                   }}
                 />
                 <FormHelperText id="location-helper-text">
-                  Describe the exact location of the issue (minimum 10 characters)
+                  {t('requests:form.locationPlaceholder', 'Describe the exact location of the issue (minimum 10 characters)')}
                 </FormHelperText>
                 <ValidationFeedback
                   field={field}

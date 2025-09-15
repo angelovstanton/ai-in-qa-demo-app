@@ -1,0 +1,111 @@
+{
+  "dashboard": "Dashboard",
+  "requests": "My Requests",
+  "new-request": "New Request",
+  "resolved-cases": "Resolved Cases",
+  "ranklist": "Community Ranklist",
+  "inbox": "Inbox",
+  "assign-tasks": "Assign Tasks",
+  "my-tasks": "My Tasks",
+  "admin-flags": "Feature Flags",
+  "staff-management": "Staff & Role Management",
+  "staff-performance": "Staff Performance",
+  "quality-reviews": "Quality Reviews",
+  "metrics": "Department Metrics",
+  "performance-goals": "Performance Goals",
+  "work-orders": "Work Orders",
+  "time-tracking": "Time Tracking",
+  "photos": "Field Photos",
+  "map": "Map View",
+  "profile": "Profile",
+  "logout": "Logout",
+  
+  "menu": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "requests": "Service Requests",
+    "myRequests": "My Requests",
+    "newRequest": "New Request",
+    "inbox": "Inbox",
+    "tasks": "My Tasks",
+    "fieldWork": "Field Work",
+    "reports": "Reports",
+    "analytics": "Analytics",
+    "users": "Users",
+    "departments": "Departments",
+    "settings": "Settings",
+    "admin": "Administration",
+    "help": "Help",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "calendar": "Calendar",
+    "documents": "Documents"
+  },
+  
+  "breadcrumb": {
+    "home": "Home",
+    "requests": "Requests",
+    "new": "New",
+    "edit": "Edit",
+    "details": "Details",
+    "profile": "Profile",
+    "settings": "Settings",
+    "admin": "Admin",
+    "reports": "Reports"
+  },
+  
+  "tabs": {
+    "overview": "Overview",
+    "details": "Details",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "history": "History",
+    "activity": "Activity",
+    "permissions": "Permissions",
+    "preferences": "Preferences",
+    "security": "Security",
+    "notifications": "Notifications"
+  },
+  
+  "footer": {
+    "about": "About",
+    "contact": "Contact Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "help": "Help Center",
+    "feedback": "Send Feedback",
+    "copyright": "© 2024 City Services Portal",
+    "version": "Version {{version}}",
+    "language": "Language",
+    "accessibility": "Accessibility"
+  },
+  
+  "userMenu": {
+    "profile": "My Profile",
+    "settings": "Settings",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "changePassword": "Change Password",
+    "signOut": "Sign Out",
+    "switchRole": "Switch Role",
+    "helpDocs": "Help & Documentation",
+    "reportBug": "Report a Bug"
+  },
+  
+  "sidebar": {
+    "collapse": "Collapse Sidebar",
+    "expand": "Expand Sidebar",
+    "pin": "Pin Sidebar",
+    "unpin": "Unpin Sidebar"
+  },
+  
+  "quickActions": {
+    "title": "Quick Actions",
+    "newRequest": "New Request",
+    "searchRequests": "Search Requests",
+    "viewReports": "View Reports",
+    "manageUsers": "Manage Users",
+    "systemSettings": "System Settings"
+  }
+}

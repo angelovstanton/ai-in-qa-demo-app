@@ -1,0 +1,40 @@
+{
+  "request": {
+    "SUBMITTED": "Submitted",
+    "TRIAGED": "Triaged",
+    "IN_PROGRESS": "In Progress",
+    "WAITING_ON_CITIZEN": "Waiting on Citizen",
+    "RESOLVED": "Resolved",
+    "CLOSED": "Closed",
+    "REJECTED": "Rejected",
+    "REOPENED": "Reopened"
+  },
+  "user": {
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "PENDING_EMAIL_VERIFICATION": "Pending Email Verification",
+    "PASSWORD_RESET_REQUIRED": "Password Reset Required",
+    "SUSPENDED": "Suspended",
+    "ARCHIVED": "Archived"
+  },
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "URGENT": "Urgent"
+  },
+  "contactMethod": {
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "SMS": "SMS"
+  },
+  "department": {
+    "roads-and-infrastructure": "Roads and Infrastructure",
+    "water-and-utilities": "Water and Utilities",
+    "waste-management": "Waste Management",
+    "parks-and-recreation": "Parks and Recreation",
+    "public-safety": "Public Safety",
+    "transportation": "Transportation",
+    "buildings-and-property": "Buildings and Property"
+  }
+}
