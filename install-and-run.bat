@@ -5,6 +5,8 @@ echo =====================================
 echo AI in QA Demo App - Installation Script
 echo =====================================
 echo.
+echo Current directory: %CD%
+echo.
 
 :: Check if Node.js is installed
 where node >nul 2>nul
@@ -27,14 +29,27 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [✓] npm found:
-npm --version
+echo [✓] npm found
 echo.
 
 :: Check if we're in the right directory
 if not exist "city-services-portal" (
+    echo.
     echo [ERROR] Cannot find city-services-portal directory
-    echo Please run this script from the root of the ai-in-qa-demo-app repository
+    echo.
+    echo Current directory: %CD%
+    echo.
+    echo Contents of current directory:
+    dir /b
+    echo.
+    echo Please ensure you have the following structure:
+    echo   your-folder\
+    echo     ^|-- city-services-portal\
+    echo     ^|     ^|-- api\
+    echo     ^|     ^|-- ui\
+    echo     ^|-- install-and-run.bat (this file^)
+    echo.
+    echo Please run this script from the root directory containing city-services-portal
     pause
     exit /b 1
 )
