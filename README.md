@@ -24,7 +24,7 @@ This application serves as a **comprehensive testing playground** for demonstrat
 # Clone and run the installation script
 git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
 cd ai-in-qa-demo-app
-install-and-run.bat
+./install-and-run.bat
 ```
 
 #### **Mac/Linux**
