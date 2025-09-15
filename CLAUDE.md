@@ -29,17 +29,18 @@ npm run preview      # Preview production build
 ### Quick Start
 ```bash
 # Terminal 1 - API
-cd city-services-portal/api && npm install && npm run db:generate && npm run db:push && npm run db:seed && npm run dev
+cd city-services-portal/api
+npm install
+cp .env.example .env  # Create environment file
+npm run db:generate
+npm run db:push
+npm run db:seed
+npm run dev
 
 # Terminal 2 - UI
-cd city-services-portal/ui && npm install && npm run dev
-```
-
-### Docker Development (Recommended)
-```bash
-cd city-services-portal
-# Windows: ./start-docker.bat
-# Mac/Linux: make start
+cd city-services-portal/ui
+npm install
+npm run dev
 ```
 
 ## Architecture Overview
@@ -134,5 +135,4 @@ All forms must implement:
 ## Build & Deployment
 - **Development**: Vite dev server + tsx watch for hot reload
 - **Production**: TypeScript compilation + static build
-- **Docker**: Full containerization available via `start-docker.bat`
 - **Database**: SQLite for simplicity, easily switchable via Prisma

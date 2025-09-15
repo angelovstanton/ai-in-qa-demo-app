@@ -6,33 +6,24 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
 ## 🎯 **Purpose**
 
 This application serves as a **comprehensive testing playground** for demonstrating AI-powered Quality Assurance tools and automated testing frameworks. It features a realistic municipal service request management system with complex workflows, multiple user roles, and extensive form interactions.
 
 ## 🚀 **Quick Start**
-
-### **Option 1: Docker (Recommended)**
 ```bash
 # Clone the repository
 git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
 cd ai-in-qa-demo-app
 
-# Start everything with Docker
-cd city-services-portal
-./start-docker.bat    # Windows
-# OR
-make start            # Mac/Linux
-```
-
-### **Option 2: Local Development**
-```bash
 # Start API
 cd city-services-portal/api
 npm install
-npm run db:generate && npm run db:push && npm run db:seed
+cp .env.example .env  # Create environment file
+npm run db:generate
+npm run db:push
+npm run db:seed
 npm run dev
 
 # Start UI (new terminal)
@@ -64,7 +55,6 @@ npm run dev
 │   │   │   ├── contexts/             # React contexts
 │   │   │   └── types/                # TypeScript definitions
 │   │   └── public/                   # Static assets
-│   └── 🐳 docker/                    # Docker configuration
 └── 📁 .github/                       # GitHub workflows & templates
 ```
 
@@ -246,25 +236,11 @@ Administration
 - **Input Validation**: Server-side validation for all inputs
 - **File Upload Security**: Type and size restrictions
 
-## 🐳 **Docker Setup**
-
-The application includes comprehensive Docker configuration:
-
-```yaml
-# docker-compose.yml provides:
-- Multi-stage builds for optimization
-- Development and production configurations
-- Automatic database setup and seeding
-- Health checks and monitoring
-- Volume persistence for data
-- Environment variable management
-```
 
 ## 🛠️ **Development**
 
 ### **Prerequisites**
 - Node.js 18+ and npm
-- Docker Desktop (for containerized development)
 - Git for version control
 
 ### **Environment Setup**
@@ -273,9 +249,8 @@ The application includes comprehensive Docker configuration:
 git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
 cd ai-in-qa-demo-app/city-services-portal
 
-# Copy environment files
+# Copy environment file for API
 cp api/.env.example api/.env
-cp ui/.env.example ui/.env
 
 # Install dependencies
 cd api && npm install
