@@ -49,7 +49,7 @@
 				"-e",
 				"SLACK_MCP_XOXB_TOKEN",
 				"-e",
-				"SLACK_MCP_ADD_MESSAGE_TOOL=space-qa",
+				"SLACK_MCP_ADD_MESSAGE_TOOL=true",
 				"ghcr.io/korotovsky/slack-mcp-server:latest",
 				"mcp-server",
 				"--transport",
