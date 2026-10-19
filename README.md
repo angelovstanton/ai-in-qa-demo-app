@@ -69,6 +69,36 @@ npm install
 npm run dev           # Start UI server on port 5173
 ```
 
+### **Option 3: Docker (single command, no Node.js required)**
+Requires only [Docker Desktop](https://docs.docker.com/get-docker/) (Docker Compose v2). Builds the API and UI images, creates the database, seeds demo data and starts everything in the background.
+
+```bash
+git clone https://github.com/angelovstanton/ai-in-qa-demo-app.git
+cd ai-in-qa-demo-app
+
+# Windows
+docker-app.bat
+
+# Mac/Linux (or Git Bash)
+chmod +x docker-app.sh
+./docker-app.sh
+```
+
+The first run takes a few minutes (image build + seeding). The UI is served immediately; API calls start working once seeding finishes.
+
+| Command | Windows | Mac/Linux | Description |
+|---------|---------|-----------|-------------|
+| **Start** | `docker-app.bat` | `./docker-app.sh` | Build and start the app (seeds data on first run only) |
+| **Reset** | `docker-app.bat reset` | `./docker-app.sh reset` | Remove containers and database, rebuild and start with fresh seed data |
+| **Reseed** | `docker-app.bat reseed` | `./docker-app.sh reseed` | Wipe and reseed the database only (faster, no rebuild) |
+| **Restart** | `docker-app.bat restart` | `./docker-app.sh restart` | Restart the containers, keeping data |
+| **Stop** | `docker-app.bat stop` | `./docker-app.sh stop` | Stop the containers, keeping data |
+| **Logs** | `docker-app.bat logs [api\|ui]` | `./docker-app.sh logs [api\|ui]` | Follow container logs |
+| **Status** | `docker-app.bat status` | `./docker-app.sh status` | Show container status |
+| **Clean** | `docker-app.bat clean` | `./docker-app.sh clean` | Remove containers, data volume and images |
+
+The database lives in the `db-data` Docker volume, so it survives `restart`/`stop` and is only wiped by `reset`, `reseed` or `clean`. The Docker setup runs the same ports as local development (UI `5173`, API `3001`), so stop any local dev servers first.
+
 ### **Access the Application**
 - **🌐 Frontend**: http://localhost:5173
 - **📚 API Docs**: http://localhost:3001/api-docs
