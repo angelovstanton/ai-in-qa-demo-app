@@ -100,9 +100,6 @@ temp/
 .tmp/
 .cache/
 
-# Docker
-.dockerignore
-
 # Testing
 coverage/
 .nyc_output/

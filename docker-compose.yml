@@ -1,0 +1,42 @@
+name: city-services-portal
+
+services:
+  api:
+    build:
+      context: ./city-services-portal
+      dockerfile: api/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: file:/data/app.db
+      JWT_SECRET: demo-docker-jwt-secret-change-me
+      NODE_ENV: development
+      PORT: 3001
+      APP_URL: http://localhost:5173
+      API_URL: http://localhost:3001
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_SIMULATION_ENABLED: "true"
+      EMAIL_SIMULATION_LOG_LEVEL: detailed
+    volumes:
+      - db-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 300s
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./city-services-portal
+      dockerfile: ui/Dockerfile
+    ports:
+      - "5173:80"
+    # Start immediately; API calls succeed once the API finishes seeding
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  db-data:

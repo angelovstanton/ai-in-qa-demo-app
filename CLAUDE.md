@@ -44,6 +44,15 @@ npm install
 npm run dev
 ```
 
+### Docker (single command)
+```bash
+docker-app.bat [start|reset|reseed|restart|stop|logs|status|clean]     # Windows
+./docker-app.sh [start|reset|reseed|restart|stop|logs|status|clean]    # Mac/Linux
+```
+- `docker-compose.yml` (repo root) runs `api` (port 3001) and `ui` (nginx on 5173, proxies `/api` to `api`)
+- SQLite DB lives in the `db-data` volume (`/data/app.db`); `api/docker-entrypoint.sh` runs `prisma db push` and seeds only on a fresh DB or when `FORCE_SEED=true`
+- Don't name scripts `docker.bat` - cmd resolves the current directory first and the script would call itself
+
 ## Architecture Overview
 
 **Monorepo Structure**: Full-stack municipal service management system designed as a comprehensive testing playground for AI-powered QA tools.
